@@ -1,5 +1,4 @@
 package gasp;
-import java.util.*;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -15,6 +14,10 @@ import gasp.utils.Utils;
 //import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class Main {
 	//Setting the logger level go to -> log4j2.xml -> configuration -> loggers -> logger -> level
@@ -63,7 +66,7 @@ public class Main {
         return populationSorted;
 	}
 	
-	public static void main (String[] args) throws IOException{
+	public static void main(String[] args) throws IOException {
 		/*
 		args = getattr(module_, configuration.args_gen)(configuration.size);
 		kwargs = getattr(module_, configuration.kwargs_gen)(configuration.size);*/
@@ -172,7 +175,7 @@ public class Main {
             Iterator<Individual> parentIterator = parents.iterator();
             while (parentIterator.hasNext()) {
             	Individual offspring1 = parentIterator.next().cloneIndividual();
-            	Individual offspring2 = parentIterator.next().cloneIndividual();
+            	Individual offspring2 = parentIterator.next().cloneIndividual(); //TODO another hasNext should be the case!!!
             	offspring.addAll(Config.crossoverFunction.crossover(offspring1, offspring2));
             }
             Collections.sort(offspring, new SortIndividuals());

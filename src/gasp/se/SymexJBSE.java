@@ -45,7 +45,7 @@ public class SymexJBSE implements Symex {
 
 	private String[] classpath;
 	private String z3Path;
-	private final RunnerParameters commonParamsGuided;
+	private final RunnerParameters commonParams;
 	private static int target;
 		
 	public SymexJBSE() {
@@ -53,10 +53,10 @@ public class SymexJBSE implements Symex {
 		this.classpath[0] = Config.programPath;
 		this.classpath[1] = Config.classTarget;
 		this.z3Path = Config.z3Path; 
-		this.commonParamsGuided = new RunnerParameters();
-		this.commonParamsGuided.setMethodSignature(Config.className, Config.descriptor, Config.methodName/*"example/IfExample", "(I)V", "m"*/);
-		this.commonParamsGuided.addUserClasspath(this.classpath);
-		this.commonParamsGuided.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
+		this.commonParams = new RunnerParameters();
+		this.commonParams.setMethodSignature(Config.className, Config.descriptor, Config.methodName);
+		this.commonParams.addUserClasspath(this.classpath);
+		this.commonParams.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
 	}
 
 	private static class ActionsRunner extends Actions {
@@ -183,12 +183,12 @@ public class SymexJBSE implements Symex {
 			FailureException {
 
 		//builds the parameters
-		final RunnerParameters pGuided = this.commonParamsGuided.clone();
+		final RunnerParameters params = this.commonParams.clone();
 		
 		//sets the calculator
 		final CalculatorRewriting calc = new CalculatorRewriting();
 		calc.addRewriter(new RewriterOperationOnSimplex());
-		pGuided.setCalculator(calc);
+		params.setCalculator(calc);
 		
 		//sets the decision procedures
 		final ArrayList<String> z3CommandLine = new ArrayList<>();
@@ -196,7 +196,7 @@ public class SymexJBSE implements Symex {
 		z3CommandLine.add(SWITCH_CHAR + "smt2");
 		z3CommandLine.add(SWITCH_CHAR + "in");
 		z3CommandLine.add(SWITCH_CHAR + "t:10");
-		pGuided.setDecisionProcedure(new DecisionProcedureAlgorithms(
+		params.setDecisionProcedure(new DecisionProcedureAlgorithms(
 				new DecisionProcedureClassInit( //useless?
 						new DecisionProcedureLICS( //useless?
 								new DecisionProcedureSMTLIB2_AUFNIRA(
@@ -206,19 +206,21 @@ public class SymexJBSE implements Symex {
 						calc, new ClassInitRulesRepo()), calc));
 
 		//sets the actions
-		pGuided.setActions(actions);
+		params.setActions(actions);
 
 		//sets the initial state
 		if (sInitial != null) {
-			pGuided.setInitialState(sInitial);
+			params.setInitialState(sInitial);
 		}
 
 		//builds the runner and runs it
 		final RunnerBuilder rb = new RunnerBuilder();
-		final Runner r = rb.build(pGuided);
+		final Runner r = rb.build(params);
 		
+		//ugly!
 		//the first time is invoked it initializes this.initialState
 		if (this.initialState == null) {
+			r.run();
 			this.initialState = rb.getEngine().getInitialState();
 		}
 		return r;
@@ -230,15 +232,22 @@ public class SymexJBSE implements Symex {
 		State s = null;
 		
 		try {
-			ActionsRunner actions = new ActionsRunner();
 			if (this.initialState == null) {
-				newRunner(actions); //ugly!
+				 //ugly!
+				final ActionsRunner actions = new ActionsRunner() {
+					@Override
+					public boolean atInitial() {
+						return true;
+					}
+				};
+				newRunner(actions);
 			}
 			final State sInitial = this.initialState.clone();
 			for (Constraint c : precondition) {
 				final Primitive condition = ((ClauseAssume) ((ConstraintJBSE) c).getClause()).getCondition();
 				sInitial.assume(condition);
 			}
+			final ActionsRunner actions = new ActionsRunner();
 			final Runner r = newRunner(actions, sInitial);
 			r.run();
 			List<State> states = actions.getStateList();
