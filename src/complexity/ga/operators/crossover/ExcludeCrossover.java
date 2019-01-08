@@ -3,7 +3,6 @@ package complexity.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
-import complexity.ga.FitnessFunction;
 import complexity.ga.Individual;
 import complexity.se.Constraint;
 import complexity.utils.RandomSingleton;

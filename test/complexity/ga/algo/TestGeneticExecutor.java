@@ -28,7 +28,7 @@ public class TestGeneticExecutor {
 	}
 	
 	@Test
-	@DisplayName("Elitism returnis not empty")
+	@DisplayName("Elitism return is not empty")
 	public void testElitism1() {
 		assertFalse(GeneticExecutor.elitism(population(), population().size()).isEmpty());
 	}

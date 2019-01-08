@@ -1,18 +1,12 @@
 package complexity.se;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import complexity.utils.Config;
-import complexity.utils.userScan;
 import jbse.algo.exc.CannotManageStateException;
-import jbse.apps.run.DecisionProcedureGuidance;
-import jbse.apps.run.DecisionProcedureGuidanceJDI;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
 import jbse.dec.DecisionProcedureAlgorithms;
@@ -25,9 +19,7 @@ import jbse.dec.exc.DecisionException;
 import jbse.jvm.Runner;
 import jbse.jvm.RunnerBuilder;
 import jbse.jvm.RunnerParameters;
-import jbse.jvm.Engine;
 import jbse.jvm.EngineParameters.BreadthMode;
-import jbse.jvm.EngineParameters.StateIdentificationMode;
 import jbse.jvm.Runner.Actions;
 import jbse.jvm.exc.CannotBacktrackException;
 import jbse.jvm.exc.CannotBuildEngineException;
@@ -37,11 +29,9 @@ import jbse.jvm.exc.InitializationException;
 import jbse.jvm.exc.NonexistingObservedVariablesException;
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
-import jbse.mem.ClauseAssumeClassInitialized;
-import jbse.mem.ClauseAssumeClassNotInitialized;
 import jbse.mem.State;
-import jbse.mem.exc.CannotRefineException;
 import jbse.mem.exc.ContradictionException;
+import jbse.mem.exc.FrozenStateException;
 import jbse.mem.exc.ThreadStackEmptyException;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.RewriterOperationOnSimplex;
@@ -51,7 +41,7 @@ import jbse.tree.StateTree.BranchPoint;
 import jbse.val.Primitive;
 
 public class SymexJBSE implements Symex {
-	private static final String COMMANDLINE_LAUNCH_Z3 = System.getProperty("os.name").toLowerCase().contains("windows") ? " /smt2 /in /t:10" : " -smt2 -in -t:10";
+	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
 	private String[] classpath;
 	private String z3Path;
@@ -66,7 +56,7 @@ public class SymexJBSE implements Symex {
 		this.z3Path = Config.z3Path; 
 		this.commonParamsGuided = new RunnerParameters();
 		this.commonParamsGuided.setMethodSignature(Config.className, Config.descriptor, Config.methodName/*"example/IfExample", "(I)V", "m"*/);
-		this.commonParamsGuided.addClasspath(this.classpath);
+		this.commonParamsGuided.addUserClasspath(this.classpath);
 		this.commonParamsGuided.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
 	}
 
@@ -202,12 +192,17 @@ public class SymexJBSE implements Symex {
 		pGuided.setCalculator(calc);
 		
 		//sets the decision procedures
+		final ArrayList<String> z3CommandLine = new ArrayList<>();
+		z3CommandLine.add(this.z3Path);
+		z3CommandLine.add(SWITCH_CHAR + "smt2");
+		z3CommandLine.add(SWITCH_CHAR + "in");
+		z3CommandLine.add(SWITCH_CHAR + "t:10");
 		pGuided.setDecisionProcedure(new DecisionProcedureAlgorithms(
 				new DecisionProcedureClassInit( //useless?
 						new DecisionProcedureLICS( //useless?
 								new DecisionProcedureSMTLIB2_AUFNIRA(
 										new DecisionProcedureAlwSat(), 
-										calc, this.z3Path + COMMANDLINE_LAUNCH_Z3), 
+										calc, z3CommandLine), 
 								calc, new LICSRulesRepo()), 
 						calc, new ClassInitRulesRepo()), calc));
 
@@ -228,11 +223,6 @@ public class SymexJBSE implements Symex {
 			this.initialState = rb.getEngine().getInitialState();
 		}
 		return r;
-	}
-	
-	public static void main(String[] args) {
-		SymexJBSE exec = new SymexJBSE();
-		//TODO
 	}
 	
 	int instructionCount=0;
@@ -260,7 +250,7 @@ public class SymexJBSE implements Symex {
 		} catch (DecisionException | CannotBuildEngineException | InitializationException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException e) {
+				| ContradictionException | EngineStuckException | FailureException | FrozenStateException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}

@@ -1,22 +1,16 @@
 package complexity.se;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import complexity.utils.Config;
-import complexity.utils.userScan;
 
 //import com.github.javaparser.JavaParser;
 //import com.github.javaparser.ast.expr.MethodCallExpr;
 //import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import jbse.algo.exc.CannotManageStateException;
-import jbse.apps.run.DecisionProcedureGuidance;
-import jbse.apps.run.DecisionProcedureGuidanceJDI;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
 import jbse.dec.DecisionProcedureAlgorithms;
@@ -29,7 +23,6 @@ import jbse.jvm.Runner;
 import jbse.jvm.RunnerBuilder;
 import jbse.jvm.RunnerParameters;
 import jbse.jvm.EngineParameters.BreadthMode;
-import jbse.jvm.EngineParameters.StateIdentificationMode;
 import jbse.jvm.Runner.Actions;
 import jbse.jvm.exc.CannotBacktrackException;
 import jbse.jvm.exc.CannotBuildEngineException;
@@ -48,7 +41,7 @@ import jbse.rules.LICSRulesRepo;
 import jbse.tree.StateTree.BranchPoint;
 
 public class SymexJBSE2 implements Symex {
-	private static final String COMMANDLINE_LAUNCH_Z3 = System.getProperty("os.name").toLowerCase().contains("windows") ? " /smt2 /in /t:10" : " -smt2 -in -t:10";
+	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
 	private String[] classpath;
 	private String z3Path;
@@ -63,7 +56,7 @@ public class SymexJBSE2 implements Symex {
 		this.z3Path = Config.z3Path; 
 		this.commonParamsGuided = new RunnerParameters();
 		this.commonParamsGuided.setMethodSignature(Config.className, Config.descriptor, Config.methodName/*"example/IfExample", "(I)V", "m"*/);
-		this.commonParamsGuided.addClasspath(this.classpath);
+		this.commonParamsGuided.addUserClasspath(this.classpath);
 		this.commonParamsGuided.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
 /*this.outPath = o.getOutDirectory().toString();
 		//this.testCase = item.getTestCase();
@@ -178,12 +171,17 @@ public class SymexJBSE2 implements Symex {
 		//pGuiding.setCalculator(calc);
 		
 		//sets the decision procedures
+		final ArrayList<String> z3CommandLine = new ArrayList<>();
+		z3CommandLine.add(this.z3Path);
+		z3CommandLine.add(SWITCH_CHAR + "smt2");
+		z3CommandLine.add(SWITCH_CHAR + "in");
+		z3CommandLine.add(SWITCH_CHAR + "t:10");
 		pGuided.setDecisionProcedure(new DecisionProcedureAlgorithms(
 				new DecisionProcedureClassInit( //useless?
 						new DecisionProcedureLICS( //useless?
 								new DecisionProcedureSMTLIB2_AUFNIRA(
 										new DecisionProcedureAlwSat(), 
-										calc, this.z3Path + COMMANDLINE_LAUNCH_Z3), 
+										calc, z3CommandLine), 
 								calc, new LICSRulesRepo()), 
 						calc, new ClassInitRulesRepo()), calc));
 
