@@ -81,9 +81,9 @@ public class Main {
 		List<Individual> profiles = wcetGenerator(); 
 		Utils.ppWcetProfiles(profiles);
 		
-    	System.out.println("Worst case input: " + profiles.get(0).getConstraintSet().toString());
-    	System.out.println("Worst case model: " + profiles.get(0).getModel().toString());
-    	System.out.println("Worst case cost: " + profiles.get(0).getFitness());
+		logger.info("Worst case input: " + profiles.get(0).getConstraintSet().toString());
+		logger.info("Worst case model: " + profiles.get(0).getModel().toString());
+		logger.info("Worst case cost: " + profiles.get(0).getFitness());
 		
 	}
 	
