@@ -49,10 +49,9 @@ public class SymexJBSE implements Symex {
 	private static int target;
 		
 	public SymexJBSE() {
-		this.classpath = new String[3];
-		this.classpath[0] = Config.dataTarget;
-		this.classpath[1] = Config.programPath;
-		this.classpath[2] = Config.classTarget;
+		this.classpath = new String[2];
+		this.classpath[0] = Config.programPath;
+		this.classpath[1] = Config.classTarget;
 		this.z3Path = Config.z3Path; 
 		this.commonParamsGuided = new RunnerParameters();
 		this.commonParamsGuided.setMethodSignature(Config.className, Config.descriptor, Config.methodName/*"example/IfExample", "(I)V", "m"*/);

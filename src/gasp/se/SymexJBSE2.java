@@ -50,7 +50,6 @@ public class SymexJBSE2 implements Symex {
 		
 	public SymexJBSE2(/*Options o, EvosuiteResult item*/) {
 		this.classpath = new String[3];
-		this.classpath[0] = Config.dataTarget;
 		this.classpath[1] = Config.programPath;
 		this.classpath[2] = Config.classTarget;
 		this.z3Path = Config.z3Path; 
