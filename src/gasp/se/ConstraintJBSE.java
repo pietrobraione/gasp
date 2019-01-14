@@ -1,7 +1,5 @@
 package gasp.se;
 
-import java.util.List;
-
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.val.exc.InvalidTypeException;
@@ -36,10 +34,5 @@ public class ConstraintJBSE extends Constraint {
 		} 
 	}
 
-	@Override
-	public boolean isInconsistent(List<Constraint> slice) {
-		return false;
-	}
-	
 
 }

@@ -2,24 +2,24 @@ package gasp.utils;
 
 import java.util.Random;
 
-public class RandomSingleton {
-	private static RandomSingleton instance;
+public class RandomNumberSupplier {
+	private static RandomNumberSupplier instance;
 	private Random rng;
 
-    private RandomSingleton() {
+    private RandomNumberSupplier() {
         rng = new Random();
 		rng.setSeed(Config.seed);        
     }
 
-    public static RandomSingleton getInstance() {
+    public static RandomNumberSupplier _I() {
         if(instance == null) {
-            instance = new RandomSingleton();
+            instance = new RandomNumberSupplier();
         }
         return instance;
     }
 
-    public int nextInt() {
-         return rng.nextInt();
+    public double nextDouble() {
+         return rng.nextDouble();
     }
     
     public int nextInt(int bound) {

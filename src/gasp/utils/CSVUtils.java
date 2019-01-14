@@ -6,46 +6,38 @@ import java.util.List;
 
 public class CSVUtils {
 
-	private static final char DEFAULT_SEPARATOR = ',';
+	private static final char SEPARATOR = ',';
 	
 	public static void writeLine(Writer w, List<String> values) throws IOException {
-		writeLine(w, values, DEFAULT_SEPARATOR, ' ');
+		writeLine(w, values, SEPARATOR, ' ');
 	}
 	
-	public static void writeLine(Writer w, List<String> values, char separators) throws IOException {
-		writeLine(w, values, separators, ' ');
+	public static void writeLine(Writer w, List<String> values, char separator) throws IOException {
+		writeLine(w, values, separator, ' ');
 	}
 	
 	private static String followCSVformat(String value) {
-		String result = value;
-		if(result.contains("\"")) {
-			result = result.replace("\"", "\"\"");
-		}
-		return result;
+		return value.replace("\"", "\"\"");
 	}
 	
-	public static void writeLine(Writer w, List<String> values, char separators, char customQuote) throws IOException {
+	public static void writeLine(Writer w, List<String> values, Character separator, Character customQuote) throws IOException {
 		boolean first = true;
 		
-		//default customQuote is empty
-		
-		if(separators == ' ') {
-			separators = DEFAULT_SEPARATOR;
-			
+		if(separator == null) {
+			separator = SEPARATOR;
 		}
 		
 		StringBuilder sb = new StringBuilder();
 		for(String value : values) {
 			if(!first) {
-				sb.append(separators);
+				sb.append(separator);
 			}
-			if (customQuote == ' ') {
+			if (customQuote == null) {
 				sb.append(followCSVformat(value));
 			}
 			else {
 				sb.append(customQuote).append(followCSVformat(value)).append(customQuote);
 			}
-			
 			first = false;
 		}
 		

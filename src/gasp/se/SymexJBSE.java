@@ -196,12 +196,13 @@ public class SymexJBSE implements Symex {
 		z3CommandLine.add(SWITCH_CHAR + "smt2");
 		z3CommandLine.add(SWITCH_CHAR + "in");
 		z3CommandLine.add(SWITCH_CHAR + "t:10");
+		final String COMMANDLINE_LAUNCH_Z3 = this.z3Path + (System.getProperty("os.name").toLowerCase().contains("windows") ? " /smt2 /in /t:10" : " -smt2 -in -t:10");
 		params.setDecisionProcedure(new DecisionProcedureAlgorithms(
 				new DecisionProcedureClassInit( //useless?
 						new DecisionProcedureLICS( //useless?
 								new DecisionProcedureSMTLIB2_AUFNIRA(
 										new DecisionProcedureAlwSat(), 
-										calc, z3CommandLine), 
+										calc, /*z3CommandLine*/COMMANDLINE_LAUNCH_Z3), 
 								calc, new LICSRulesRepo()), 
 						calc, new ClassInitRulesRepo()), calc));
 

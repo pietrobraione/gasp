@@ -1,7 +1,5 @@
 package gasp.se;
 
-import java.util.List;
-
 public class ConstraintStub extends Constraint {
 	
 	private static final String chars = "abcdefghijklmnopkrstuvwxyzabcdefghijklmnopkrstuvwxyzabcdefghijklmnopkrstuvwxyzabcdefghijklmnopkrstuvwxyz";
@@ -27,10 +25,5 @@ public class ConstraintStub extends Constraint {
 	public Constraint mkNot() {
 		return new ConstraintStub("not (" + this.theConstraint + ")");
 	}
-
-	@Override
-	public boolean isInconsistent(List<Constraint> slice) {
-		return false;
-	}	
 
 }

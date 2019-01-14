@@ -3,18 +3,19 @@ package gasp.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
+import gasp.ga.FitnessEvaluationException;
 import gasp.ga.FitnessFunction;
 import gasp.ga.Individual;
 import gasp.se.Constraint;
 import gasp.utils.Utils;
 
-public class UnionCrossover extends CrossoverFunction{
+public class UnionCrossover_NotUsedYet extends CrossoverFunction{
 
 	@Override
-	public ArrayList<Individual> crossover(Individual parent1, Individual parent2) {
+	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
 		
-		List<Constraint> constraints1 = parent1.getConstraintSet();
-		List<Constraint> constraints2 = parent2.getConstraintSet();
+		List<Constraint> constraints1 = parent1.getConstraintSetClone();
+		List<Constraint> constraints2 = parent2.getConstraintSetClone();
 		
 		List<Constraint> allConstraints = new ArrayList<>();
 		allConstraints.addAll(constraints1);
@@ -24,7 +25,7 @@ public class UnionCrossover extends CrossoverFunction{
         List<Constraint> childConstraints2 = new ArrayList<>();
         while(!allConstraints.isEmpty()) {
             Constraint c = allConstraints.remove(allConstraints.size() - 1);
-            Constraint notC = Utils.negate(c);
+            Constraint notC = c.mkNot();
             if(allConstraints.contains(notC)){
                 allConstraints.remove(notC);
                 //TODO genes = [c, not_c];
@@ -37,13 +38,24 @@ public class UnionCrossover extends CrossoverFunction{
                 }
 		}
 		
-		Individual child1 = FitnessFunction.evaluate(childConstraints1);
-        Individual child2 = FitnessFunction.evaluate(childConstraints2);
-        
         ArrayList<Individual> children = new ArrayList<>();
-        children.add(child1);
-        children.add(child2);
-        return children; //return child1, child2
+
+        try {
+        	Individual child1 = FitnessFunction.evaluate(childConstraints1);
+	        children.add(child1);
+		} catch (FitnessEvaluationException e) { }
+
+		try {
+			Individual child2 = FitnessFunction.evaluate(childConstraints2);
+	        children.add(child2);
+		} catch (FitnessEvaluationException e) { }
+    
+		if (children.isEmpty()) {
+			throw new CrossoverException("Crossover produced no children");
+		}
+		
+        return children.toArray(new Individual[children.size()]);
+        
 	}
 	
 }

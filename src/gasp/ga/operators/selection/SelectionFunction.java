@@ -1,39 +1,51 @@
 package gasp.ga.operators.selection;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import gasp.ga.Individual;
 
 public abstract class SelectionFunction {
 	
-	protected abstract Individual selectIndividual(List<Individual> individuals);
+	protected abstract int selectIndividual(List<Individual> population, boolean populationIsSorted);
 	
-	public ArrayList<Individual> selection(ArrayList<Individual> population, int nPairs) {
-		ArrayList<Individual> result = new ArrayList<Individual>();
-		ArrayList<Individual> populationCopy = new ArrayList<Individual>();
-		for (int i = 0; i < population.size(); i++){
-			populationCopy.add(population.get(i).cloneIndividual());
-		}
-		for (int i = 0; i < nPairs; i++){
-		    Individual individual1 = selectIndividual(populationCopy);
-		    populationCopy.remove(individual1);
-		    Individual individual2 = selectIndividual(populationCopy);
-		    populationCopy.remove(individual2);
-		    result.add(individual1);
-		    result.add(individual2);
-		}
-		return result;
+	public Pair selectPairDistinct(List<Individual> population, boolean populationIsSorted) {
+		final List<Individual> populationCopy = new ArrayList<>(population);
+		
+		final Pair retValue = new Pair();
+		
+		int index = selectIndividual(populationCopy, populationIsSorted);
+		retValue.ind1 = populationCopy.get(index);
+		
+		populationCopy.remove(index);
+
+		index = selectIndividual(populationCopy, true /* sorted at previous step */);
+		retValue.ind2 = populationCopy.get(index);
+		
+		return retValue;
 	}
 
-	public ArrayList<Individual> survivalSelection(ArrayList<Individual> population, int n) {
-        ArrayList<Individual> result = new ArrayList<Individual>();
+	public List<Individual> survivalSelection(List<Individual> population, int n) {
+		final List<Individual> populationCopy = new ArrayList<>(population);
+		Collections.sort(populationCopy);
+
+		final List<Individual> retValue = new ArrayList<Individual>();
         for(int i = 0; i < n; i++) {
-            Individual individual = selectIndividual(population);
-            population.remove(individual);
-            result.add(individual);
+            int index = selectIndividual(populationCopy, true);
+
+            retValue.add(populationCopy.get(index));
+            
+            populationCopy.remove(index);
         }
-        return result;
+        
+        return retValue;
 	}
 	
+	public static class Pair {
+		public Individual ind1;
+		public Individual ind2;
+	}
+	
+
 }

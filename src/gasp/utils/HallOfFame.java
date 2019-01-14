@@ -8,22 +8,8 @@ import gasp.ga.Individual;
 
 public class HallOfFame {
 	
-	public int n;
-	public List<Individual> bestIndividuals = new ArrayList<>();
+	private List<Individual> bestIndividuals = new ArrayList<>();
 	
-	public HallOfFame(int n) {
-		super();
-		this.n = n;
-	}
-	
-	public int getN() {
-		return n;
-	}
-
-	public void setN(int n) {
-		this.n = n;
-	}
-
 	public List<Individual> getBestIndividuals() {
 		return bestIndividuals;
 	}
@@ -33,7 +19,8 @@ public class HallOfFame {
 	}
 
 	public void update(List<Individual> population) {
-		bestIndividuals = population;
-		Collections.sort(bestIndividuals, new SortIndividuals());
+		bestIndividuals.addAll(population);
+		Collections.sort(bestIndividuals);
+		bestIndividuals = new ArrayList<>(bestIndividuals.subList(0, Config.eliteSize));
 	}
 }

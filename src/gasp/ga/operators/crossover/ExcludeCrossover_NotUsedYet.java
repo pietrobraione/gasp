@@ -3,36 +3,46 @@ package gasp.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
-import gasp.ga.FitnessFunction;
 import gasp.ga.Individual;
 import gasp.se.Constraint;
-import gasp.utils.RandomSingleton;
+import gasp.utils.RandomNumberSupplier;
 import gasp.utils.Utils;
 
-public class PrefixCrossover extends CrossoverFunction{
-    
-	@Override
-	public ArrayList<Individual> crossover(Individual parent1, Individual parent2) {
-		List<Constraint> Constraints1 = parent1.getConstraintSet();
-		List<Constraint> Constraints2 = parent2.getConstraintSet();
+public class ExcludeCrossover_NotUsedYet extends CrossoverFunction{
 
-        List<Constraint> parent1Prefix = splitConstraints(Constraints1).get(0);
-        List<Constraint> parent1Split1 = splitConstraints(Constraints1).get(1);
-        List<Constraint> parent1Split2 = splitConstraints(Constraints1).get(2);
-        List<Constraint> parent2Prefix = splitConstraints(Constraints2).get(0);
-        List<Constraint> parent2Split1 = splitConstraints(Constraints2).get(1);
-        List<Constraint> parent2Split2 = splitConstraints(Constraints2).get(2);
-        
-        List<Constraint> child1Constraints = combine(parent1Prefix, (RandomSingleton.getInstance().nextBoolean() ? parent2Split1 : parent2Split2));
-        List<Constraint> child2Constraints = combine(parent2Prefix, (RandomSingleton.getInstance().nextBoolean() ? parent1Split1 : parent1Split2));
-        Individual child1 = FitnessFunction.evaluate(child1Constraints);
-        Individual child2 = FitnessFunction.evaluate(child2Constraints);
+	@Override
+	public Individual[] crossover(Individual parent1, Individual parent2) {
+
+		List<Constraint> Constraints1 = parent1.getConstraintSetClone();
+		List<Constraint> Constraints2 = parent2.getConstraintSetClone();
+		
+		List<Constraint> parent1Split1 = splitConstraints(Constraints1).get(0);
+        List<Constraint> parent1Split2 = splitConstraints(Constraints1).get(1);
+        List<Constraint> parent1Split3 = splitConstraints(Constraints1).get(2);
+        List<Constraint> parent2Split1 = splitConstraints(Constraints2).get(0);
+        List<Constraint> parent2Split2 = splitConstraints(Constraints2).get(1);
+        List<Constraint> parent2Split3 = splitConstraints(Constraints2).get(2);
+
+		List<List<Constraint>> options = new ArrayList<>();
+		options.add(parent1Split1);
+		options.add(parent2Split1);
+		options.add(parent1Split2);
+		options.add(parent2Split2);
+		options.add(parent1Split3);
+		options.add(parent2Split3);
+
+        List<List<Constraint>> choices = new ArrayList<>();
+        //TODO choices = rng.sample(options, k=2); //usare (rng.nextBoolean() ? parent2Split1 : parent2Split2)
+        //List<Constraint> child1Contraints = combine(choices[0][0], choices[1][1]);
+        //List<Constraint> child2Contraints = combine(choices[1][0], choices[0][1]);
+
+		//Individual child1 = FitnessFunction.evaluate(child1Constraints);
+        //Individual child2 = FitnessFunction.evaluate(child2Constraints);
         
         ArrayList<Individual> children = new ArrayList<>();
-        children.add(child1);
-        children.add(child2);
-        
-        return children;
+        //children.add(child1);
+        //children.add(child2);
+        return children.toArray(new Individual[children.size()]);
 	}
 	
 	private List<List<Constraint>> splitConstraints(List<Constraint> constraints) {
@@ -58,8 +68,8 @@ public class PrefixCrossover extends CrossoverFunction{
             splitset.add(get2);
             return splitset;
         }else if(constraints.size() > 2){
-        	int point1 = RandomSingleton.getInstance().nextInt(constraints.size() - 2) + 1;
-        	int point2 = RandomSingleton.getInstance().nextInt((constraints.size() + point1) + 1) + point1 + 1;
+        	int point1 = RandomNumberSupplier._I().nextInt(constraints.size() - 2) + 1;
+        	int point2 = RandomNumberSupplier._I().nextInt((constraints.size() - point1) + 1) + point1 + 1;
         	List<Constraint> set1 = new ArrayList<>();
         	List<Constraint> set12 = new ArrayList<>();
         	List<Constraint> set2 = new ArrayList<>();
@@ -89,5 +99,6 @@ public class PrefixCrossover extends CrossoverFunction{
         	}
         return result;
 	}
+	
 	
 }

@@ -4,78 +4,23 @@ import java.util.*;
 
 import gasp.ga.Individual;
 import gasp.se.Constraint;
-import gasp.se.Symex;
 
 public abstract class Utils {
 	
-	static Symex se = Symex.makeEngine();
-	
-	public static void conjuncts() {
-		//TODO:
-	}
-	
-	public static void toSmt2() {
-		//TODO:
-	}
-	
-	public static Constraint negate(Constraint c) {
-		return c.mkNot();
-	}
-			
-	public static void assertInRange() {
-		//TODO:
-	}
-	
-	public static void assertSorted() {
-		//TODO:
-	}
-	
-	public static void assertAllDifferent() {
-		//TODO:
-	}
-	
-	public static void assertAllPositive() {
-		//TODO:
-	}
-	
-	//Print the input profiles
-	public static void ppWcetProfiles(List<Individual> profiles) {
-    	for(int i = 0; i < profiles.size(); i++){
-        	int id = i + 1;
-    		System.out.println("id: " + id);
-        	System.out.println("cost: " + profiles.get(i).getFitness());
-        	//TODO:
-        	//System.out.println("complete: {profile.complete!r}");
-        	//System.out.println("path: {profile.path!r}");
-        	//System.out.println("pc: {profile.pc!r}");
-        	System.out.println(profiles.get(i).getModel());
-        	System.out.println();
-        	}
-	}
-	
-	//return the negation of the given constraint
-	public static Constraint mkNot(Constraint c) {
-		return c.mkNot();
-	}
-	
 	public static Constraint mkAnd(List<Constraint> refs) {
-		return se.mkAnd(refs);
+		return null; //TODO;
 	}
 	
 	public static Constraint mkImplies(Constraint c1, Constraint c2) {
-		return se.boolRef(c1, c2);
+		return null; //TODO
 	}
-	
-	public static void solverAssert() {
-		//TODO: (GeneticExecutor)ga_wcet_generator -> solver_assert(solver, pc)
-	}
-	
+		
 	public static boolean isContradiction(Constraint c) {
-		return se.quickCheck(c);
+		return false; //TODO
 	}
 	
 	public static boolean isTautology(Constraint c) {
-		return se.quickCheck(c);
+		return false; //TODO
 	}
 	
 	public static boolean isImplied(List<Constraint> constraintSet, Constraint c) {
@@ -85,4 +30,44 @@ public abstract class Utils {
 	public static boolean isInconsistent(List<Constraint> constraintSet) {
 		return isContradiction(mkAnd(constraintSet));
 	}
+	
+	public static boolean isInconsistent(Constraint c, List<Constraint> cc) {
+		if (cc.isEmpty()) {
+			return false;
+		}
+		return false; //TODO
+	}
+
+	public static boolean isRedundant(Constraint c, List<Constraint> slice) {
+		return false; //TODO
+	}
+	
+	public static String logIndividuals(List<Individual> individuals) {
+		String retValue = "";
+		
+		int id = 1;
+		for(Individual ind: individuals) {
+			retValue += id++ + ". " + ind + "\n";
+		}
+		
+		return retValue;
+	}
+	
+	public static String logFitnessStats(List<Individual> individuals) {
+		ArrayList<Integer> fitnesses = new ArrayList<Integer>();
+		int sum = 0;
+		
+		for(int i = 0; i < individuals.size(); i++){
+			fitnesses.add(individuals.get(i).getFitness());
+			sum += individuals.get(i).getFitness();
+		}
+		
+        int minFitness = Collections.min(fitnesses);
+        int maxFitness = Collections.max(fitnesses);
+        int avgFitness = sum / fitnesses.size();
+        return "max: " + maxFitness + ", min: " + minFitness + ", avg: " + avgFitness;
+	}
+	
+
+
 }

@@ -1,61 +1,79 @@
 package gasp.ga.operators.crossover;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
+import gasp.ga.FitnessEvaluationException;
 import gasp.ga.FitnessFunction;
 import gasp.ga.Individual;
+import gasp.ga.operators.mutation.MutationException;
 import gasp.ga.operators.mutation.MutationFunction;
 import gasp.se.Constraint;
 import gasp.se.Symex;
-import gasp.utils.RandomSingleton;
+import gasp.utils.Config;
+import gasp.utils.RandomNumberSupplier;
+import gasp.utils.Utils;
 
 public class SinglePointCrossover extends CrossoverFunction {
 
 	@Override
-	public List<Individual> crossover(Individual parent1, Individual parent2) {
-		List<Constraint> constraints1 = parent1.getConstraintSet();
-		List<Constraint> constraints2 = parent2.getConstraintSet();
+	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
+		List<Constraint> constraints1 = parent1.getConstraintSetClone();
+		List<Constraint> constraints2 = parent2.getConstraintSetClone();
 		int cp1;
 		int cp2;
 		
-		if(constraints1.size() > 1) {
-			cp1 = RandomSingleton.getInstance().nextInt(constraints1.size() - 1) + 1;
-		}else {
-			cp1 = 0;
+		if (constraints1.size() > 0) {
+			cp1 = RandomNumberSupplier._I().nextInt(constraints1.size());
+		} else {
+			throw new CrossoverException("Crossover produced no children: parent1 has no constraints");
 		}
-		if(constraints2.size() > 1) {
-			cp2 = RandomSingleton.getInstance().nextInt(constraints2.size() - 1) + 1;
-		}else {
-			cp2 = 0;
+		
+		if (constraints2.size() > 0) {
+			cp2 = RandomNumberSupplier._I().nextInt(constraints2.size());
+		} else {
+			throw new CrossoverException("Crossover produced no children: parent2 has no constraints");
 		}
 				
         List<Constraint> childConstraints1 = combine(constraints1.subList(0, cp1), constraints2.subList(cp2, constraints2.size()));
         List<Constraint> childConstraints2 = combine(constraints2.subList(0, cp2), constraints1.subList(cp1, constraints1.size()));
         
-        MutationFunction.mutationBis(childConstraints1);
-        MutationFunction.mutationBis(childConstraints2);
-
-        Individual child1 = FitnessFunction.evaluate(childConstraints1);
-        Individual child2 = FitnessFunction.evaluate(childConstraints2);
-        
         ArrayList<Individual> children = new ArrayList<>();
-        children.add(child1);
-        children.add(child2);
-        
-        return children;
+
+        Exception e1 = null;
+        try {
+            Config.mutationFunction.applyMutationToConstraintSetPortion(childConstraints1, Config.mutationSizeRatio);
+        	Individual child1 = FitnessFunction.evaluate(childConstraints1);
+	        children.add(child1);
+		} catch (FitnessEvaluationException | MutationException e) { 
+			e1 = e;
+		}
+
+        Exception e2 = null;
+		try {
+	        Config.mutationFunction.applyMutationToConstraintSetPortion(childConstraints2, Config.mutationSizeRatio);
+			Individual child2 = FitnessFunction.evaluate(childConstraints2);
+	        children.add(child2);
+		} catch (FitnessEvaluationException | MutationException e) { 
+			e2 = e;
+		}
+
+		if (children.isEmpty()) {
+			throw new CrossoverException("Crossover produced no children: " + e1, e2);
+		}
+
+        return children.toArray(new Individual[children.size()]);
 	}
 	
 	private List<Constraint> combine(List<Constraint> constraints1, List<Constraint> constraints2){
 		List<Constraint> result = new ArrayList<>(constraints1);
-		for (Constraint c2: constraints2) {
-			List<Constraint> slice = Symex.makeEngine().formulaSlicing(result, c2);
-			if (slice.isEmpty()) {
-				result.add(c2);
-			} /*else if (!slice.get(0).equals(Constraint.TRUE) && !slice.get(0).equals(Constraint.FALSE)) {
-				if (!c2.isInconsistent(slice)) {
-					result.add(c2);                			
-				}
-			}*/
+		
+		for (Constraint c: constraints2) {
+			List<Constraint> slice = Symex.makeEngine().formulaSlicing(result, c);
+		
+			if (!Utils.isInconsistent(c, slice) && !Utils.isRedundant(c, slice)) { 
+				result.add(c);
+			}
 		}
 	
 		return result;

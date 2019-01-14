@@ -2,67 +2,58 @@ package gasp.ga.operators.mutation;
 
 import java.util.List;
 
+import gasp.ga.FitnessEvaluationException;
 import gasp.ga.FitnessFunction;
 import gasp.ga.Individual;
 import gasp.se.Constraint;
 import gasp.utils.Config;
-import gasp.utils.RandomSingleton;
-import gasp.utils.Utils;
+import gasp.utils.RandomNumberSupplier;
 
-public abstract class MutationFunction{
-
-	public static Individual deleteMutation(Individual individual, double ratio) {
-		int nTargets = (int) Math.round(ratio * individual.getConstraintSet().size());
-        List<Constraint> childConstraints = individual.getConstraintSet();
-        for(int i = 0; i < nTargets; i++) {
-            int index = RandomSingleton.getInstance().nextInt((childConstraints.size() - 1) + 1);
-            childConstraints.remove(index);
-            }
-        Individual child = FitnessFunction.evaluate(childConstraints);
-        return child;
-        }
+public abstract class MutationFunction {
 	
-	public static Individual negateMutation(Individual individual, double ratio) {
-		int nConstraints = individual.getConstraintSet().size();
-		int nTargets = (int) Math.round(ratio * nConstraints);
-		List<Constraint> childConstraints = individual.getConstraintSet();
-		for(int i = RandomSingleton.getInstance().nextInt(nConstraints); i < nTargets; i++) {
-			Utils.negate(childConstraints.get(i));
-			if(Utils.isInconsistent(childConstraints)) {
-				Utils.negate(childConstraints.get(i));
-				}
-			}
-        Individual child = FitnessFunction.evaluate(childConstraints);
-        return child;
+	protected abstract void applyMutation(List<Constraint> constraintSet) throws MutationException;
+
+	public void applySingleMutation(List<Constraint> constraintSet) throws MutationException {
+        if(RandomNumberSupplier._I().nextDouble() < Config.mutationProb) {
+        	applyMutation(constraintSet);
+        }
+	}
+
+	public void applyMutationToConstraintSetPortion(List<Constraint> constraintSet, double portion) throws MutationException {
+		if (portion <= 0d || portion >= 1d) {
+			throw new MutationException("Cannot mutate (" + portion + " * constraintSetSize) constraints");
 		}
-
-	public static void deleteMutationBis(List<Constraint> childConstraints, double ratio) {
-		int nTargets = (int) Math.round(ratio * childConstraints.size());
-        for(int i = 0; i < nTargets; i++){
-            int index = RandomSingleton.getInstance().nextInt((childConstraints.size() - 1) + 1);
-            childConstraints.remove(index);
-            if(RandomSingleton.getInstance().nextBoolean() ? true : false){
-                break;
-                }
-            }
-        }
-	
-	public static void mutationBis(List<Constraint> childConstraints) {
-		double ratio = 0.1;
-        if(RandomSingleton.getInstance().nextInt() < Config.mutationProb) {
-            deleteMutationBis(childConstraints, ratio);
+		
+		int numOfMutations = (int) Math.round(portion * constraintSet.size());
+        
+		for(int i = 0; i < numOfMutations; i++){
+			applySingleMutation(constraintSet);
         }
 	}
 	
-	public static Individual mutation(int seed, Individual individual) {
-		double ratio = 0.1;
-		if(RandomSingleton.getInstance().nextInt(seed) < Config.mutationProb) {
-            if(RandomSingleton.getInstance().nextBoolean() ? true : false){
-                return deleteMutation(individual, ratio);
-            }else {
-                return negateMutation(individual, ratio);
-                }
-            }
-        return individual;
-        }
+	public Individual mutateIndividuaByApplyingMutationToConstraintSetPortion(Individual individual, double portion) throws MutationException {
+		List<Constraint> constraintSet = individual.getConstraintSetClone();
+		
+		applyMutationToConstraintSetPortion(constraintSet, portion);
+		
+		return makeIndividual(constraintSet);
+	}
+
+	public Individual mutateIndividuaByApplyingSingleMutation(Individual individual, double portion) throws MutationException {
+		List<Constraint> constraintSet = individual.getConstraintSetClone();
+		
+		applySingleMutation(constraintSet);
+		
+		return makeIndividual(constraintSet);
+	}
+	
+	private Individual makeIndividual(List<Constraint> constraintSet) throws MutationException {
+        try {
+			Individual newIndividual = FitnessFunction.evaluate(constraintSet);
+	        return newIndividual;
+		} catch (FitnessEvaluationException e) {
+			throw new MutationException(e);
+		}
+		
+	}
 }
