@@ -1,0 +1,3 @@
+[submodule "jbse"]
+	path = jbse
+	url = https://github.com/pietrobraione/jbse.git
