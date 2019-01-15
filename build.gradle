@@ -1,7 +1,7 @@
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
-    group = 'tardis'
+    group = 'gasp'
     version = '0.1.0-SNAPSHOT'
 
     repositories {
