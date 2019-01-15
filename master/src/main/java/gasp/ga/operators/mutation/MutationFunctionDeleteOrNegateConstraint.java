@@ -2,10 +2,10 @@ package gasp.ga.operators.mutation;
 
 import java.util.List;
 
-import gasp.se.Constraint;
+import gasp.ga.Constraint;
 import gasp.utils.RandomNumberSupplier;
 
-public class DeleteOrNegateConstraintMutationFunction extends MutationFunction {
+public class MutationFunctionDeleteOrNegateConstraint extends MutationFunction {
 
 	@Override
 	protected void applyMutation(List<Constraint> constraintSet) throws MutationException {

@@ -2,8 +2,8 @@ package gasp.utils;
 
 import java.util.*;
 
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
-import gasp.se.Constraint;
 
 public abstract class Utils {
 	

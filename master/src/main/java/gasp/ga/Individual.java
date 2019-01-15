@@ -1,7 +1,6 @@
 package gasp.ga;
 import java.util.*;
 
-import gasp.se.Constraint;
 import gasp.se.Model;
 import gasp.se.Symex;
 
@@ -51,7 +50,17 @@ public class Individual implements Cloneable, Comparable<Individual> {
 	public String toString() {
 		return "Individual [fitness = " + fitness + ", constraintSet = " + constraintSet + "]";
 	}
-			
+
+        @Override
+	public Individual clone() {
+	    //TODO should be a deep copy???
+	    try {
+	        return (Individual) super.clone();
+	    } catch (CloneNotSupportedException e) {
+		throw new AssertionError("Unexpected failure of clone method.", e);
+	    }
+	}
+    
 	@Override
 	public int hashCode() {
 		final int prime = 31;

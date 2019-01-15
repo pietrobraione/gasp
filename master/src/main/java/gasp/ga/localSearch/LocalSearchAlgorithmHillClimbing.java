@@ -1,17 +1,18 @@
-package gasp.localSearch;
+package gasp.ga.localSearch;
 
 import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
 import gasp.se.*;
 import gasp.utils.*;
 
-public class LocalSearchHillClimbing extends LocalSearchAlgorithm { 
+public class LocalSearchAlgorithmHillClimbing extends LocalSearchAlgorithm { 
 	
-	private static final Logger logger = LogManager.getLogger(LocalSearchHillClimbing.class);
+	private static final Logger logger = LogManager.getLogger(LocalSearchAlgorithmHillClimbing.class);
 
 	@Override
 	public Individual doLocalSearch(Individual individual) {

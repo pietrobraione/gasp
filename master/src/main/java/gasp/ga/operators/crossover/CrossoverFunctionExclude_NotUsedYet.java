@@ -3,12 +3,12 @@ package gasp.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
-import gasp.se.Constraint;
 import gasp.utils.RandomNumberSupplier;
 import gasp.utils.Utils;
 
-public class ExcludeCrossover_NotUsedYet extends CrossoverFunction{
+public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
 
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) {

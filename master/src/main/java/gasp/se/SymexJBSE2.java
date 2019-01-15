@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import gasp.ga.Constraint;
 import gasp.utils.Config;
 
 //import com.github.javaparser.JavaParser;

@@ -7,11 +7,11 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gasp.ga.localSearch.LocalSearchAlgorithm;
 import gasp.ga.operators.crossover.CrossoverException;
 import gasp.ga.operators.crossover.CrossoverFunction;
 import gasp.ga.operators.selection.SelectionFunction;
 import gasp.ga.operators.selection.SelectionFunction.Pair;
-import gasp.localSearch.LocalSearchAlgorithm;
 import gasp.utils.Config;
 import gasp.utils.Utils;
 
@@ -19,20 +19,14 @@ public class GeneticAlgorithm {
 
 	private static final Logger logger = LogManager.getLogger(GeneticAlgorithm.class);
 
-	private List<Individual> population = new ArrayList<Individual>();
-	
-	private LocalSearchAlgorithm localSearchAlgorithm;
-	
 	private final SelectionFunction selectionFunction;
 	private final CrossoverFunction crossoverFunction;
+	private final LocalSearchAlgorithm localSearchAlgorithm;
 	
+	private List<Individual> population = new ArrayList<Individual>();
 	private int currentIteration = 0;
 
-	public void setLocalSearchAlgorithm(LocalSearchAlgorithm localSearchAlgorithm) {
-		this.localSearchAlgorithm = localSearchAlgorithm;
-	}
-
-	public GeneticAlgorithm(SelectionFunction selectionFunction, CrossoverFunction crossoverFunction) {
+	public GeneticAlgorithm(SelectionFunction selectionFunction, CrossoverFunction crossoverFunction, LocalSearchAlgorithm localSearchAlgorithm) {
 		if (selectionFunction == null) {
 			throw new IllegalArgumentException("Selection function cannot be null");
 		} else {
@@ -44,14 +38,32 @@ public class GeneticAlgorithm {
 		} else {
 			this.crossoverFunction = crossoverFunction;
 		}
+		
+		if (localSearchAlgorithm == null) {
+			throw new IllegalArgumentException("Local search algorithm cannot be null");
+		} else {
+			this.localSearchAlgorithm = localSearchAlgorithm;
+		}
+	}
+	
+	/**
+	 * Constructor to be used only for testing
+	 * 
+	 * @param population a {@link List}{@code <}{@link Individual}{@code >}. Must not be null.
+	 */
+	GeneticAlgorithm(List<Individual> population) {
+		this.selectionFunction = null;
+		this.crossoverFunction = null;
+		this.localSearchAlgorithm = null;
+		this.population.addAll(population);
 	}
 
-	public List<Individual> geBestSolutions(int n) {
+	public List<Individual> getBestSolutions(int n) {
 		if (population == null || n > population.size()) throw new IllegalArgumentException();
 		
 		Collections.sort(population);
 
-        return new ArrayList<>(population.subList(0, Config.eliteSize));        
+        return new ArrayList<>(population.subList(0, n));        
 	}
 	
 	protected void generateInitialPopulation() {
@@ -128,7 +140,7 @@ public class GeneticAlgorithm {
 		
 	}
 
-	protected ArrayList<Individual> elitism() {
+	protected List<Individual> elitism() {
         Collections.sort(population);
 
         ArrayList<Individual> elite = new ArrayList<>(population.subList(0, Config.eliteSize));

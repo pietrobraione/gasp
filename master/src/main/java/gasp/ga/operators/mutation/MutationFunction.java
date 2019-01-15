@@ -2,10 +2,9 @@ package gasp.ga.operators.mutation;
 
 import java.util.List;
 
-import gasp.ga.FitnessEvaluationException;
-import gasp.ga.FitnessFunction;
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
-import gasp.se.Constraint;
+import gasp.ga.fitness.FitnessEvaluationException;
 import gasp.utils.Config;
 import gasp.utils.RandomNumberSupplier;
 
@@ -31,7 +30,7 @@ public abstract class MutationFunction {
         }
 	}
 	
-	public Individual mutateIndividuaByApplyingMutationToConstraintSetPortion(Individual individual, double portion) throws MutationException {
+	public Individual mutateIndividualByApplyingMutationToConstraintSetPortion(Individual individual, double portion) throws MutationException {
 		List<Constraint> constraintSet = individual.getConstraintSetClone();
 		
 		applyMutationToConstraintSetPortion(constraintSet, portion);
@@ -39,7 +38,7 @@ public abstract class MutationFunction {
 		return makeIndividual(constraintSet);
 	}
 
-	public Individual mutateIndividuaByApplyingSingleMutation(Individual individual, double portion) throws MutationException {
+	public Individual mutateIndividualByApplyingSingleMutation(Individual individual, double portion) throws MutationException {
 		List<Constraint> constraintSet = individual.getConstraintSetClone();
 		
 		applySingleMutation(constraintSet);
@@ -49,11 +48,10 @@ public abstract class MutationFunction {
 	
 	private Individual makeIndividual(List<Constraint> constraintSet) throws MutationException {
         try {
-			Individual newIndividual = FitnessFunction.evaluate(constraintSet);
+			Individual newIndividual = Config.fitnessFunction.evaluate(constraintSet);
 	        return newIndividual;
 		} catch (FitnessEvaluationException e) {
 			throw new MutationException(e);
 		}
-		
 	}
 }

@@ -46,6 +46,4 @@ public abstract class SelectionFunction {
 		public Individual ind1;
 		public Individual ind2;
 	}
-	
-
 }

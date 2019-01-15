@@ -2,6 +2,11 @@ package gasp.ga.operators.crossover;
 
 public class CrossoverException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5668800634733442518L;
+
 	public CrossoverException() {
 	}
 

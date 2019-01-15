@@ -3,13 +3,12 @@ package gasp.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
-import gasp.ga.FitnessEvaluationException;
-import gasp.ga.FitnessFunction;
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
-import gasp.se.Constraint;
-import gasp.utils.Utils;
+import gasp.ga.fitness.FitnessEvaluationException;
+import gasp.utils.Config;
 
-public class UnionCrossover_NotUsedYet extends CrossoverFunction{
+public class CrossoverFunctionUnion_NotUsedYet extends CrossoverFunction {
 
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
@@ -41,12 +40,12 @@ public class UnionCrossover_NotUsedYet extends CrossoverFunction{
         ArrayList<Individual> children = new ArrayList<>();
 
         try {
-        	Individual child1 = FitnessFunction.evaluate(childConstraints1);
+        	Individual child1 = Config.fitnessFunction.evaluate(childConstraints1);
 	        children.add(child1);
 		} catch (FitnessEvaluationException e) { }
 
 		try {
-			Individual child2 = FitnessFunction.evaluate(childConstraints2);
+			Individual child2 = Config.fitnessFunction.evaluate(childConstraints2);
 	        children.add(child2);
 		} catch (FitnessEvaluationException e) { }
     

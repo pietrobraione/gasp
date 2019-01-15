@@ -1,5 +1,6 @@
 package gasp.se;
 
+import gasp.ga.Constraint;
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.val.exc.InvalidTypeException;
@@ -34,5 +35,6 @@ public class ConstraintJBSE extends Constraint {
 		} 
 	}
 
+	//TODO equals, hashCode
 
 }

@@ -2,6 +2,8 @@ package gasp.se;
 
 import java.util.List;
 
+import gasp.ga.Constraint;
+
 public class Model {
 	
 	private List<Constraint> constraints;

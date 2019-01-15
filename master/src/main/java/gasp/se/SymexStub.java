@@ -3,6 +3,9 @@ package gasp.se;
 import java.util.ArrayList;
 import java.util.List;
 
+import gasp.ga.Constraint;
+import gasp.ga.ConstraintStub;
+
 public class SymexStub implements Symex {
 	
 	private int instructionCount = 0;

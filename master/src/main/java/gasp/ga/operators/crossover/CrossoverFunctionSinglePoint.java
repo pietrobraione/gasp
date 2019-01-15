@@ -3,18 +3,16 @@ package gasp.ga.operators.crossover;
 import java.util.ArrayList;
 import java.util.List;
 
-import gasp.ga.FitnessEvaluationException;
-import gasp.ga.FitnessFunction;
+import gasp.ga.Constraint;
 import gasp.ga.Individual;
+import gasp.ga.fitness.FitnessEvaluationException;
 import gasp.ga.operators.mutation.MutationException;
-import gasp.ga.operators.mutation.MutationFunction;
-import gasp.se.Constraint;
 import gasp.se.Symex;
 import gasp.utils.Config;
 import gasp.utils.RandomNumberSupplier;
 import gasp.utils.Utils;
 
-public class SinglePointCrossover extends CrossoverFunction {
+public class CrossoverFunctionSinglePoint extends CrossoverFunction {
 
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
@@ -43,7 +41,7 @@ public class SinglePointCrossover extends CrossoverFunction {
         Exception e1 = null;
         try {
             Config.mutationFunction.applyMutationToConstraintSetPortion(childConstraints1, Config.mutationSizeRatio);
-        	Individual child1 = FitnessFunction.evaluate(childConstraints1);
+        	Individual child1 = Config.fitnessFunction.evaluate(childConstraints1);
 	        children.add(child1);
 		} catch (FitnessEvaluationException | MutationException e) { 
 			e1 = e;
@@ -52,7 +50,7 @@ public class SinglePointCrossover extends CrossoverFunction {
         Exception e2 = null;
 		try {
 	        Config.mutationFunction.applyMutationToConstraintSetPortion(childConstraints2, Config.mutationSizeRatio);
-			Individual child2 = FitnessFunction.evaluate(childConstraints2);
+			Individual child2 = Config.fitnessFunction.evaluate(childConstraints2);
 	        children.add(child2);
 		} catch (FitnessEvaluationException | MutationException e) { 
 			e2 = e;

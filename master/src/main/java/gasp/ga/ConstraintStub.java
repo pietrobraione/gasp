@@ -1,4 +1,4 @@
-package gasp.se;
+package gasp.ga;
 
 public class ConstraintStub extends Constraint {
 	
@@ -26,4 +26,6 @@ public class ConstraintStub extends Constraint {
 		return new ConstraintStub("not (" + this.theConstraint + ")");
 	}
 
+
+	//TODO equals, hashCode
 }

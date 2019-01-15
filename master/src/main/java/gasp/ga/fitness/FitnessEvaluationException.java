@@ -1,6 +1,11 @@
-package gasp.ga;
+package gasp.ga.fitness;
 
 public class FitnessEvaluationException extends Exception {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1984646626257298286L;
 
 	public FitnessEvaluationException() {
 	}

@@ -1,4 +1,4 @@
-package gasp.localSearch;
+package gasp.ga.localSearch;
 
 import gasp.ga.Individual;
 

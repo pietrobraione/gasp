@@ -6,7 +6,7 @@ import java.util.List;
 import gasp.ga.Individual;
 import gasp.utils.RandomNumberSupplier;
 
-public class RankSelection extends SelectionFunction {
+public class RankSelectionFunction extends SelectionFunction {
 
 	@Override
 	protected int selectIndividual(List<Individual> individuals, boolean populationIsSorted) {
