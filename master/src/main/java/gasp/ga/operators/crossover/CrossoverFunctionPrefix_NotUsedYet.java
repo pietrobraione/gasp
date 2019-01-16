@@ -2,15 +2,29 @@ package gasp.ga.operators.crossover;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import gasp.ga.Constraint;
 import gasp.ga.Individual;
 import gasp.ga.fitness.FitnessEvaluationException;
-import gasp.utils.Config;
-import gasp.utils.RandomNumberSupplier;
+import gasp.ga.fitness.FitnessFunction;
 import gasp.utils.Utils;
 
-public class CrossoverFunctionPrefix_NotUsedYet extends CrossoverFunction {
+public class CrossoverFunctionPrefix_NotUsedYet implements CrossoverFunction {
+	private final FitnessFunction fitnessFunction;
+	private final Random random;
+	
+	public CrossoverFunctionPrefix_NotUsedYet(FitnessFunction fitnessFunction, Random random) {		
+		if (fitnessFunction == null) {
+			throw new IllegalArgumentException("Fitness function cannot be null.");
+		}
+		if (random == null) {
+			throw new IllegalArgumentException("The random generator cannot be null.");
+		}
+		
+		this.fitnessFunction = fitnessFunction;
+		this.random = random;
+	}
     
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
@@ -24,18 +38,18 @@ public class CrossoverFunctionPrefix_NotUsedYet extends CrossoverFunction {
         List<Constraint> parent2Split1 = splitConstraints(Constraints2).get(1);
         List<Constraint> parent2Split2 = splitConstraints(Constraints2).get(2);
         
-        List<Constraint> child1Constraints = combine(parent1Prefix, (RandomNumberSupplier._I().nextBoolean() ? parent2Split1 : parent2Split2));
-        List<Constraint> child2Constraints = combine(parent2Prefix, (RandomNumberSupplier._I().nextBoolean() ? parent1Split1 : parent1Split2));
+        List<Constraint> child1Constraints = combine(parent1Prefix, (this.random.nextBoolean() ? parent2Split1 : parent2Split2));
+        List<Constraint> child2Constraints = combine(parent2Prefix, (this.random.nextBoolean() ? parent1Split1 : parent1Split2));
   
         ArrayList<Individual> children = new ArrayList<>();
 
         try {
-        	Individual child1 = Config.fitnessFunction.evaluate(child1Constraints);
+        	Individual child1 = this.fitnessFunction.evaluate(child1Constraints);
 	        children.add(child1);
 		} catch (FitnessEvaluationException e) { }
 
 		try {
-			Individual child2 = Config.fitnessFunction.evaluate(child2Constraints);
+			Individual child2 = this.fitnessFunction.evaluate(child2Constraints);
 	        children.add(child2);
 		} catch (FitnessEvaluationException e) { }
     
@@ -70,8 +84,8 @@ public class CrossoverFunctionPrefix_NotUsedYet extends CrossoverFunction {
             splitset.add(get2);
             return splitset;
         }else if(constraints.size() > 2){
-        	int point1 = RandomNumberSupplier._I().nextInt(constraints.size() - 2) + 1;
-        	int point2 = RandomNumberSupplier._I().nextInt((constraints.size() + point1) + 1) + point1 + 1;
+        	int point1 = this.random.nextInt(constraints.size() - 2) + 1;
+        	int point2 = this.random.nextInt((constraints.size() + point1) + 1) + point1 + 1;
         	List<Constraint> set1 = new ArrayList<>();
         	List<Constraint> set12 = new ArrayList<>();
         	List<Constraint> set2 = new ArrayList<>();

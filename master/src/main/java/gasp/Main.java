@@ -14,23 +14,47 @@ import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 
 import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
-import gasp.utils.Config;
+import picocli.CommandLine;
 
 import java.io.IOException;
 
 public class Main {
+	private final Options o;
+	
 	public static void main(String[] args) throws IOException {
-		final Main m = new Main();
+		final Options o = CommandLine.populateCommand(new Options(), args);
+		if (o.getHelp()) {
+			CommandLine.usage(o, System.out);
+			System.exit(0);
+		}
+		final Main m = new Main(o);
 		m.run();
+	}
+	
+	public Main(Options o) {
+		this.o = o;
 	}
 	
 	public void run() {
 		configureLogger();
 		final Logger logger = LogManager.getLogger(Main.class);
-		logger.info("GASP started, going to evolve " + Config.generations  + " generations");
-		logger.info("Estimated fitness evaluation: " + Config.estimateFitnessEvaluations());
+		
+		logger.info("GASP started, going to evolve " + o.getGenerations()  + " generations");
+		logger.info("Estimated fitness evaluation: " + o.estimateFitnessEvaluations());
 
-		final GeneticAlgorithm ga = new GeneticAlgorithm(Config.selectionFunction, Config.crossoverFunction, Config.localSearchAlgorithm);	
+		final GeneticAlgorithm ga = new GeneticAlgorithm(o.getGenerations(),
+				                                         o.getLocalSearchRate(),
+				                                         o.getPopulationSize(),
+				                                         o.getEliteSize(),
+				                                         o.getCrossoverFunction(), 
+				                                         o.getSelectionFunction(),
+				                                         o.getLocalSearchAlgorithm(),
+				                                         o.getClasspath(),
+				                                         o.getJBSEPath(),
+				                                         o.getZ3Path(),
+				                                         o.getMethodClassName(),
+				                                         o.getMethodDescriptor(),
+				                                         o.getMethodName());	
 		ga.generateSolution();
 		final Individual solution = ga.getBestSolutions(1).get(0);
 		

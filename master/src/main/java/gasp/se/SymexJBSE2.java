@@ -1,15 +1,11 @@
 package gasp.se;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import gasp.ga.Constraint;
-import gasp.utils.Config;
-
-//import com.github.javaparser.JavaParser;
-//import com.github.javaparser.ast.expr.MethodCallExpr;
-//import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
@@ -49,33 +45,36 @@ public class SymexJBSE2 implements Symex {
 	//private final TestCase testCase;
 	private final RunnerParameters commonParamsGuided;
 		
-	public SymexJBSE2(/*Options o, EvosuiteResult item*/) {
-		this.classpath = new String[3];
-		this.classpath[1] = Config.programPath;
-		this.classpath[2] = Config.classTarget;
-		this.z3Path = Config.z3Path; 
+	public SymexJBSE2(List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
+		if (classpath == null) {
+			throw new IllegalArgumentException("Classpath cannot be null");
+		}
+		if (jbsePath == null) {
+			throw new IllegalArgumentException("JBSE path cannot be null");
+		}
+		if (z3Path == null) {
+			throw new IllegalArgumentException("Z3 path cannot be null");
+		}
+		if (methodClassName == null) {
+			throw new IllegalArgumentException("Method class name cannot be null");
+		}
+		if (methodDescriptor == null) {
+			throw new IllegalArgumentException("Method descriptor cannot be null");
+		}
+		if (methodName == null) {
+			throw new IllegalArgumentException("Method name cannot be null");
+		}
+		
+		this.classpath = new String[classpath.size() + 1];
+		for (int i = 0; i < classpath.size(); ++i) {
+			this.classpath[i] = classpath.get(i).toString();
+		}
+		this.classpath[classpath.size()] = jbsePath.toString();
+		this.z3Path = z3Path.toString(); 
 		this.commonParamsGuided = new RunnerParameters();
-		this.commonParamsGuided.setMethodSignature(Config.className, Config.descriptor, Config.methodName/*"example/IfExample", "(I)V", "m"*/);
+		this.commonParamsGuided.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParamsGuided.addUserClasspath(this.classpath);
 		this.commonParamsGuided.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
-/*this.outPath = o.getOutDirectory().toString();
-		//this.testCase = item.getTestCase();
-		//builds the template parameters object for the guided (symbolic) execution
-		if (o.getHeapScope() != null) {
-			for (Map.Entry<String, Integer> e : o.getHeapScope().entrySet()) {
-				this.commonParamsGuided.setHeapScope(e.getKey(), e.getValue());
-			}
-		}*/
-		/*if (o.getCountScope() > 0) {
-			this.commonParamsGuided.setCountScope(o.getCountScope());
-		}*/
-		
-		//builds the template parameters object for the guiding (concrete) execution
-		/*this.commonParamsGuiding = new RunnerParameters();
-		this.commonParamsGuiding.addClasspath(this.classpath);
-		this.commonParamsGuiding.setStateIdentificationMode(StateIdentificationMode.COMPACT);
-		this.commonParamsGuiding.setBreadthMode(BreadthMode.ALL_DECISIONS);
-*/
 	}
 
 	private static class ActionsRunner extends Actions {
@@ -240,17 +239,6 @@ public class SymexJBSE2 implements Symex {
 		return this.initialState;
 	}
 	
-	public static void main(String[] args) {
-		SymexJBSE2 runner = new SymexJBSE2();
-		try {
-			runner.runProgram();
-		} catch (DecisionException | CannotBuildEngineException | InitializationException
-				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
-				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException e) {
-			e.printStackTrace();
-		}
-	}
 	int instructionCount=0;
 	@Override
 	public List<Constraint> randomWalkSymbolicExecution(List<Constraint> precondition) {
@@ -302,12 +290,6 @@ public class SymexJBSE2 implements Symex {
 	@Override
 	public int getInstructionCount() {
 		return instructionCount;
-	}
-
-	@Override
-	public Constraint mkAnd(List<Constraint> refs) {
-		refs.get(0);
-		return null;
 	}
 
 	@Override

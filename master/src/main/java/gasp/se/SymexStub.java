@@ -47,11 +47,6 @@ public class SymexStub implements Symex {
 	}
 
 	@Override
-	public Constraint mkAnd(List<Constraint> refs) {
-		return refs.get(0);
-	}
-
-	@Override
 	public boolean quickCheck(Constraint c) {
 		return true;
 	}

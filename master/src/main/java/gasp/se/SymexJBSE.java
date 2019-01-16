@@ -1,12 +1,12 @@
 package gasp.se;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import gasp.ga.Constraint;
-import gasp.utils.Config;
 import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
@@ -44,18 +44,39 @@ import jbse.val.Primitive;
 public class SymexJBSE implements Symex {
 	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
-	private String[] classpath;
-	private String z3Path;
+	private final String[] classpath;
+	private final String z3Path;
 	private final RunnerParameters commonParams;
 	private static int target;
 		
-	public SymexJBSE() {
-		this.classpath = new String[2];
-		this.classpath[0] = Config.programPath;
-		this.classpath[1] = Config.classTarget;
-		this.z3Path = Config.z3Path; 
+	public SymexJBSE(List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
+		if (classpath == null) {
+			throw new IllegalArgumentException("Classpath cannot be null");
+		}
+		if (jbsePath == null) {
+			throw new IllegalArgumentException("JBSE path cannot be null");
+		}
+		if (z3Path == null) {
+			throw new IllegalArgumentException("Z3 path cannot be null");
+		}
+		if (methodClassName == null) {
+			throw new IllegalArgumentException("Method class name cannot be null");
+		}
+		if (methodDescriptor == null) {
+			throw new IllegalArgumentException("Method descriptor cannot be null");
+		}
+		if (methodName == null) {
+			throw new IllegalArgumentException("Method name cannot be null");
+		}
+		
+		this.classpath = new String[classpath.size() + 1];
+		for (int i = 0; i < classpath.size(); ++i) {
+			this.classpath[i] = classpath.get(i).toString();
+		}
+		this.classpath[classpath.size()] = jbsePath.toString();
+		this.z3Path = z3Path.toString(); 
 		this.commonParams = new RunnerParameters();
-		this.commonParams.setMethodSignature(Config.className, Config.descriptor, Config.methodName);
+		this.commonParams.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParams.addUserClasspath(this.classpath);
 		this.commonParams.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
 	}
@@ -63,39 +84,26 @@ public class SymexJBSE implements Symex {
 	private static class ActionsRunner extends Actions {
 		private final ArrayList<State> stateList = new ArrayList<State>();
 		
-		public ActionsRunner() {
-		}
-		
 		public ArrayList<State> getStateList() {
 			return this.stateList;
 		}
 		
 		@Override
-		public boolean atRoot() {
-			System.out.println("atRoot");
-			return super.atRoot();
-		}
-
-		@Override
 		public boolean atTraceEnd() {
-			System.out.println("atTraceEnd");
-			stateList.add(this.getEngine().getCurrentState());
+			this.stateList.add(this.getEngine().getCurrentState());
 			return true;
 		}
 
 		@Override
 		public boolean atBranch(BranchPoint bp) {
-			System.out.println("atBranch");
-			int numOfStates = getEngine().getNumOfStatesAtBranch(bp);
-			if(numOfStates==0) {
+			final int numOfStates = getEngine().getNumOfStatesAtBranch(bp);
+			if (numOfStates == 0) {
 				return super.atBranch(bp);
 			}
-			Random r=new Random();
-			int high=numOfStates+1;
-			System.out.println("Branch = "+high);
+			final Random r = new Random();
+			final int high = numOfStates + 1;
 			target=r.nextInt(high) + 1;
 	
-			System.out.println("atBranch: randomly selected " + target);
 			while (target > 1) {
 				try {
 					target--;
@@ -112,7 +120,6 @@ public class SymexJBSE implements Symex {
 
 		@Override
 		public void atEnd() {
-			System.out.println("atEnd");
 			super.atEnd();
 		}
 	}
@@ -227,7 +234,8 @@ public class SymexJBSE implements Symex {
 		return r;
 	}
 	
-	int instructionCount=0;
+	private int instructionCount = 0;
+	
 	@Override
 	public List<Constraint> randomWalkSymbolicExecution(List<Constraint> precondition) {
 		State s = null;
@@ -245,13 +253,17 @@ public class SymexJBSE implements Symex {
 			}
 			final State sInitial = this.initialState.clone();
 			for (Constraint c : precondition) {
-				final Primitive condition = ((ClauseAssume) ((ConstraintJBSE) c).getClause()).getCondition();
-				sInitial.assume(condition);
+				final ConstraintJBSE cJBSE = (ConstraintJBSE) c;
+				final Clause clause = cJBSE.getClause();
+				if (clause instanceof ClauseAssume) {
+					final Primitive condition = ((ClauseAssume) clause).getCondition();
+					sInitial.assume(condition);
+				} //TODO else???
 			}
 			final ActionsRunner actions = new ActionsRunner();
 			final Runner r = newRunner(actions, sInitial);
 			r.run();
-			List<State> states = actions.getStateList();
+			final List<State> states = actions.getStateList();
 			if (states.size() != 1) {
 				throw new RuntimeException();
 			}
@@ -264,21 +276,9 @@ public class SymexJBSE implements Symex {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
-		List<Constraint> ret = new ArrayList<>();
-		Collection<Clause> pathCondition1 = s.getPathCondition();
-		Collection<Clause> pathCondition=new ArrayList<>();
-		for (Clause c : pathCondition1) {
-			if (c instanceof ClauseAssume) {
-				pathCondition.add(c);
-			}
-		}
-		System.out.println("Computed the path condition: " + pathCondition);
-		for (Clause c : pathCondition) {
-			ret.add(new ConstraintJBSE(c));
-		}
-		
 		this.instructionCount = s.getDepth() + 1;
-		return ret;
+		final List<Constraint> retVal = s.getPathCondition().stream().map(clause -> new ConstraintJBSE(clause)).collect(Collectors.toList());		
+		return retVal;
 	}
 
 	@Override
@@ -293,13 +293,7 @@ public class SymexJBSE implements Symex {
 
 	@Override
 	public int getInstructionCount() {
-		return instructionCount;
-	}
-
-	@Override
-	public Constraint mkAnd(List<Constraint> refs) {
-		refs.get(0);
-		return null;
+		return this.instructionCount;
 	}
 
 	@Override

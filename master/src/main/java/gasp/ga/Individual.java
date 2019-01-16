@@ -1,14 +1,9 @@
 package gasp.ga;
 import java.util.*;
 
-import gasp.se.Model;
-import gasp.se.Symex;
-
 /* Individuals are immutable */
 
 public class Individual implements Cloneable, Comparable<Individual> {
-	
-	
 	private final List<Constraint> constraintSet;
 	private int fitness;
 	
@@ -18,15 +13,6 @@ public class Individual implements Cloneable, Comparable<Individual> {
 		}
 		this.constraintSet = new ArrayList<>(constraintSet);
 		this.fitness = fitness;
-	}
-
-	public static Individual makeRandomIndividual() {
-		Symex se = Symex.makeEngine();
-		
-		List<Constraint> constraintSet = se.randomWalkSymbolicExecution();
-		int fitness = se.getInstructionCount();
-
-		return new Individual(constraintSet, fitness);
 	}
 
 	public List<Constraint> getConstraintSetClone() {

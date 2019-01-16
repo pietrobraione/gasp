@@ -5,26 +5,11 @@ import java.util.List;
 import gasp.ga.Constraint;
 
 public interface Symex {
-	
-	//public RandomWalkSymbolicExecutor rngWalkSymbolExe;
-	//public SymbolicExecutor symbolicExe;
-	//public PcClause pcClause;
-	
 	public List<Constraint> randomWalkSymbolicExecution(List<Constraint> precondition);
 	public List<Constraint> randomWalkSymbolicExecution();
-
-	public List<Constraint> formulaSlicing(List<Constraint> formula, Constraint target);	
-	
-	public static Symex makeEngine() {
-		//return new SymexStub();
-		return new SymexJBSE();
-	}
+	public List<Constraint> formulaSlicing(List<Constraint> formula, Constraint target);		
 	public int getInstructionCount();
-	
-	public Constraint mkAnd(List<Constraint> refs);
-	
 	public boolean quickCheck(Constraint c);
-	
 	public Constraint boolRef(Constraint c1, Constraint c2);
 	
 }

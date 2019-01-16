@@ -2,14 +2,23 @@ package gasp.ga.operators.selection;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import gasp.ga.Individual;
-import gasp.utils.RandomNumberSupplier;
 
-public class RankSelectionFunction extends SelectionFunction {
+public class SelectionFunctionRank implements SelectionFunction {
+	private final Random random;
+	
+	public SelectionFunctionRank(Random random) {
+		if (random == null) {
+			throw new IllegalArgumentException("The random generator cannot be null.");
+		}
+		
+		this.random = random;
+	}
 
 	@Override
-	protected int selectIndividual(List<Individual> individuals, boolean populationIsSorted) {
+	public int selectIndividual(List<Individual> individuals, boolean populationIsSorted) {
 		if (!populationIsSorted) {
 			Collections.sort(individuals);
 		}
@@ -19,15 +28,15 @@ public class RankSelectionFunction extends SelectionFunction {
         int[] ranking = getRanks(individuals);
 
         int rankSum = 0;
-        for(int i = 0; i < ranking.length; i++){
+        for (int i = 0; i < ranking.length; ++i){
         	rankSum += ranking[i];
         }
         
-        int pick = RandomNumberSupplier._I().nextInt(rankSum);
+        final int pick = this.random.nextInt(rankSum);
         int current = 0;
-        for(int i = 0; i < ranking.length; i++){
+        for (int i = 0; i < ranking.length; ++i){
             current += ranking[i];
-            if(current > pick) {
+            if (current > pick) {
                 return i;
             }	
         }

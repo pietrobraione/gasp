@@ -6,9 +6,18 @@ import java.util.List;
 import gasp.ga.Constraint;
 import gasp.ga.Individual;
 import gasp.ga.fitness.FitnessEvaluationException;
-import gasp.utils.Config;
+import gasp.ga.fitness.FitnessFunction;
 
-public class CrossoverFunctionUnion_NotUsedYet extends CrossoverFunction {
+public class CrossoverFunctionUnion_NotUsedYet implements CrossoverFunction {
+	private final FitnessFunction fitnessFunction;
+	
+	public CrossoverFunctionUnion_NotUsedYet(FitnessFunction fitnessFunction) {		
+		if (fitnessFunction == null) {
+			throw new IllegalArgumentException("Fitness function cannot be null.");
+		}
+		
+		this.fitnessFunction = fitnessFunction;
+	}
 
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) throws CrossoverException {
@@ -40,12 +49,12 @@ public class CrossoverFunctionUnion_NotUsedYet extends CrossoverFunction {
         ArrayList<Individual> children = new ArrayList<>();
 
         try {
-        	Individual child1 = Config.fitnessFunction.evaluate(childConstraints1);
+        	Individual child1 = this.fitnessFunction.evaluate(childConstraints1);
 	        children.add(child1);
 		} catch (FitnessEvaluationException e) { }
 
 		try {
-			Individual child2 = Config.fitnessFunction.evaluate(childConstraints2);
+			Individual child2 = this.fitnessFunction.evaluate(childConstraints2);
 	        children.add(child2);
 		} catch (FitnessEvaluationException e) { }
     

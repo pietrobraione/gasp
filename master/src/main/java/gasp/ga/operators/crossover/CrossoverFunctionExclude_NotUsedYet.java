@@ -2,12 +2,21 @@ package gasp.ga.operators.crossover;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import gasp.ga.Constraint;
 import gasp.ga.Individual;
-import gasp.utils.RandomNumberSupplier;
 
-public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
+public class CrossoverFunctionExclude_NotUsedYet implements CrossoverFunction {
+	private final Random random;
+
+	public CrossoverFunctionExclude_NotUsedYet(Random random) {
+		if (random == null) {
+			throw new IllegalArgumentException("The random generator cannot be null.");
+		}
+		
+		this.random = random;
+	}
 
 	@Override
 	public Individual[] crossover(Individual parent1, Individual parent2) {
@@ -68,8 +77,8 @@ public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
             splitset.add(get2);
             return splitset;
         }else if(constraints.size() > 2){
-        	int point1 = RandomNumberSupplier._I().nextInt(constraints.size() - 2) + 1;
-        	int point2 = RandomNumberSupplier._I().nextInt((constraints.size() - point1) + 1) + point1 + 1;
+        	int point1 = this.random.nextInt(constraints.size() - 2) + 1;
+        	int point2 = this.random.nextInt((constraints.size() - point1) + 1) + point1 + 1;
         	List<Constraint> set1 = new ArrayList<>();
         	List<Constraint> set12 = new ArrayList<>();
         	List<Constraint> set2 = new ArrayList<>();

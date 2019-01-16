@@ -1,8 +1,6 @@
-package gasp.se;
+package gasp.ga;
 
 import java.util.List;
-
-import gasp.ga.Constraint;
 
 public class Model {
 	

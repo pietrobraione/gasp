@@ -2,8 +2,7 @@ package gasp.ga.localSearch;
 
 import gasp.ga.Individual;
 
-public abstract class LocalSearchAlgorithm {
-	
-	public abstract Individual doLocalSearch(Individual individual);
-	
+@FunctionalInterface
+public interface LocalSearchAlgorithm {
+	Individual doLocalSearch(Individual individual);
 }

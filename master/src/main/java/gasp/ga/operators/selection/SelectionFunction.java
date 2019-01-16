@@ -6,11 +6,16 @@ import java.util.List;
 
 import gasp.ga.Individual;
 
-public abstract class SelectionFunction {
+@FunctionalInterface
+public interface SelectionFunction {
+	int selectIndividual(List<Individual> population, boolean populationIsSorted);
 	
-	protected abstract int selectIndividual(List<Individual> population, boolean populationIsSorted);
+	public static class Pair {
+		public Individual ind1;
+		public Individual ind2;
+	}
 	
-	public Pair selectPairDistinct(List<Individual> population, boolean populationIsSorted) {
+	default Pair selectPairDistinct(List<Individual> population, boolean populationIsSorted) {
 		final List<Individual> populationCopy = new ArrayList<>(population);
 		
 		final Pair retValue = new Pair();
@@ -26,7 +31,7 @@ public abstract class SelectionFunction {
 		return retValue;
 	}
 
-	public List<Individual> survivalSelection(List<Individual> population, int n) {
+	default List<Individual> survivalSelection(List<Individual> population, int n) {
 		final List<Individual> populationCopy = new ArrayList<>(population);
 		Collections.sort(populationCopy);
 
@@ -40,10 +45,5 @@ public abstract class SelectionFunction {
         }
         
         return retValue;
-	}
-	
-	public static class Pair {
-		public Individual ind1;
-		public Individual ind2;
 	}
 }
