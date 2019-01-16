@@ -24,7 +24,7 @@ public class CrossoverFunctionUnion_NotUsedYet extends CrossoverFunction {
         List<Constraint> childConstraints2 = new ArrayList<>();
         while(!allConstraints.isEmpty()) {
             Constraint c = allConstraints.remove(allConstraints.size() - 1);
-            Constraint notC = c.mkNot();
+            Constraint notC = c.not();
             if(allConstraints.contains(notC)){
                 allConstraints.remove(notC);
                 //TODO genes = [c, not_c];

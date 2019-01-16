@@ -25,7 +25,7 @@ public class LocalSearchAlgorithmHillClimbing extends LocalSearchAlgorithm {
 		for (int remainingAttempts = Config.populationSize / 2; remainingAttempts > 0; remainingAttempts--) {			
 			List<Constraint> currentConstraints = individual.getConstraintSetClone();
 
-			Constraint mutatedConstraint = currentConstraints.get(index).mkNot();
+			Constraint mutatedConstraint = currentConstraints.get(index).not();
 			
 			currentConstraints.remove(index);
 			currentConstraints.add(index, mutatedConstraint);

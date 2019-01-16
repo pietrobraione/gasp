@@ -10,6 +10,7 @@ import gasp.utils.Config;
 import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
+import jbse.common.exc.InvalidInputException;
 import jbse.dec.DecisionProcedureAlgorithms;
 import jbse.dec.DecisionProcedureAlwSat;
 import jbse.dec.DecisionProcedureClassInit;
@@ -32,7 +33,6 @@ import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
 import jbse.mem.State;
 import jbse.mem.exc.ContradictionException;
-import jbse.mem.exc.FrozenStateException;
 import jbse.mem.exc.ThreadStackEmptyException;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.RewriterOperationOnSimplex;
@@ -259,7 +259,8 @@ public class SymexJBSE implements Symex {
 		} catch (DecisionException | CannotBuildEngineException | InitializationException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException | FrozenStateException e) {
+				| ContradictionException | EngineStuckException | FailureException | InvalidInputException e) {
+			//TODO improve!
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}

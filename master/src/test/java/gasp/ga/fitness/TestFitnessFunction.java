@@ -10,8 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.jupiter.api.Disabled;
-
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @DisplayName("FitnessFunction test suite")

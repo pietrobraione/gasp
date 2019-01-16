@@ -22,7 +22,7 @@ public class ConstraintStub extends Constraint {
 	}
 
 	@Override
-	public Constraint mkNot() {
+	public Constraint not() {
 		return new ConstraintStub("not (" + this.theConstraint + ")");
 	}
 

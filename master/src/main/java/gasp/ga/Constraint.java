@@ -4,6 +4,6 @@ public abstract class Constraint {
 	@Override
 	public abstract String toString(); 
 	
-	public abstract Constraint mkNot();
+	public abstract Constraint not();
 
 }

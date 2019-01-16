@@ -19,7 +19,7 @@ public class MutationFunctionDeleteOrNegateConstraint extends MutationFunction {
 	private void applyNegateMutation(List<Constraint> constraintSet) throws MutationException {
         int index = RandomNumberSupplier._I().nextInt(constraintSet.size());
 
-        Constraint neg = constraintSet.get(index).mkNot();
+        Constraint neg = constraintSet.get(index).not();
 
         constraintSet.remove(index);
         constraintSet.add(index, neg);

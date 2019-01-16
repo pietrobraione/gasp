@@ -6,7 +6,6 @@ import java.util.List;
 import gasp.ga.Constraint;
 import gasp.ga.Individual;
 import gasp.utils.RandomNumberSupplier;
-import gasp.utils.Utils;
 
 public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
 
@@ -31,7 +30,8 @@ public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
 		options.add(parent1Split3);
 		options.add(parent2Split3);
 
-        List<List<Constraint>> choices = new ArrayList<>();
+        //List<List<Constraint>> choices = new ArrayList<>();
+		
         //TODO choices = rng.sample(options, k=2); //usare (rng.nextBoolean() ? parent2Split1 : parent2Split2)
         //List<Constraint> child1Contraints = combine(choices[0][0], choices[1][1]);
         //List<Constraint> child2Contraints = combine(choices[1][0], choices[0][1]);
@@ -89,6 +89,7 @@ public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
 		return splitset;
 	}
 	
+	/*
 	private List<Constraint> combine(List<Constraint> constraints1, List<Constraint> constraints2) {
 		List<Constraint> result = constraints1;
         for(int i = 0; i < constraints2.size(); i++){
@@ -98,7 +99,7 @@ public class CrossoverFunctionExclude_NotUsedYet extends CrossoverFunction {
         		}
         	}
         return result;
-	}
+	}*/
 	
 	
 }
