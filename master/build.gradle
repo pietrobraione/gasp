@@ -17,7 +17,8 @@ shadowJar {
     exclude 'tools.jar'
     relocate 'javassist', 'gasp.javassist'
     relocate 'jbse', 'gasp.jbse'
-    relocate 'org.apache', 'gasp.org.apache'
+    relocate 'picocli', 'gasp.picocli'
+    //do not relocate log4j2, otherwise it doesn't work 
 }
 
 build.dependsOn 'shadowJar'
@@ -28,6 +29,9 @@ application {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'gasp.Main'
+        attributes 'Main-Class': 'gasp.Main',
+                   'Implementation-Title': 'GASP',
+                   'Implementation-Vendor': 'University of Milano-Bicocca',
+                   'Implementation-Version': version
     }
 }

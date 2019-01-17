@@ -25,17 +25,22 @@ import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegateConstraint;
 import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.selection.SelectionFunctionRank;
 import gasp.ga.operators.selection.SelectionFunction;
+import gasp.utils.Utils;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
+@Command(name = "gasp", versionProvider = Options.ManifestVersionProvider.class)
 public class Options {
 	@Spec
 	private CommandSpec spec;
 	
 	private boolean help = false;
+	private boolean version = false;
 	private int generations = 5;
 	private int localSearchRate = 5;
 	private int populationSize = 10;
@@ -54,18 +59,6 @@ public class Options {
 	private String methodClassName = "smalldemos/ifx/IfExample";
 	private String methodDescriptor = "(I)V";	
 	private String methodName = "m";
-
-	/*
-	//Giovanni's settings
-	public static final String z3Path = Paths.get("/Users", "denaro", "Desktop", "RTools", "Z3", "z3-4.3.2.d548c51a984e-x64-osx-10.8.5", "bin", "z3").toString();	
-	public static final String classTarget="/Users/denaro/git/gasp/jbse/build/classes/java/main";
-	public static final String programPath="/Users/denaro/git/jbse-examples/bin";
-
-	//Pietro's settings
-	public static final Path z3Path = Paths.get("/opt", "local", "bin", "z3").toString();	
-	public static final String classTarget="/Users/pietro/git/gasp/jbse/build/classes/java/main";
-	public static final String programPath="/Users/pietro/git/jbse-examples/bin";*/
-
 	
 	public enum CrossoverFunctionType { EXCLUDE, PREFIX, SINGLE_POINT, UNION } 
 	public enum MutationFunctionType { DELETE_CONSTRAINT, DELETE_OR_NEGATE_CONSTRAINT }
@@ -73,13 +66,22 @@ public class Options {
 	public enum FitnessFunctionType { SYMBOLIC_EXECUTION }
 	public enum LocalSearchAlgorithmType { HILL_CLIMBING, NONE }
 	
-	@Option(names = {"-h", "--help"}, usageHelp = true, defaultValue = "false", description = "Prints usage and exits.")
+	@Option(names = {"-h", "--help"}, usageHelp = true, description = "Show this help message and exit.")
 	public void setHelp(boolean help) {
 		this.help = help;
 	}
 	
 	public boolean getHelp() {
 		return this.help;
+	}
+	
+	@Option(names = {"-V", "--version"}, versionHelp = true, description = "Print version information and exit.")
+	public void setVersion(boolean version) {
+		this.version = version;
+	}
+	
+	public boolean getVersion() {
+		return this.version;
 	}
 	
 	@Option(names = {"-g", "--generations"}, defaultValue = "5", description = "Number of generations to be executed (default: ${DEFAULT-VALUE}).")
@@ -131,129 +133,67 @@ public class Options {
 		return this.eliteSize;
 	}
 	
-	
 	@Option(names = {"-c", "--crossover-function"}, defaultValue = "SINGLE_POINT", description = "The crossover function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-	public void setCrossoverFunction(CrossoverFunctionType type) {
+	public void setCrossoverFunctionType(CrossoverFunctionType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Crossover function is null.");
 		}
 		this.crossoverFunctionType = type;
 	}
 	
-	public CrossoverFunction getCrossoverFunction() {
-		switch (this.crossoverFunctionType) {
-		case EXCLUDE:
-			return new CrossoverFunctionExclude_NotUsedYet(this.random);
-		case PREFIX:
-			return new CrossoverFunctionPrefix_NotUsedYet(getFitnessFunction(),
-													      this.random);
-		case SINGLE_POINT:
-			return new CrossoverFunctionSinglePoint(getMutationFunction(),
-													getFitnessFunction(),
-													this.mutationSizeRatio,
-													this.random,
-													this.classpath,
-													this.jbsePath,
-													this.z3Path,
-													this.methodClassName,
-													this.methodDescriptor,
-													this.methodName);
-		case UNION:
-			return new CrossoverFunctionUnion_NotUsedYet(getFitnessFunction());
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a crossover function case was not handled.");
-		}
+	public CrossoverFunctionType getCrossoverFunctionType() {
+		return this.crossoverFunctionType;
 	}
 	
 	@Option(names = {"-m", "--mutation-function"}, defaultValue = "DELETE_CONSTRAINT", description = "The mutation function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-	public void setMutationFunction(MutationFunctionType type) {
+	public void setMutationFunctionType(MutationFunctionType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Mutation function is null.");
 		}
 		this.mutationFunctionType = type;
 	}
 	
-	public MutationFunction getMutationFunction() {
-		switch (this.mutationFunctionType) {
-		case DELETE_CONSTRAINT:
-			return new MutationFunctionDeleteConstraint(getFitnessFunction(), 
-														this.mutationProbability, 
-														this.random);
-		case DELETE_OR_NEGATE_CONSTRAINT:
-			return new MutationFunctionDeleteOrNegateConstraint(getFitnessFunction(), 
-																this.mutationProbability, 
-																this.random);
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
-		}
+	public MutationFunctionType getMutationFunctionType() {
+		return this.mutationFunctionType;
 	}
 	
 	@Option(names = {"-s", "--selection-function"}, defaultValue = "RANK", description = "The selection function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-	public void setSelectionFunction(SelectionFunctionType type) {
+	public void setSelectionFunctionType(SelectionFunctionType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Selection function is null.");
 		}
 		this.selectionFunctionType = type;
 	}
 	
-	public SelectionFunction getSelectionFunction() {
-		switch (this.selectionFunctionType) {
-		case RANK:
-			return new SelectionFunctionRank(this.random);
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a selection function case was not handled.");
-		}
+	public SelectionFunctionType getSelectionFunctionType() {
+		return this.selectionFunctionType;
 	}
 	
 	@Option(names = {"-f", "--fitness-function"}, defaultValue = "SYMBOLIC_EXECUTION", description = "The fitness function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-	public void setFitnessFunction(FitnessFunctionType type) {
+	public void setFitnessFunctionType(FitnessFunctionType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Fitness function is null.");
 		}
 		this.fitnessFunctionType = type;
 	}
 	
-	public FitnessFunction getFitnessFunction() {
-		switch (this.fitnessFunctionType) {
-		case SYMBOLIC_EXECUTION:
-			return new FitnessFunctionSymbolicExecution(this.classpath, 
-                                                        this.jbsePath, 
-                                                        this.z3Path, 
-                                                        this.methodClassName, 
-                                                        this.methodDescriptor, 
-                                                        this.methodName);
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a fitness function case was not handled.");
-		}
+	public FitnessFunctionType getFitnessFunctionType() {
+		return this.fitnessFunctionType;
 	}
 	
 	@Option(names = {"-l", "--local-search-algorithm"}, defaultValue = "HILL_CLIMBING", description = "The local search algorithm, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
-	public void setLocalSearchAlgorithm(LocalSearchAlgorithmType type) {
+	public void setLocalSearchAlgorithmType(LocalSearchAlgorithmType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Local search algorithm is null.");
 		}
 		this.localSearchAlgorithmType = type;
 	}
 	
-	public LocalSearchAlgorithm getLocalSearchAlgorithm() {
-		switch (this.localSearchAlgorithmType) {
-		case HILL_CLIMBING:
-			return new LocalSearchAlgorithmHillClimbing(this.populationSize,
-														this.random,
-														this.classpath, 
-                    									this.jbsePath, 
-                    									this.z3Path, 
-                    									this.methodClassName, 
-                    									this.methodDescriptor, 
-                    									this.methodName);
-		case NONE:
-			return null;
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a local search algorithm case was not handled.");
-		}
+	public LocalSearchAlgorithmType getLocalSearchAlgorithmType() {
+		return this.localSearchAlgorithmType;
 	}
 	
-	@Option(names = {"-mp", "--mutation-probability"}, defaultValue = "0.1", description = "Probability of applying the mutation operator (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-P", "--mutation-probability"}, defaultValue = "0.1", description = "Probability of applying the mutation operator (default: ${DEFAULT-VALUE}).")
 	public void setMutationProbability(double mutationProbability) {
 		if (mutationProbability < 0 || mutationProbability > 1) {
 			throw new ParameterException(this.spec.commandLine(), String.format("Mutation probability %f is less than zero or greater than one.", mutationProbability));
@@ -265,7 +205,7 @@ public class Options {
 		return this.mutationProbability;
 	}
 	
-	@Option(names = {"-mr", "--mutation-size-ratio"}, defaultValue = "0.1", description = "Ratio between the number of individual to which the mutation operator can be applied and the total population size (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-R", "--mutation-size-ratio"}, defaultValue = "0.1", description = "Ratio between the number of individual to which the mutation operator can be applied and the total population size (default: ${DEFAULT-VALUE}).")
 	public void setMutationSizeRatio(double mutationSizeRatio) {
 		if (mutationSizeRatio < 0 || mutationSizeRatio > 1) {
 			throw new ParameterException(this.spec.commandLine(), String.format("Mutation size ratio %f is less than zero or greater than one.", mutationSizeRatio));
@@ -277,7 +217,7 @@ public class Options {
 		return this.mutationSizeRatio;
 	}
 	
-	@Option(names = {"-rs", "--seed"}, description = "Seed for random number generator (by default it is picked from the current time).")
+	@Option(names = {"-S", "--seed"}, description = "Seed for random number generator (by default it is picked from the current time).")
 	public void setSeed(long seed) {
 		this.random = new Random(seed);
 	}
@@ -286,7 +226,7 @@ public class Options {
 		return this.random;
 	}
 	
-	@Option(names = {"-cp", "--classpath"}, defaultValue = ".", description = "The classpath for the target application (default: current directory).")
+	@Option(names = {"-C", "--classpath"}, defaultValue = ".", description = "The classpath for the target application (default: current directory).")
 	public void setClasspath(String classpath) {
 		if (classpath == null) {
 			throw new ParameterException(this.spec.commandLine(), "Classpath is null.");
@@ -304,7 +244,7 @@ public class Options {
 		return this.classpath;
 	}
 	
-	@Option(names = {"-j", "--jbse-path"}, defaultValue = ".", description = "The path to the JBSE classes (default: current directory).")
+	@Option(names = {"-j", "--jbse-path"}, paramLabel = "<jbsePath>", defaultValue = ".", description = "The path to the JBSE classes (default: current directory).")
 	public void setJBSEPath(String jbsePath) {
 		if (jbsePath == null) {
 			throw new ParameterException(this.spec.commandLine(), "Path to JBSE is null.");
@@ -320,7 +260,7 @@ public class Options {
 		return this.jbsePath;
 	}
 	
-	@Option(names = {"-z3", "--z3-path"}, defaultValue = ".", description = "The path to the Z3 executable (default: current directory).")
+	@Option(names = {"-Z", "--z3-path"}, defaultValue = ".", description = "The path to the Z3 executable (default: current directory).")
 	public void setZ3Path(String z3Path) {
 		if (z3Path == null) {
 			throw new ParameterException(this.spec.commandLine(), "Path to Z3 is null.");
@@ -336,7 +276,7 @@ public class Options {
 		return this.z3Path;
 	}
 	
-	@Parameters(arity = "1", description = "The signature of the method to analyze, a semicolon-separated list of: class name in internal format, descriptor, method name.")
+	@Parameters(description = "The signature of the method to analyze, a semicolon-separated list of: class name in internal format, descriptor, method name.")
 	public void setMethodSignature(String signature) {
 		if (signature == null) {
 			throw new ParameterException(this.spec.commandLine(), "The signature of the method to analyze is null.");
@@ -368,5 +308,14 @@ public class Options {
 	    int p = this.populationSize;
 	    double mp = this.mutationProbability;
 	    return (int) Math.round(p * ((mp + 1) * g + 1));
+	}
+	
+	static class ManifestVersionProvider implements IVersionProvider {
+		@Override
+		public String[] getVersion() throws Exception {
+			final String[] retVal = new String[1];
+			retVal[0] = Utils.getName() + ", version " + Utils.getVersion();
+			return retVal;
+		}
 	}
 }

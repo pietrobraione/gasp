@@ -5,7 +5,18 @@ import java.util.*;
 import gasp.ga.Constraint;
 import gasp.ga.Individual;
 
-public abstract class Utils {
+public interface Utils {
+	public static String getName() {
+		return Utils.class.getPackage().getImplementationTitle();
+	}
+	
+	public static String getVendor() {
+		return Utils.class.getPackage().getImplementationVendor();
+	}
+	
+	public static String getVersion() {
+		return Utils.class.getPackage().getImplementationVersion();
+	}
 	
 	public static Constraint mkAnd(List<Constraint> refs) {
 		return null; //TODO;
