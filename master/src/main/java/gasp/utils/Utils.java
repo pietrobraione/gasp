@@ -2,7 +2,7 @@ package gasp.utils;
 
 import java.util.*;
 
-import gasp.ga.Constraint;
+import gasp.ga.Gene;
 import gasp.ga.Individual;
 
 public interface Utils {
@@ -18,6 +18,7 @@ public interface Utils {
 		return Utils.class.getPackage().getImplementationVersion();
 	}
 	
+	/*
 	public static Constraint mkAnd(List<Constraint> refs) {
 		return null; //TODO;
 	}
@@ -52,30 +53,19 @@ public interface Utils {
 	public static boolean isRedundant(Constraint c, List<Constraint> slice) {
 		return false; //TODO
 	}
+	*/
 	
-	public static String logIndividuals(List<Individual> individuals) {
-		String retValue = "";
-		
-		int id = 1;
-		for(Individual ind: individuals) {
-			retValue += id++ + ". " + ind + "\n";
-		}
-		
-		return retValue;
-	}
-	
-	public static String logFitnessStats(List<Individual> individuals) {
-		ArrayList<Integer> fitnesses = new ArrayList<Integer>();
+	public static <T extends Gene<T>> String logFitnessStats(List<Individual<T>> individuals) {
+		final ArrayList<Integer> fitnesses = new ArrayList<Integer>();
 		int sum = 0;
-		
-		for(int i = 0; i < individuals.size(); i++){
+		for (int i = 0; i < individuals.size(); i++) {
 			fitnesses.add(individuals.get(i).getFitness());
 			sum += individuals.get(i).getFitness();
 		}
 		
-        int minFitness = Collections.min(fitnesses);
-        int maxFitness = Collections.max(fitnesses);
-        int avgFitness = sum / fitnesses.size();
+        final int minFitness = Collections.min(fitnesses);
+        final int maxFitness = Collections.max(fitnesses);
+        final int avgFitness = sum / fitnesses.size();
         return "max: " + maxFitness + ", min: " + minFitness + ", avg: " + avgFitness;
 	}
 	

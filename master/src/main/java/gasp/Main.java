@@ -19,11 +19,10 @@ import org.apache.logging.log4j.core.config.builder.api.RootLoggerComponentBuild
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
-
+import gasp.ga.Gene;
+import gasp.ga.IndividualGenerator;
 import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
-import gasp.ga.fitness.FitnessFunction;
-import gasp.ga.fitness.FitnessFunctionSymbolicExecution;
 import gasp.ga.localSearch.LocalSearchAlgorithm;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
 import gasp.ga.operators.crossover.CrossoverFunction;
@@ -36,6 +35,8 @@ import gasp.ga.operators.mutation.MutationFunctionDeleteConstraint;
 import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegateConstraint;
 import gasp.ga.operators.selection.SelectionFunction;
 import gasp.ga.operators.selection.SelectionFunctionRank;
+import gasp.se.GeneJBSE;
+import gasp.se.IndividualGeneratorJBSE;
 
 public class Main {
 	private final Options o;
@@ -74,23 +75,11 @@ public class Main {
 		logger.info("Started, going to evolve " + o.getGenerations()  + " generations");
 		logger.info("Estimated fitness evaluation: " + o.estimateFitnessEvaluations());
 
-		final GeneticAlgorithm ga = new GeneticAlgorithm(this.o.getGenerations(),
-														 this.o.getLocalSearchRate(),
-														 this.o.getPopulationSize(),
-														 this.o.getEliteSize(),
-				                                         crossoverFunction(), 
-				                                         selectionFunction(),
-				                                         localSearchAlgorithm(),
-				                                         this.o.getClasspath(),
-				                                         this.o.getJBSEPath(),
-				                                         this.o.getZ3Path(),
-				                                         this.o.getMethodClassName(),
-				                                         this.o.getMethodDescriptor(),
-				                                         this.o.getMethodName());	
-		ga.generateSolution();
-		final Individual solution = ga.getBestSolutions(1).get(0);
+		final GeneticAlgorithm<?> ga = geneticAlgorithm();
+		ga.evolve();
+		final Individual<?> solution = ga.getBestIndividuals(1).get(0);
 		
-		logger.info("Worst case input: " + solution.getConstraintSetClone());
+		logger.info("Worst case input: " + solution.getChromosome());
 		logger.info("Worst case model: " + solution.getModel());
 		logger.info("Worst case cost: " + solution.getFitness());	
 		logger.info(getName() + " ended");
@@ -114,80 +103,76 @@ public class Main {
 		Configurator.initialize(builder.build());
 	}
 	
-	private CrossoverFunction crossoverFunction() {
+	private GeneticAlgorithm<?> geneticAlgorithm() {
+		final IndividualGenerator<GeneJBSE> cm = 
+				new IndividualGeneratorJBSE(this.o.getRandom(),
+										  this.o.getClasspath(),
+										  this.o.getJBSEPath(), 
+										  this.o.getZ3Path(),
+										  this.o.getMethodClassName(), 
+										  this.o.getMethodDescriptor(), 
+										  this.o.getMethodName());
+		final GeneticAlgorithm<GeneJBSE> retVal = 
+				new GeneticAlgorithm<GeneJBSE>(cm,
+													 this.o.getGenerations(),
+									    			 this.o.getLocalSearchRate(),
+									    			 this.o.getPopulationSize(),
+									    			 this.o.getEliteSize(),
+									    			 crossoverFunction(cm), 
+									    			 selectionFunction(cm),
+									    			 localSearchAlgorithm(cm));	
+		return retVal;
+	}
+	
+	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction(IndividualGenerator<T> cm) {
 		switch (this.o.getCrossoverFunctionType()) {
 		case EXCLUDE:
-			return new CrossoverFunctionExclude_NotUsedYet(this.o.getRandom());
+			return new CrossoverFunctionExclude_NotUsedYet<T>(this.o.getRandom());
 		case PREFIX:
-			return new CrossoverFunctionPrefix_NotUsedYet(fitnessFunction(),
-														  this.o.getRandom());
+			return new CrossoverFunctionPrefix_NotUsedYet<T>(cm,
+														     this.o.getRandom());
 		case SINGLE_POINT:
-			return new CrossoverFunctionSinglePoint(mutationFunction(),
-													fitnessFunction(),
-													this.o.getMutationSizeRatio(),
-													this.o.getRandom(),
-													this.o.getClasspath(),
-													this.o.getJBSEPath(),
-													this.o.getZ3Path(),
-													this.o.getMethodClassName(),
-													this.o.getMethodDescriptor(),
-													this.o.getMethodName());
+			return new CrossoverFunctionSinglePoint<T>(cm, 
+													   mutationFunction(cm),
+													   this.o.getMutationSizeRatio(),
+													   this.o.getRandom());
 		case UNION:
-			return new CrossoverFunctionUnion_NotUsedYet(fitnessFunction());
+			return new CrossoverFunctionUnion_NotUsedYet<T>(cm);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a crossover function case was not handled.");
 		}
 	}
 	
-	private MutationFunction mutationFunction() {
+	private <T extends Gene<T>> MutationFunction<T> mutationFunction(IndividualGenerator<T> cm) {
 		switch (this.o.getMutationFunctionType()) {
 		case DELETE_CONSTRAINT:
-			return new MutationFunctionDeleteConstraint(fitnessFunction(), 
-														this.o.getMutationProbability(), 
-														this.o.getRandom());
+			return new MutationFunctionDeleteConstraint<T>(cm, 
+														   this.o.getMutationProbability(), 
+														   this.o.getRandom());
 		case DELETE_OR_NEGATE_CONSTRAINT:
-			return new MutationFunctionDeleteOrNegateConstraint(fitnessFunction(), 
-																this.o.getMutationProbability(), 
-																this.o.getRandom());
+			return new MutationFunctionDeleteOrNegateConstraint<T>(cm, 
+																   this.o.getMutationProbability(), 
+																   this.o.getRandom());
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
 		}
 	}
 	
-	private SelectionFunction selectionFunction() {
+	private <T extends Gene<T>> SelectionFunction<T> selectionFunction(IndividualGenerator<T> cm) {
 		switch (this.o.getSelectionFunctionType()) {
 		case RANK:
-			return new SelectionFunctionRank(this.o.getRandom());
+			return new SelectionFunctionRank<T>(this.o.getRandom());
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a selection function case was not handled.");
 		}
 	}
 	
-	private FitnessFunction fitnessFunction() {
-		switch (this.o.getFitnessFunctionType()) {
-		case SYMBOLIC_EXECUTION:
-			return new FitnessFunctionSymbolicExecution(this.o.getClasspath(), 
-                                                        this.o.getJBSEPath(), 
-                                                        this.o.getZ3Path(), 
-                                                        this.o.getMethodClassName(), 
-                                                        this.o.getMethodDescriptor(), 
-                                                        this.o.getMethodName());
-		default:
-			throw new AssertionError("Reached unreachable point: Possibly a fitness function case was not handled.");
-		}
-	}
-	
-	private LocalSearchAlgorithm localSearchAlgorithm() {
+	private <T extends Gene<T>> LocalSearchAlgorithm<T> localSearchAlgorithm(IndividualGenerator<T> cm) {
 		switch (this.o.getLocalSearchAlgorithmType()) {
 		case HILL_CLIMBING:
-			return new LocalSearchAlgorithmHillClimbing(this.o.getPopulationSize(),
-														this.o.getRandom(),
-														this.o.getClasspath(), 
-                    									this.o.getJBSEPath(), 
-                    									this.o.getZ3Path(), 
-                    									this.o.getMethodClassName(), 
-                    									this.o.getMethodDescriptor(), 
-                    									this.o.getMethodName());
+			return new LocalSearchAlgorithmHillClimbing<T>(cm,
+														   this.o.getPopulationSize(),
+														   this.o.getRandom());
 		case NONE:
 			return null;
 		default:

@@ -4,9 +4,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import gasp.ga.Gene;
 import gasp.ga.Individual;
 
-public class SelectionFunctionRank implements SelectionFunction {
+public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFunction<T> {
 	private final Random random;
 	
 	public SelectionFunctionRank(Random random) {
@@ -18,14 +19,14 @@ public class SelectionFunctionRank implements SelectionFunction {
 	}
 
 	@Override
-	public int selectIndividual(List<Individual> individuals, boolean populationIsSorted) {
+	public int selectIndividual(List<Individual<T>> individuals, boolean populationIsSorted) {
 		if (!populationIsSorted) {
 			Collections.sort(individuals);
 		}
 		
 		Collections.reverse(individuals);
 		
-        int[] ranking = getRanks(individuals);
+        final int[] ranking = getRanks(individuals);
 
         int rankSum = 0;
         for (int i = 0; i < ranking.length; ++i){
@@ -41,24 +42,20 @@ public class SelectionFunctionRank implements SelectionFunction {
             }	
         }
         
-        return ranking.length - 1; /*should neve happen */
+        return ranking.length - 1; //should never happen
 	}
 
-	private int[] getRanks(List<Individual> population) {
+	private int[] getRanks(List<Individual<T>> population) {
 		int[] ranking = new int[population.size()];
-        
 		int currRank = 0;
         int currFitness = 0;
-        for(int i = 0; i < population.size(); i++){
-        
+        for (int i = 0; i < population.size(); ++i){
         	if (population.get(i).getFitness() > currFitness) {
         		currFitness = population.get(i).getFitness();
                 currRank = i + 1;
         	}
-            
         	ranking[i] = currRank;
         }
-        
         return ranking;
 	}
 

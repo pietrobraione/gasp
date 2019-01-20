@@ -2,9 +2,9 @@ package gasp.ga.operators.mutation;
 
 import java.util.List;
 
-import gasp.ga.Constraint;
+import gasp.ga.Gene;
 
 @FunctionalInterface
-public interface MutationFunction {
-	void applyMutationToConstraintSetPortion(List<Constraint> constraintSet, double portion) throws MutationException;
+public interface MutationFunction<T extends Gene<T>> {
+	List<T> mutate(List<T> chromosome, double percentage);
 }

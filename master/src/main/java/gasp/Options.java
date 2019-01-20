@@ -11,20 +11,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import gasp.ga.fitness.FitnessFunction;
-import gasp.ga.fitness.FitnessFunctionSymbolicExecution;
-import gasp.ga.localSearch.LocalSearchAlgorithm;
-import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
-import gasp.ga.operators.crossover.CrossoverFunction;
-import gasp.ga.operators.crossover.CrossoverFunctionExclude_NotUsedYet;
-import gasp.ga.operators.crossover.CrossoverFunctionPrefix_NotUsedYet;
-import gasp.ga.operators.crossover.CrossoverFunctionSinglePoint;
-import gasp.ga.operators.crossover.CrossoverFunctionUnion_NotUsedYet;
-import gasp.ga.operators.mutation.MutationFunctionDeleteConstraint;
-import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegateConstraint;
-import gasp.ga.operators.mutation.MutationFunction;
-import gasp.ga.operators.selection.SelectionFunctionRank;
-import gasp.ga.operators.selection.SelectionFunction;
 import gasp.utils.Utils;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Command;
@@ -314,7 +300,7 @@ public class Options {
 		@Override
 		public String[] getVersion() throws Exception {
 			final String[] retVal = new String[1];
-			retVal[0] = Utils.getName() + ", version " + Utils.getVersion();
+			retVal[0] = Utils.getName() + " version " + Utils.getVersion();
 			return retVal;
 		}
 	}

@@ -1,83 +1,94 @@
 package gasp.ga;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /* Individuals are immutable */
 
-public class Individual implements Cloneable, Comparable<Individual> {
-	private final List<Constraint> constraintSet;
-	private int fitness;
+public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Individual<T>> {
+	private final List<T> chromosome;
+	private final int fitness;
 	
-	public Individual(List<Constraint> constraintSet, int fitness) {
-		if(constraintSet == null || constraintSet.isEmpty()){
-			throw new IllegalArgumentException("the constraint set can't be empty or null");
+	public Individual(List<T> chromosome, int fitness) {
+		if (chromosome == null || chromosome.isEmpty()) {
+			throw new IllegalArgumentException("The chromosome can't be null or an empty list of genes.");
 		}
-		this.constraintSet = new ArrayList<>(constraintSet);
+		
+		this.chromosome = new ArrayList<>(chromosome);
 		this.fitness = fitness;
 	}
 
-	public List<Constraint> getConstraintSetClone() {
-		return new ArrayList<>(constraintSet);
+	public List<T> getChromosome() {
+		return new ArrayList<T>(this.chromosome);
 	}
 
 	public int size() {
-		return constraintSet.size();
+		return this.chromosome.size();
 	}
 
 	public int getFitness() {
-		return fitness;
+		return this.fitness;
 	}
 
-	// Return the solution of the formula represent by this individual  
-	public Model getModel() {
-		return new Model(constraintSet);
+	public Model<T> getModel() {
+		return new Model<T>(this);
 	}
 	
 	@Override
 	public String toString() {
-		return "Individual [fitness = " + fitness + ", constraintSet = " + constraintSet + "]";
+		return "Individual [fitness = " + this.fitness + ", chromosome = " + this.chromosome + "]";
 	}
 
-        @Override
-	public Individual clone() {
-	    //TODO should be a deep copy???
-	    try {
-	        return (Individual) super.clone();
-	    } catch (CloneNotSupportedException e) {
-		throw new AssertionError("Unexpected failure of clone method.", e);
-	    }
-	}
+	@SuppressWarnings("unchecked")
+	@Override
+	public Individual<T> clone() {
+    	//TODO should be a deep copy???
+    	try {
+    		return (Individual<T>) super.clone();
+    	} catch (CloneNotSupportedException e) {
+    		throw new AssertionError("Unexpected failure of clone method.", e);
+    	}
+    }
     
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((constraintSet == null) ? 0 : constraintSet.hashCode());
-		result = prime * result + fitness;
+		result = prime * result + this.chromosome.hashCode();
+		result = prime * result + this.fitness;
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		Individual other = (Individual) obj;
-		if (constraintSet == null) {
-			if (other.constraintSet != null)
+		}
+		@SuppressWarnings("unchecked")
+		final Individual<T> other = (Individual<T>) obj;
+		if (this.chromosome == null) {
+			if (other.chromosome != null) {
 				return false;
-		} else if (!constraintSet.equals(other.constraintSet))
+			}
+		} else if (!this.chromosome.equals(other.chromosome)) {
 			return false;
-		if (fitness != other.fitness)
+		}
+		if (this.fitness != other.fitness) {
 			return false;
+		}
+		
 		return true;
 	}
 
 	@Override
-	public int compareTo(Individual other) {
-		if (this.fitness < other.fitness) {
+	public int compareTo(Individual<T> other) {
+		if (this.fitness > other.fitness) {
 			return -1;
 		} else if (this.fitness == other.fitness) {
 			return 0;
@@ -85,6 +96,4 @@ public class Individual implements Cloneable, Comparable<Individual> {
 			return 1;
 		}
 	}
-
-	
 }

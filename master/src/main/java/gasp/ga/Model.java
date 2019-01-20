@@ -2,17 +2,15 @@ package gasp.ga;
 
 import java.util.List;
 
-public class Model {
-	
-	private List<Constraint> constraints;
+public class Model<T extends Gene<T>> {
+	private List<T> chromosome;
 
-	public Model(List<Constraint> constraintSet) {
-		this.constraints = constraintSet;
+	public Model(Individual<T> individual) {
+		this.chromosome = individual.getChromosome();
 	}
 
 	@Override
 	public String toString() {
-		return "Model [constraints=" + constraints + "]";
+		return "Model [chromosome=" + this.chromosome + "]";
 	}
-
 }

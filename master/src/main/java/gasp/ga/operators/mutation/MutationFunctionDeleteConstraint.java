@@ -3,17 +3,16 @@ package gasp.ga.operators.mutation;
 import java.util.List;
 import java.util.Random;
 
-import gasp.ga.Constraint;
-import gasp.ga.fitness.FitnessFunction;
+import gasp.ga.Gene;
+import gasp.ga.IndividualGenerator;
 
-public class MutationFunctionDeleteConstraint extends AbstractMutationFunction {
-	public MutationFunctionDeleteConstraint(FitnessFunction fitnessFunction, double mutationProbability, Random random) {
-		super(fitnessFunction, mutationProbability, random);
+public class MutationFunctionDeleteConstraint<T extends Gene<T>> extends AbstractMutationFunction<T> {
+	public MutationFunctionDeleteConstraint(IndividualGenerator<T> individualGenerator, double mutationProbability, Random random) {
+		super(individualGenerator, mutationProbability, random);
 	}
 	
 	@Override
-	protected void applyMutation(List<Constraint> constraintSet) throws MutationException {
-        int index = this.random.nextInt(constraintSet.size());
-        constraintSet.remove(index);
+	protected void mutateGene(List<T> chromosome, int position) {
+		chromosome.remove(position);
 	}
 }

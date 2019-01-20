@@ -3,34 +3,31 @@ package gasp.ga.operators.mutation;
 import java.util.List;
 import java.util.Random;
 
-import gasp.ga.Constraint;
-import gasp.ga.fitness.FitnessFunction;
+import gasp.ga.Gene;
+import gasp.ga.IndividualGenerator;
 
-public class MutationFunctionDeleteOrNegateConstraint extends AbstractMutationFunction {
-	public MutationFunctionDeleteOrNegateConstraint(FitnessFunction fitnessFunction, double mutationProbability, Random random) {
-		super(fitnessFunction, mutationProbability, random);
+public class MutationFunctionDeleteOrNegateConstraint<T extends Gene<T>> extends AbstractMutationFunction<T> {
+	public MutationFunctionDeleteOrNegateConstraint(IndividualGenerator<T> individualGenerator, double mutationProbability, Random random) {
+		super(individualGenerator, mutationProbability, random);
 	}
 	
 
 	@Override
-	protected void applyMutation(List<Constraint> constraintSet) throws MutationException {
+	protected void mutateGene(List<T> chromosome, int position) {
 		if (this.random.nextBoolean()){
-			applyDeleteMutation(constraintSet);
+			applyDeleteMutation(chromosome, position);
 		} else {
-			applyNegateMutation(constraintSet);
+			applyNegateMutation(chromosome, position);
 		}
 	}
 	
-	private void applyNegateMutation(List<Constraint> constraintSet) throws MutationException {
-		final int index = this.random.nextInt(constraintSet.size());
-        Constraint neg = constraintSet.get(index).not();
-        constraintSet.remove(index);
-        constraintSet.add(index, neg);
-	}
-	
-	private void applyDeleteMutation(List<Constraint> constraintSet) throws MutationException {
-        final int index = this.random.nextInt(constraintSet.size());
-        constraintSet.remove(index);
+	private void applyDeleteMutation(List<T> chromosome, int position) {
+        chromosome.remove(position);
 	}
 
+	private void applyNegateMutation(List<T> chromosome, int position) {
+        final T neg = chromosome.get(position).not();
+        chromosome.remove(position);
+        chromosome.add(position, neg);
+	}
 }

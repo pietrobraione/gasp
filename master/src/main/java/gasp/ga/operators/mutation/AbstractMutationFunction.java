@@ -1,21 +1,22 @@
 package gasp.ga.operators.mutation;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import gasp.ga.Constraint;
+import gasp.ga.Gene;
 import gasp.ga.Individual;
-import gasp.ga.fitness.FitnessEvaluationException;
-import gasp.ga.fitness.FitnessFunction;
+import gasp.ga.IndividualGenerator;
 
-public abstract class AbstractMutationFunction implements MutationFunction {
-	protected final FitnessFunction fitnessFunction;
+public abstract class AbstractMutationFunction<T extends Gene<T>> implements MutationFunction<T> {
+	protected final IndividualGenerator<T> individualGenerator;
 	protected final double mutationProbability;
 	protected final Random random;
 	
-	protected AbstractMutationFunction(FitnessFunction fitnessFunction, double mutationProbability, Random random) {
-		if (fitnessFunction == null) {
-			throw new IllegalArgumentException("Fitness function cannot be null.");
+	protected AbstractMutationFunction(IndividualGenerator<T> individualGenerator, double mutationProbability, Random random) {
+		if (individualGenerator == null) {
+			throw new IllegalArgumentException("The individual generator cannot be null.");
 		}
 		if (mutationProbability < 0 || mutationProbability > 1) {
 			throw new IllegalArgumentException("The mutation probability cannot be less than 0 or greater than 1.");
@@ -24,56 +25,48 @@ public abstract class AbstractMutationFunction implements MutationFunction {
 			throw new IllegalArgumentException("The random generator cannot be null.");
 		}
 		
-		this.fitnessFunction = fitnessFunction;
+		this.individualGenerator = individualGenerator;
 		this.mutationProbability = mutationProbability;
 		this.random = random;
 	}
 
 	@Override
-	public void applyMutationToConstraintSetPortion(List<Constraint> constraintSet, double portion) throws MutationException {
-		if (portion <= 0d || portion >= 1d) {
-			throw new MutationException("Cannot mutate (" + portion + " * constraintSetSize) constraints");
+	public List<T> mutate(List<T> chromosome, double percentage) {
+		if (chromosome == null) {
+			throw new IllegalArgumentException("Chromosome cannot be null.");
+		}
+		if (percentage < 0 || percentage > 1) {
+			throw new IllegalArgumentException("Percentage cannot be less than 0 or greater than 1.");
 		}
 		
-		int numOfMutations = (int) Math.round(portion * constraintSet.size());
-        
-		for(int i = 0; i < numOfMutations; i++){
-			applySingleMutation(constraintSet);
-        }
-	}
-	
-	private void applySingleMutation(List<Constraint> constraintSet) throws MutationException {
-        if (this.random.nextDouble() < this.mutationProbability) {
-        	applyMutation(constraintSet);
-        }
-	}
-	
-	protected abstract void applyMutation(List<Constraint> constraintSet) throws MutationException;
-
-	//TODO the methods that follow seem unused; delete them?
-	
-	public Individual mutateIndividualByApplyingMutationToConstraintSetPortion(Individual individual, double portion) throws MutationException {
-		List<Constraint> constraintSet = individual.getConstraintSetClone();
-		
-		applyMutationToConstraintSetPortion(constraintSet, portion);
-		
-		return makeIndividual(constraintSet);
-	}
-
-	public Individual mutateIndividualByApplyingSingleMutation(Individual individual, double portion) throws MutationException {
-		List<Constraint> constraintSet = individual.getConstraintSetClone();
-		
-		applySingleMutation(constraintSet);
-		
-		return makeIndividual(constraintSet);
-	}
-	
-	private Individual makeIndividual(List<Constraint> constraintSet) throws MutationException {
-        try {
-			final Individual newIndividual = this.fitnessFunction.evaluate(constraintSet);
-	        return newIndividual;
-		} catch (FitnessEvaluationException e) {
-			throw new MutationException(e);
+		final ArrayList<T> retVal = new ArrayList<>(chromosome);
+		final int numOfMutations = (int) Math.round(percentage * chromosome.size());
+		final ArrayList<Integer> positions = new ArrayList<Integer>();
+		for (int i = 0; i < chromosome.size(); ++i) {
+			positions.add(i);
 		}
+		Collections.shuffle(positions, this.random);
+		for (int i = 0; i < numOfMutations; ++i) {
+	        if (this.random.nextDouble() < this.mutationProbability) {
+	        	mutateGene(retVal, positions.get(i));
+	        }
+        }
+		return retVal;
+	}
+	
+	protected abstract void mutateGene(List<T> chromosome, int position);
+	
+	//TODO these are unused; remove?
+	
+	public final Individual<T> mutateIndividual(Individual<T> individual, double percentage) {
+		final List<T> chromosome = individual.getChromosome();
+		final List<T> chromosomeMutated = mutate(chromosome, percentage);
+		return this.individualGenerator.generateRandomIndividual(chromosomeMutated);
+	}
+
+	public Individual<T> mutateIndividual(Individual<T> individual) {
+		final List<T> chromosome = individual.getChromosome();
+		mutateGene(chromosome, this.random.nextInt(chromosome.size()));
+		return this.individualGenerator.generateRandomIndividual(chromosome);
 	}
 }

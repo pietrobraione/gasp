@@ -4,22 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import gasp.ga.Gene;
 import gasp.ga.Individual;
 
 @FunctionalInterface
-public interface SelectionFunction {
-	int selectIndividual(List<Individual> population, boolean populationIsSorted);
+public interface SelectionFunction<T extends Gene<T>> {
+	int selectIndividual(List<Individual<T>> population, boolean populationIsSorted);
 	
-	public static class Pair {
-		public Individual ind1;
-		public Individual ind2;
-	}
-	
-	default Pair selectPairDistinct(List<Individual> population, boolean populationIsSorted) {
-		final List<Individual> populationCopy = new ArrayList<>(population);
-		
-		final Pair retValue = new Pair();
-		
+	default Pair<Individual<T>> selectPairDistinct(List<Individual<T>> population, boolean populationIsSorted) {
+		final List<Individual<T>> populationCopy = new ArrayList<>(population);		
+		final Pair<Individual<T>> retValue = new Pair<>();
+
 		int index = selectIndividual(populationCopy, populationIsSorted);
 		retValue.ind1 = populationCopy.get(index);
 		
@@ -31,16 +26,14 @@ public interface SelectionFunction {
 		return retValue;
 	}
 
-	default List<Individual> survivalSelection(List<Individual> population, int n) {
-		final List<Individual> populationCopy = new ArrayList<>(population);
+	default List<Individual<T>> survivalSelection(List<Individual<T>> population, int n) {
+		final List<Individual<T>> populationCopy = new ArrayList<>(population);
 		Collections.sort(populationCopy);
 
-		final List<Individual> retValue = new ArrayList<Individual>();
-        for(int i = 0; i < n; i++) {
-            int index = selectIndividual(populationCopy, true);
-
+		final List<Individual<T>> retValue = new ArrayList<Individual<T>>();
+        for (int i = 0; i < n; ++i) {
+            final int index = selectIndividual(populationCopy, true);
             retValue.add(populationCopy.get(index));
-            
             populationCopy.remove(index);
         }
         

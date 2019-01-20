@@ -1,6 +1,6 @@
 package gasp.se;
 
-import gasp.ga.Constraint;
+import gasp.ga.Gene;
 import jbse.common.exc.InvalidInputException;
 import jbse.mem.Clause;
 import jbse.mem.ClauseAssume;
@@ -9,12 +9,12 @@ import jbse.mem.ClauseAssumeClassNotInitialized;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.val.exc.InvalidTypeException;
 
-public class ConstraintJBSE extends Constraint {
+public class GeneJBSE extends Gene<GeneJBSE> {
 	private final Clause clause;
 	private final boolean negated;
 	private final int hashCode;
 
-	public ConstraintJBSE(Clause clause, boolean negated) {
+	public GeneJBSE(Clause clause, boolean negated) {
 		if (clause == null) {
 			throw new NullPointerException("Cannot build a ConstraintJBSE from a null Clause.");
 		}
@@ -27,7 +27,7 @@ public class ConstraintJBSE extends Constraint {
 		this.hashCode = result;
 	}
 	
-	public ConstraintJBSE(Clause clause) {
+	public GeneJBSE(Clause clause) {
 		this(clause, false);
 	}
 	
@@ -45,16 +45,16 @@ public class ConstraintJBSE extends Constraint {
 	}
 
 	@Override
-	public Constraint not() {
+	public GeneJBSE not() {
 		try {
 			if (this.clause instanceof ClauseAssume) {
-				return new ConstraintJBSE(new ClauseAssume(((ClauseAssume) this.clause).getCondition().not()));
+				return new GeneJBSE(new ClauseAssume(((ClauseAssume) this.clause).getCondition().not()));
 			} else if (this.clause instanceof ClauseAssumeReferenceSymbolic) {
-				return new ConstraintJBSE(this.clause, !this.negated);
+				return new GeneJBSE(this.clause, !this.negated);
 			} else if (this.clause instanceof ClauseAssumeClassInitialized) {
-				return new ConstraintJBSE(new ClauseAssumeClassNotInitialized(((ClauseAssumeClassInitialized) this.clause).getClassFile()));
+				return new GeneJBSE(new ClauseAssumeClassNotInitialized(((ClauseAssumeClassInitialized) this.clause).getClassFile()));
 			} else { //this.clause instanceof ClauseAssumeClassNotInitialized
-				return new ConstraintJBSE(new ClauseAssumeClassInitialized(((ClauseAssumeClassNotInitialized) this.clause).getClassFile(), null));
+				return new GeneJBSE(new ClauseAssumeClassInitialized(((ClauseAssumeClassNotInitialized) this.clause).getClassFile(), null));
 			}
 		} catch (InvalidTypeException | InvalidInputException e) {
 			throw new RuntimeException(e);
@@ -77,7 +77,7 @@ public class ConstraintJBSE extends Constraint {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final ConstraintJBSE other = (ConstraintJBSE) obj;
+		final GeneJBSE other = (GeneJBSE) obj;
 		if (!this.clause.equals(other.clause)) {
 			return false;
 		}
