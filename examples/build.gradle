@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':jbse')
+    implementation project(':gasp-master')
+}

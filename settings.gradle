@@ -5,3 +5,4 @@ include ':gasp-master'
 
 project(':jbse').projectDir = file('jbse')
 project(':gasp-master').projectDir = file('master')
+project(':gasp-examples').projectDir = file('examples')
