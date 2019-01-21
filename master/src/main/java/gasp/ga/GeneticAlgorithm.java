@@ -173,28 +173,28 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
         
         final List<Individual<T>> offsprings = new ArrayList<>();
         for (int i = 0; i < this.populationSize / 2; ++i) {
-        	offsprings.addAll(doCrossoverOnPair());
+        	offsprings.addAll(generateOffspringsFromTwoParents());
         }
         
         return offsprings;
 	}
 	
-	List<Individual<T>> doCrossoverOnPair() {
-		final Pair<Individual<T>> parents = this.selectionFunction.selectPairDistinct(this.population, true);
+	List<Individual<T>> generateOffspringsFromTwoParents() {
+		final Pair<Individual<T>> parents = this.selectionFunction.selectParents(this.population, true);
         logger.debug("Selected parents: [" + parents.ind1.getFitness() + "], [" + parents.ind2.getFitness() + "]");
         
-        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.crossover(parents.ind1.getChromosome(), parents.ind2.getChromosome());
+        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(parents.ind1.getChromosome(), parents.ind2.getChromosome());
         final List<T> chromosomeCombinedAndMutated1 = this.mutationFunction.mutate(chromosomesCrossover.ind1);
-        final Individual<T> child1 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated1);
+        final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated1);
         final List<T> chromosomeCombinedAndMutated2 = this.mutationFunction.mutate(chromosomesCrossover.ind2);
-        final Individual<T> child2 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated2);
+        final Individual<T> offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated2);
 
         final ArrayList<Individual<T>> retVal = new ArrayList<>();
-        if (child1 != null) {
-        	retVal.add(child1);
+        if (offspring1 != null) {
+        	retVal.add(offspring1);
         }
-        if (child2 != null) {
-        	retVal.add(child2);
+        if (offspring2 != null) {
+        	retVal.add(offspring2);
         }
         return retVal;
 	}

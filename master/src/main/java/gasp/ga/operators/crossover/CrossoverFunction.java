@@ -7,5 +7,5 @@ import gasp.ga.Pair;
 
 @FunctionalInterface
 public interface CrossoverFunction<T extends Gene<T>> {
-	Pair<List<T>> crossover(List<T> chromosome1, List<T> chromosome2);
+	Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2);
 }

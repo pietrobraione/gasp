@@ -19,7 +19,7 @@ public class CrossoverFunctionPrefix<T extends Gene<T>> implements CrossoverFunc
 	}
     
 	@Override
-	public Pair<List<T>> crossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
 		if (chromosome1 == null || chromosome2 == null) {
 			throw new IllegalArgumentException("The chromosomes cannot be null.");
 		}
@@ -28,7 +28,7 @@ public class CrossoverFunctionPrefix<T extends Gene<T>> implements CrossoverFunc
 		}
 		if (chromosome1.size() < 3 || chromosome2.size() < 3) {
 			final CrossoverFunctionSinglePoint<T> delegate = new CrossoverFunctionSinglePoint<>(this.random);
-			return delegate.crossover(chromosome1, chromosome2);
+			return delegate.doCrossover(chromosome1, chromosome2);
 		}
 		
     	final int cutPoint11 = this.random.nextInt(chromosome1.size() - 2) + 1;
@@ -44,13 +44,7 @@ public class CrossoverFunctionPrefix<T extends Gene<T>> implements CrossoverFunc
 	
 	private List<T> combineChromosomes(List<T> chromosome1, List<T> chromosome2) {
 		final List<T> result = new ArrayList<>(chromosome1);
-        for (int i = 0; i < chromosome2.size(); ++i){
-        	result.add(chromosome2.get(i));
-        	/*if (Utils.isInconsistent(result)){
-        		result.remove(constraints2.size() - 1);
-        	}*/
-        }
+		result.addAll(chromosome2);
         return result;
-	}
-	
+	}	
 }

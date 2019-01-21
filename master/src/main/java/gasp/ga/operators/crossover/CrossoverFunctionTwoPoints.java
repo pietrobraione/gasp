@@ -19,7 +19,7 @@ public final class CrossoverFunctionTwoPoints<T extends Gene<T>> implements Cros
 	}
 
 	@Override
-	public Pair<List<T>> crossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
 		if (chromosome1 == null || chromosome2 == null) {
 			throw new IllegalArgumentException("The chromosomes cannot be null.");
 		}
@@ -28,7 +28,7 @@ public final class CrossoverFunctionTwoPoints<T extends Gene<T>> implements Cros
 		}
 		if (chromosome1.size() < 3 || chromosome2.size() < 3) {
 			final CrossoverFunctionSinglePoint<T> delegate = new CrossoverFunctionSinglePoint<>(this.random);
-			return delegate.crossover(chromosome1, chromosome2);
+			return delegate.doCrossover(chromosome1, chromosome2);
 		}
 		
     	final int cutPoint11 = this.random.nextInt(chromosome1.size() - 2) + 1;
@@ -44,21 +44,8 @@ public final class CrossoverFunctionTwoPoints<T extends Gene<T>> implements Cros
 	
 	private List<T> combineChromosomes(List<T> chromosome1, List<T> chromosome2, List<T> chromosome3) {
 		final List<T> retVal = new ArrayList<>(chromosome1);
-		for (T gene : chromosome2) {
-			/* TODO
-			final List<T> slice = this.individualGenerator.slice(result, gene);
-			if (!this.individualGenerator.isInconsistent(c, slice) && !this.individualGenerator.isRedundant(c, slice)) { */
-				retVal.add(gene);
-			/*}*/
-		}
-		for (T gene : chromosome3) {
-			/* TODO
-			final List<T> slice = this.individualGenerator.slice(result, gene);
-			if (!this.individualGenerator.isInconsistent(c, slice) && !this.individualGenerator.isRedundant(c, slice)) { */
-				retVal.add(gene);
-			/*}*/
-		}
-	
+		retVal.addAll(chromosome2);
+		retVal.addAll(chromosome3);
 		return retVal;
 	}
 }

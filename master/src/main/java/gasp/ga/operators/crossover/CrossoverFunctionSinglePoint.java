@@ -19,7 +19,7 @@ public final class CrossoverFunctionSinglePoint<T extends Gene<T>> implements Cr
 	}
 
 	@Override
-	public Pair<List<T>> crossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
 		if (chromosome1 == null || chromosome2 == null) {
 			throw new IllegalArgumentException("The chromosomes cannot be null.");
 		}
@@ -38,14 +38,7 @@ public final class CrossoverFunctionSinglePoint<T extends Gene<T>> implements Cr
 	
 	private List<T> combineChromosomes(List<T> chromosome1, List<T> chromosome2) {
 		final List<T> retVal = new ArrayList<>(chromosome1);
-		for (T gene : chromosome2) {
-			/* TODO
-			final List<T> slice = this.individualGenerator.slice(result, gene);
-			if (!this.individualGenerator.isInconsistent(c, slice) && !this.individualGenerator.isRedundant(c, slice)) { */
-				retVal.add(gene);
-			/*}*/
-		}
-	
+		retVal.addAll(chromosome2);
 		return retVal;
 	}
 }

@@ -12,7 +12,7 @@ import gasp.ga.Pair;
 public interface SelectionFunction<T extends Gene<T>> {
 	int selectIndividual(List<Individual<T>> population, boolean populationIsSorted);
 	
-	default Pair<Individual<T>> selectPairDistinct(List<Individual<T>> population, boolean populationIsSorted) {
+	default Pair<Individual<T>> selectParents(List<Individual<T>> population, boolean populationIsSorted) {
 		final List<Individual<T>> populationCopy = new ArrayList<>(population);		
 
 		final int index1 = selectIndividual(populationCopy, populationIsSorted);

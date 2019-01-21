@@ -19,7 +19,7 @@ public final class CrossoverFunctionUnion<T extends Gene<T>> implements Crossove
 	}
 
 	@Override
-	public Pair<List<T>> crossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
 		final List<T> allGenes = new ArrayList<>();
 		allGenes.addAll(chromosome1);
 		allGenes.addAll(chromosome2);
