@@ -2,6 +2,7 @@ rootProject.name = 'gasp'
 
 include ':jbse'
 include ':gasp-master'
+include ':gasp-examples'
 
 project(':jbse').projectDir = file('jbse')
 project(':gasp-master').projectDir = file('master')
