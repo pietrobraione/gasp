@@ -8,10 +8,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gasp.ga.localSearch.LocalSearchAlgorithm;
-import gasp.ga.operators.crossover.CrossoverException;
 import gasp.ga.operators.crossover.CrossoverFunction;
+import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.selection.SelectionFunction;
-import gasp.ga.operators.selection.Pair;
 import gasp.utils.Utils;
 
 public final class GeneticAlgorithm<T extends Gene<T>> {
@@ -23,6 +22,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	private final int populationSize;
 	private final int eliteSize;
 	private final CrossoverFunction<T> crossoverFunction;
+	private final MutationFunction<T> mutationFunction;
 	private final SelectionFunction<T> selectionFunction;
 	private final LocalSearchAlgorithm<T> localSearchAlgorithm;
 	
@@ -31,8 +31,8 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 
 	public GeneticAlgorithm(IndividualGenerator<T> constraintManager, int generations, 
 							int localSearchRate, int populationSize, int eliteSize, 
-							CrossoverFunction<T> crossoverFunction, SelectionFunction<T> selectionFunction, 
-							LocalSearchAlgorithm<T> localSearchAlgorithm) {
+							CrossoverFunction<T> crossoverFunction, MutationFunction<T> mutationFunction, 
+							SelectionFunction<T> selectionFunction, LocalSearchAlgorithm<T> localSearchAlgorithm) {
 		if (constraintManager == null) {
 			throw new IllegalArgumentException("Constraint manager cannot be null.");
 		}
@@ -54,6 +54,9 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		if (crossoverFunction == null) {
 			throw new IllegalArgumentException("Crossover function cannot be null.");
 		}
+		if (mutationFunction == null) {
+			throw new IllegalArgumentException("Mutation function cannot be null.");
+		}
 		if (selectionFunction == null) {
 			throw new IllegalArgumentException("Selection function cannot be null.");
 		}
@@ -67,6 +70,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		this.populationSize = populationSize;
 		this.eliteSize = eliteSize;
 		this.crossoverFunction = crossoverFunction;
+		this.mutationFunction = mutationFunction;
 		this.selectionFunction = selectionFunction;
 		this.localSearchAlgorithm = localSearchAlgorithm;
 		
@@ -169,29 +173,29 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
         
         final List<Individual<T>> offsprings = new ArrayList<>();
         for (int i = 0; i < this.populationSize / 2; ++i) {
-        	final Individual<T>[] children = doCrossoverOnPair();
-        	if (children != null)  {
-        		if (children.length > 0) {
-        			offsprings.add(children[0]);
-        		}
-        		if (children.length > 1) {
-        			offsprings.add(children[1]);
-        		}
-        	}
+        	offsprings.addAll(doCrossoverOnPair());
         }
         
         return offsprings;
 	}
 	
-	Individual<T>[] doCrossoverOnPair() {
+	List<Individual<T>> doCrossoverOnPair() {
 		final Pair<Individual<T>> parents = this.selectionFunction.selectPairDistinct(this.population, true);
         logger.debug("Selected parents: [" + parents.ind1.getFitness() + "], [" + parents.ind2.getFitness() + "]");
         
-        try {
-			final Individual<T>[] children = this.crossoverFunction.crossover(parents.ind1, parents.ind2);
-			return children;
-		} catch (CrossoverException e) {
-			return null;
-		}
+        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.crossover(parents.ind1.getChromosome(), parents.ind2.getChromosome());
+        final List<T> chromosomeCombinedAndMutated1 = this.mutationFunction.mutate(chromosomesCrossover.ind1);
+        final Individual<T> child1 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated1);
+        final List<T> chromosomeCombinedAndMutated2 = this.mutationFunction.mutate(chromosomesCrossover.ind2);
+        final Individual<T> child2 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated2);
+
+        final ArrayList<Individual<T>> retVal = new ArrayList<>();
+        if (child1 != null) {
+        	retVal.add(child1);
+        }
+        if (child2 != null) {
+        	retVal.add(child2);
+        }
+        return retVal;
 	}
 }

@@ -18,43 +18,6 @@ public interface Utils {
 		return Utils.class.getPackage().getImplementationVersion();
 	}
 	
-	/*
-	public static Constraint mkAnd(List<Constraint> refs) {
-		return null; //TODO;
-	}
-	
-	public static Constraint mkImplies(Constraint c1, Constraint c2) {
-		return null; //TODO
-	}
-		
-	public static boolean isContradiction(Constraint c) {
-		return false; //TODO
-	}
-	
-	public static boolean isTautology(Constraint c) {
-		return false; //TODO
-	}
-	
-	public static boolean isImplied(List<Constraint> constraintSet, Constraint c) {
-		return isTautology(mkImplies(mkAnd(constraintSet), c));
-	}
-	
-	public static boolean isInconsistent(List<Constraint> constraintSet) {
-		return isContradiction(mkAnd(constraintSet));
-	}
-	
-	public static boolean isInconsistent(Constraint c, List<Constraint> cc) {
-		if (cc.isEmpty()) {
-			return false;
-		}
-		return false; //TODO
-	}
-
-	public static boolean isRedundant(Constraint c, List<Constraint> slice) {
-		return false; //TODO
-	}
-	*/
-	
 	public static <T extends Gene<T>> String logFitnessStats(List<Individual<T>> individuals) {
 		final ArrayList<Integer> fitnesses = new ArrayList<Integer>();
 		int sum = 0;
@@ -68,7 +31,4 @@ public interface Utils {
         final int avgFitness = sum / fitnesses.size();
         return "max: " + maxFitness + ", min: " + minFitness + ", avg: " + avgFitness;
 	}
-	
-
-
 }

@@ -4,11 +4,10 @@ import java.util.List;
 import java.util.Random;
 
 import gasp.ga.Gene;
-import gasp.ga.IndividualGenerator;
 
 public class MutationFunctionDeleteConstraint<T extends Gene<T>> extends AbstractMutationFunction<T> {
-	public MutationFunctionDeleteConstraint(IndividualGenerator<T> individualGenerator, double mutationProbability, Random random) {
-		super(individualGenerator, mutationProbability, random);
+	public MutationFunctionDeleteConstraint(double mutationProbability, double mutationSizeRatio, Random random) {
+		super(mutationProbability, mutationSizeRatio, random);
 	}
 	
 	@Override

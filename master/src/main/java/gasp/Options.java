@@ -46,7 +46,7 @@ public class Options {
 	private String methodDescriptor = "(I)V";	
 	private String methodName = "m";
 	
-	public enum CrossoverFunctionType { EXCLUDE, PREFIX, SINGLE_POINT, UNION } 
+	public enum CrossoverFunctionType { SINGLE_POINT, TWO_POINTS, PREFIX, UNION } 
 	public enum MutationFunctionType { DELETE_CONSTRAINT, DELETE_OR_NEGATE_CONSTRAINT }
 	public enum SelectionFunctionType { RANK }
 	public enum FitnessFunctionType { SYMBOLIC_EXECUTION }

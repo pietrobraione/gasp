@@ -6,5 +6,5 @@ import gasp.ga.Gene;
 
 @FunctionalInterface
 public interface MutationFunction<T extends Gene<T>> {
-	List<T> mutate(List<T> chromosome, double percentage);
+	List<T> mutate(List<T> chromosome);
 }

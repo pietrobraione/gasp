@@ -1,9 +1,9 @@
-package gasp.se;
+package gasp.ga.jbse;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -49,7 +49,9 @@ import jbse.rewr.RewriterOperationOnSimplex;
 import jbse.rules.ClassInitRulesRepo;
 import jbse.rules.LICSRulesRepo;
 import jbse.tree.StateTree.BranchPoint;
+import jbse.val.Expression;
 import jbse.val.Primitive;
+import jbse.val.exc.InvalidOperandException;
 import jbse.val.exc.InvalidTypeException;
 
 public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
@@ -58,6 +60,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 	private final Random random;
 	private final String[] classpath;
 	private final String z3Path;
+	private final ArrayList<String> z3CommandLine;
 	private final RunnerParameters commonParams;
 	private final State initialState;
 	
@@ -91,6 +94,11 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		}
 		this.classpath[classpath.size()] = jbsePath.toString();
 		this.z3Path = z3Path.toString(); 
+		this.z3CommandLine  = new ArrayList<>();
+		z3CommandLine.add(this.z3Path);
+		z3CommandLine.add(SWITCH_CHAR + "smt2");
+		z3CommandLine.add(SWITCH_CHAR + "in");
+		z3CommandLine.add(SWITCH_CHAR + "t:10");
 		this.commonParams = new RunnerParameters();
 		this.commonParams.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParams.addUserClasspath(this.classpath);
@@ -115,138 +123,11 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 	}
 
 	private class ActionsRunner extends Actions {
-		private final ArrayList<HashSet<String>> partition = new ArrayList<>();
-		private final ArrayList<String> partitionPointsToClass = new ArrayList<>();
-		private final HashSet<String> nulls = new HashSet<>();
-		
+		private final ChromosomeChecker chk;
 		private State endState = null;
 		
-		public ActionsRunner(ArrayList<ClauseAssumeReferenceSymbolic> referencesPrecondition, 
-							 ArrayList<Boolean> negated) throws ContradictionException {
-			//first, positive clauses
-			for (int i = 0; i < referencesPrecondition.size(); ++i) {
-				final ClauseAssumeReferenceSymbolic c = referencesPrecondition.get(i);
-				final boolean isNegated = negated.get(i);
-				if (!isNegated) {
-					if (c instanceof ClauseAssumeAliases) {
-						final ClauseAssumeAliases ca = (ClauseAssumeAliases) c;
-						final String originString1 = ca.getReference().asOriginString();
-						final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-						addToSamePartitionSet(originString1, originString2);
-					} else if (c instanceof ClauseAssumeExpands) {
-						final ClauseAssumeExpands ce = (ClauseAssumeExpands) c;
-						final String originString = ce.getReference().asOriginString();
-						final String className = ce.getObjekt().getType().getClassName();
-						addToSamePartitionSet(originString);
-						assertPartitionClass(originString, className);
-					} else { //c instanceof ClauseAssumeNull
-						addToNulls(c.getReference().asOriginString());
-					}
-				}
-			}
-			//then, negative clauses
-			for (int i = 0; i < referencesPrecondition.size(); ++i) {
-				final ClauseAssumeReferenceSymbolic c = referencesPrecondition.get(i);
-				final boolean isNegated = negated.get(i);
-				if (isNegated) {
-					if (c instanceof ClauseAssumeAliases) {
-						final ClauseAssumeAliases ca = (ClauseAssumeAliases) c;
-						final String originString1 = ca.getReference().asOriginString();
-						final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-						checkNotSamePartitionSet(originString1, originString2);
-					} else if (c instanceof ClauseAssumeExpands) {
-						final ClauseAssumeExpands ce = (ClauseAssumeExpands) c;
-						final String originString = ce.getReference().asOriginString();
-						final String className = ce.getObjekt().getType().getClassName();
-						checkNotPartitionClass(originString, className);
-					} else { //c instanceof ClauseAssumeNull
-						checkNotNull(c.getReference().asOriginString());
-					}
-				}
-			}
-		}
-		
-		private void checkNotSamePartitionSet(String... members) throws ContradictionException {
-			final HashSet<String> membersSet = new HashSet<>(Arrays.asList(members));
-			for (HashSet<String> set : this.partition) {
-				if (set.containsAll(membersSet)) {
-					//contradiction
-					throw new ContradictionException();
-				}
-			}
-		}
-		
-		private void addToSamePartitionSet(String... members) throws ContradictionException {
-			final HashSet<String> membersSet = new HashSet<>(Arrays.asList(members));
-			if (!Collections.disjoint(this.nulls, membersSet)) {
-				//contradiction
-				throw new ContradictionException();
-			}
-			HashSet<String> foundSet = null;
-			for (HashSet<String> set : this.partition) {
-				if (!Collections.disjoint(set, membersSet)) {
-					if (foundSet != null) {
-						//contradiction
-						throw new ContradictionException();
-					}
-					foundSet = set;
-				}
-			}
-			//no contradiction
-			if (foundSet == null) {
-				foundSet = new HashSet<>();
-				this.partition.add(foundSet);
-				this.partitionPointsToClass.add(null);
-			}
-			foundSet.addAll(membersSet);
-		}
-		
-		private void assertPartitionClass(String member, String className) throws ContradictionException {
-			for (int i = 0; i < this.partition.size(); ++i) {
-				if (this.partition.get(i).contains(member)) {
-					if (this.partitionPointsToClass.get(i) == null) {
-						this.partitionPointsToClass.set(i, className);
-						return;
-					} else if (this.partitionPointsToClass.get(i).equals(className)) {
-						//no contradiction, do nothing
-						return;
-					} else {
-						//contradiction
-						throw new ContradictionException();
-					}
-				}
-			}
-		}
-		
-		private void checkNotPartitionClass(String member, String className) throws ContradictionException {
-			for (int i = 0; i < this.partition.size(); ++i) {
-				if (this.partition.get(i).contains(member)) {
-					if (className.equals(this.partitionPointsToClass.get(i))) {
-						//contradiction
-						throw new ContradictionException();
-					} else {
-						//no contradiction, do nothing
-						return;
-					}
-				}
-			}
-		}
-		
-		private void checkNotNull(String member) throws ContradictionException {
-			if (this.nulls.contains(member)) {
-				//contradiction
-				throw new ContradictionException();
-			}
-		}
-		
-		private void addToNulls(String member) throws ContradictionException {
-			for (HashSet<String> set : this.partition) {
-				if (set.contains(member)) {
-					//contradiction
-					throw new ContradictionException();
-				}
-			}
-			this.nulls.add(member);
+		public ActionsRunner(ChromosomeChecker chk) {
+			this.chk = chk;
 		}
 		
 		public State getEndState() {
@@ -278,7 +159,9 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			for (int index : indices) {
 				try {
 					final State s = (index == 0 ? engine.getCurrentState() : engine.getStateAtBranch(bp, index - 1));
-					if (satisfiesReferencePrecondition(s)) {
+					if (contradictsReferencePrecondition(s)) {
+						continue;
+					} else {
 						compliantStateIndex = index;
 						break;
 					}
@@ -305,50 +188,32 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			return super.atBranch(bp);
 		}
 
-		private boolean satisfiesReferencePrecondition(State s) {
+		private boolean contradictsReferencePrecondition(State s) {
 			for (Clause c : s.getPathCondition()) {
 				if (c instanceof ClauseAssumeAliases) {
-					final ClauseAssumeAliases ca = (ClauseAssumeAliases) c;
+					final ClauseAssumeAliases ca = (ClauseAssumeAliases) c; 
 					final String originString1 = ca.getReference().asOriginString();
 					final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-					if (cannotBeAlias(originString1, originString2)) {
-						return false;
+					if (this.chk.contradictsAlias(originString1, originString2)) {
+						return true;
+					}
+				} else if (c instanceof ClauseAssumeExpands) {
+					final ClauseAssumeExpands ce = (ClauseAssumeExpands) c;
+					final String originString = ce.getReference().asOriginString();
+					final String className = ce.getObjekt().getType().getClassName();
+					if (this.chk.contradictsExpands(originString, className)) {
+						return true;
 					}
 				} else if (c instanceof ClauseAssumeNull) {
-					if (cannotBeNull(((ClauseAssumeNull) c).getReference().asOriginString())) {
-						return false;
+					final ClauseAssumeNull cn = (ClauseAssumeNull) c;
+					final String originString = cn.getReference().asOriginString();
+					if (this.chk.contradictsNull(originString)) {
+						return true;
 					}
-				}
-			}
-			return true;
-		}
-		
-		private boolean cannotBeAlias(String originString1, String originString2) {
-			HashSet<String> set1 = null;
-			HashSet<String> set2 = null;
-			for (HashSet<String> set : this.partition) {
-				if (set.contains(originString1)) {
-					set1 = set;
-				}
-				if (set.contains(originString2)) {
-					set2 = set;
-				}
-			}
-			return (set1 != null && set2 != null && set1 != set2);
-		}
-		
-		private boolean cannotBeNull(String originString) {
-			if (this.nulls.contains(originString)) {
-				return false;
-			}
-			for (HashSet<String> set : this.partition) {
-				if (set.contains(originString)) {
-					return true;
-				}
+				}  //else, do nothing
 			}
 			return false;
 		}
-
 
 		@Override
 		public void atEnd() {
@@ -429,17 +294,12 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		params.setCalculator(calc);
 		
 		//sets the decision procedures
-		final ArrayList<String> z3CommandLine = new ArrayList<>();
-		z3CommandLine.add(this.z3Path);
-		z3CommandLine.add(SWITCH_CHAR + "smt2");
-		z3CommandLine.add(SWITCH_CHAR + "in");
-		z3CommandLine.add(SWITCH_CHAR + "t:10");
 		params.setDecisionProcedure(new DecisionProcedureAlgorithms(
 				new DecisionProcedureClassInit( //useless?
 						new DecisionProcedureLICS( //useless?
 								new DecisionProcedureSMTLIB2_AUFNIRA(
 										new DecisionProcedureAlwSat(), 
-										calc, z3CommandLine), 
+										calc, this.z3CommandLine), 
 								calc, new LICSRulesRepo()), 
 						calc, new ClassInitRulesRepo()), calc));
 
@@ -463,29 +323,14 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 
 		try {
 			final State sInitial = this.initialState.clone();
-			final ArrayList<ClauseAssumeReferenceSymbolic> referencesPrecondition = new ArrayList<>();
-			final ArrayList<Boolean> negated = new ArrayList<>();
-			for (GeneJBSE c : chromosome) {
-				final Clause clause = c.getClause();
-				if (clause instanceof ClauseAssume) {
-					Primitive condition = ((ClauseAssume) clause).getCondition();
-					if (c.isNegated()) {
-						condition = condition.not();
-					}
-					sInitial.assume(condition);
-				} else if (clause instanceof ClauseAssumeReferenceSymbolic) {
-					referencesPrecondition.add((ClauseAssumeReferenceSymbolic) clause);
-					negated.add(c.isNegated());
-				} //else skip
-			}
-			final ActionsRunner actions = new ActionsRunner(referencesPrecondition, negated);
+			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
 			final Runner r = newRunner(actions, sInitial);
 			r.run();
 			s = actions.getEndState();
 		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException | InvalidInputException e) {
+				| ContradictionException | EngineStuckException | FailureException | InvalidInputException | InvalidOperandException e) {
 			//TODO improve!
 			throw new RuntimeException(e);
 		}
@@ -499,5 +344,259 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 				.filter(clause -> (clause instanceof ClauseAssume || clause instanceof ClauseAssumeReferenceSymbolic))
 				.map(clause -> new GeneJBSE(clause)).collect(Collectors.toList());		
 		return new Individual<>(chromosomeIndividual, s.getDepth() + 1);
+	}
+	
+	private class ChromosomeChecker {
+		final ArrayList<HashSet<String>> aliases = new ArrayList<>();
+		final HashMap<String, HashSet<String>> notAliases = new HashMap<>();
+		final ArrayList<String> pointsTo = new ArrayList<>();
+		final ArrayList<HashSet<String>> doesNotPointTo = new ArrayList<>();
+		final HashSet<String> nulls = new HashSet<>();
+		final HashSet<String> notNulls = new HashSet<>();
+		final ArrayList<GeneJBSE> chromosomeFiltered = new ArrayList<>();
+		
+		ChromosomeChecker(List<GeneJBSE> chromosome) throws DecisionException, InvalidTypeException, InvalidOperandException, InvalidInputException {
+			final HashSet<Integer> contradictoryGenesPositions = new HashSet<>();
+			Primitive precondition = null;
+			final CalculatorRewriting calc = new CalculatorRewriting();
+			calc.addRewriter(new RewriterOperationOnSimplex());
+			final DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine);
+			for (int i = 0; i < chromosome.size(); ++i) {
+				final GeneJBSE gene = chromosome.get(i);
+				final Clause clause = gene.getClause();
+				if (clause instanceof ClauseAssume) {
+					Primitive condition = ((ClauseAssume) clause).getCondition();
+					if (gene.isNegated()) {
+						condition = condition.not();
+					}
+					if (contradicts(dec, precondition, condition)) {
+						contradictoryGenesPositions.add(i);
+					} else {
+						precondition = (precondition == null ? condition : precondition.and(condition));
+					}
+				} else if (clause instanceof ClauseAssumeReferenceSymbolic) {
+					if (gene.isNegated()) {
+						if (clause instanceof ClauseAssumeAliases) {
+							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+							final String originString1 = ca.getReference().asOriginString();
+							final String originString2 = ca.getObjekt().getOrigin().asOriginString();
+							if (contradictsNotAlias(originString1, originString2)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addNotAlias(originString1, originString2);
+							}
+						} else if (clause instanceof ClauseAssumeExpands) {
+							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+							final String originString = ce.getReference().asOriginString();
+							final String className = ce.getObjekt().getType().getClassName();
+							if (contradictsDoesNotPointTo(originString, className)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addDoesNotPointTo(originString, className);
+							}
+						} else { //clause instanceof ClauseAssumeNull
+							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+							final String originString = cn.getReference().asOriginString();
+							if (contradictsNotNull(originString)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addNotNull(originString);
+							}
+						}
+					} else {
+						if (clause instanceof ClauseAssumeAliases) {
+							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+							final String originString1 = ca.getReference().asOriginString();
+							final String originString2 = ca.getObjekt().getOrigin().asOriginString();
+							if (contradictsAlias(originString1, originString2)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addAlias(originString1, originString2);
+							}
+						} else if (clause instanceof ClauseAssumeExpands) {
+							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+							final String originString = ce.getReference().asOriginString();
+							final String className = ce.getObjekt().getType().getClassName();
+							if (contradictsExpands(originString, className)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addExpands(originString, className);
+							}
+						} else { //clause instanceof ClauseAssumeNull
+							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+							final String originString = cn.getReference().asOriginString();
+							if (contradictsNull(originString)) {
+								contradictoryGenesPositions.add(i);
+							} else {
+								addNull(originString);
+							}
+						}
+					}
+				} //else skip
+			}
+			
+			//builds the filtered chromosome
+			for (int i = 0; i < chromosome.size(); ++i) {
+				if (contradictoryGenesPositions.contains(i)) {
+					//do nothing
+				} else {
+					this.chromosomeFiltered.add(chromosome.get(i));
+				}
+			}
+		}
+	
+		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition) 
+				throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
+			final Primitive conditionAnd = (precondition == null ? condition : precondition.and(condition));
+			if (conditionAnd.surelyFalse()) {
+				return true;
+			} else if (conditionAnd.surelyTrue()) {
+				return false;
+			} else {
+				return dec.isSat((Expression) conditionAnd);
+			}
+		}
+
+		boolean contradictsNotAlias(String originString1, String originString2) {
+			if (this.nulls.contains(originString1) || this.nulls.contains(originString2)) {
+				return false;
+			}
+			HashSet<String> aliasSet1 = null, aliasSet2 = null;
+			for (HashSet<String> aliasSet : this.aliases) {
+				if (aliasSet.contains(originString1)) {
+					aliasSet1 = aliasSet;
+				}
+				if (aliasSet.contains(originString2)) {
+					aliasSet2 = aliasSet;
+				}
+			}
+			if (aliasSet1 != null && aliasSet2 != null && aliasSet1 == aliasSet2) {
+				return true;
+			}
+			return false;
+		}
+
+		void addNotAlias(String originString1, String originString2) {
+			final HashSet<String> inequivalent1 = (this.notAliases.containsKey(originString1) ? this.notAliases.get(originString1) : new HashSet<>());
+			inequivalent1.add(originString2);
+			notAliases.put(originString1, inequivalent1);
+			final HashSet<String> inequivalent2 = (this.notAliases.containsKey(originString2) ? this.notAliases.get(originString2) : new HashSet<>());
+			inequivalent2.add(originString1);
+			notAliases.put(originString2, inequivalent2);
+		}
+
+		boolean contradictsDoesNotPointTo(String originString, String className) {
+			for (int i = 0; i < this.aliases.size(); ++i) {
+				final HashSet<String> aliasSet = this.aliases.get(i);
+				if (aliasSet.contains(originString) && this.pointsTo.get(i).equals(className)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		void addDoesNotPointTo(String originString, String className) {
+			for (int i = 0; i < this.aliases.size(); ++i) {
+				final HashSet<String> aliasSet = this.aliases.get(i);
+				if (aliasSet.contains(originString)) {
+					this.doesNotPointTo.get(i).add(className);
+					return;
+				}
+			}
+			this.aliases.add(new HashSet<>());
+			this.aliases.get(aliases.size() - 1).add(originString);
+			this.pointsTo.add(null);
+			this.doesNotPointTo.add(new HashSet<>());
+			this.doesNotPointTo.get(doesNotPointTo.size() - 1).add(className);
+		}
+
+		boolean contradictsNotNull(String originString) {
+			return this.nulls.contains(originString);
+		}
+
+		void addNotNull(String originString) {
+			this.notNulls.add(originString);
+		}
+
+		boolean contradictsAlias(String originString1, String originString2) {
+			if (this.nulls.contains(originString1) || this.nulls.contains(originString2)) {
+				return true;
+			}
+			if (this.notAliases.containsKey(originString1) && this.notAliases.get(originString1).contains(originString2)) {
+				return true;
+			}
+			if (this.notAliases.containsKey(originString2) && this.notAliases.get(originString2).contains(originString1)) {
+				return true;
+			}
+			HashSet<String> aliasSet1 = null, aliasSet2 = null;
+			for (HashSet<String> aliasSet : this.aliases) {
+				if (aliasSet.contains(originString1)) {
+					aliasSet1 = aliasSet;
+				}
+				if (aliasSet.contains(originString2)) {
+					aliasSet2 = aliasSet;
+				}
+			}
+			if (aliasSet1 != null && aliasSet2 != null && aliasSet1 != aliasSet2) {
+				return true;
+			}
+			return false;
+		}
+
+		void addAlias(String originString1, String originString2) {
+			for (HashSet<String> aliasSet : this.aliases) {
+				if (aliasSet.contains(originString1) || aliasSet.contains(originString2)) {
+					aliasSet.add(originString1);
+					aliasSet.add(originString2);
+					return;
+				}
+			}
+			this.aliases.add(new HashSet<>());
+			this.aliases.get(aliases.size() - 1).add(originString1);
+			this.aliases.get(aliases.size() - 1).add(originString2);
+			this.pointsTo.add(null);
+			this.doesNotPointTo.add(new HashSet<>());
+		}
+
+		boolean contradictsExpands(String originString, String className) {
+			for (int i = 0; i < this.aliases.size(); ++i) {
+				final HashSet<String> aliasSet = this.aliases.get(i);
+				if (aliasSet.contains(originString)) {
+					return (this.doesNotPointTo.get(i).contains(className) ||
+							(this.pointsTo.get(i) != null && !className.equals(this.pointsTo.get(i))));
+				}
+			}
+			return false;
+		}
+
+		void addExpands(String originString, String className) {
+			for (int i = 0; i < this.aliases.size(); ++i) {
+				final HashSet<String> aliasSet = this.aliases.get(i);
+				if (aliasSet.contains(originString)) {
+					this.pointsTo.set(i, className);
+					return;
+				}
+			}
+			this.aliases.add(new HashSet<>());
+			this.aliases.get(aliases.size() - 1).add(originString);
+			this.pointsTo.add(className);
+			this.doesNotPointTo.add(new HashSet<>());
+		}
+
+		boolean contradictsNull(String originString) {
+			if (this.notNulls.contains(originString)) {
+				return true;
+			}
+			for (HashSet<String> aliasSet : aliases) {
+				if (aliasSet.contains(originString)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		void addNull(String originString) {
+			this.nulls.add(originString);
+		}
 	}
 }

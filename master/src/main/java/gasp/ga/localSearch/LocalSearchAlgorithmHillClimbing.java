@@ -48,6 +48,11 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 			
 			final Individual<T> newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 			
+			if (newIndividual == null) {
+				//unsuccessful mutation
+				continue;
+			}
+			
 			logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness());
 
 			if (newIndividual.getFitness() > retValue.getFitness()) {

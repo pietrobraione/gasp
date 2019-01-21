@@ -6,6 +6,7 @@ import java.util.List;
 
 import gasp.ga.Gene;
 import gasp.ga.Individual;
+import gasp.ga.Pair;
 
 @FunctionalInterface
 public interface SelectionFunction<T extends Gene<T>> {
@@ -13,17 +14,16 @@ public interface SelectionFunction<T extends Gene<T>> {
 	
 	default Pair<Individual<T>> selectPairDistinct(List<Individual<T>> population, boolean populationIsSorted) {
 		final List<Individual<T>> populationCopy = new ArrayList<>(population);		
-		final Pair<Individual<T>> retValue = new Pair<>();
 
-		int index = selectIndividual(populationCopy, populationIsSorted);
-		retValue.ind1 = populationCopy.get(index);
+		final int index1 = selectIndividual(populationCopy, populationIsSorted);
+		final Individual<T> individual1 = populationCopy.get(index1);
 		
-		populationCopy.remove(index);
+		populationCopy.remove(index1);
 
-		index = selectIndividual(populationCopy, true /* sorted at previous step */);
-		retValue.ind2 = populationCopy.get(index);
+		final int index2 = selectIndividual(populationCopy, true /* sorted at previous step */);
+		final Individual<T> individual2 = populationCopy.get(index2);
 		
-		return retValue;
+		return new Pair<>(individual1, individual2);
 	}
 
 	default List<Individual<T>> survivalSelection(List<Individual<T>> population, int n) {

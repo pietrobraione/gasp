@@ -28,11 +28,10 @@ public class TestGeneticAlgorithm {
 		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
 	}
 	
-	@SuppressWarnings("unchecked")
 	private GeneticAlgorithm<GeneStub> ga() {
-		return new GeneticAlgorithm<GeneStub>(new IndividualGeneratorStub(new Random()), 1, 1, POPULATION_SIZE, ELITE_SIZE, 
-									(i1, i2) -> { return new Individual[] { i1, i2 }; }, 
-									(li, b) -> 0, i -> i);
+		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), 1, 1, POPULATION_SIZE, ELITE_SIZE, 
+									  (c1, c2) -> { return new Pair<>(c1, c2); }, c -> c,
+									  (pop, sorted) -> 0, i -> i);
 	}
 	
 	@Test
@@ -76,7 +75,7 @@ public class TestGeneticAlgorithm {
 	}
 	
 	@Test
-	@DisplayName("GeneticAlgorithm.getBestSolutions does not return null")
+	@DisplayName("GeneticAlgorithm.getBestIndividuals does not return null")
 	public void testAlgorithm1() throws IOException {
 		final GeneticAlgorithm<?> algo = ga();
  		algo.evolve();
@@ -84,11 +83,10 @@ public class TestGeneticAlgorithm {
 	}
 
 	@Test
-	@DisplayName("GeneticAlgorithm.getBestSolutions does not return an empty list")
+	@DisplayName("GeneticAlgorithm.getBestIndividuals does not return an empty list")
 	public void testAlgorithm2() throws IOException {
 		final GeneticAlgorithm<?> algo = ga();
  		algo.evolve();
  		assertFalse(algo.getBestIndividuals(POPULATION_SIZE).isEmpty());
 	}
-
 }

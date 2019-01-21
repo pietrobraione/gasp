@@ -3,7 +3,7 @@ package gasp.ga;
 import org.junit.jupiter.api.Test;
 
 import gasp.ga.Individual;
-import gasp.se.IndividualGeneratorJBSE;
+import gasp.ga.jbse.IndividualGeneratorJBSE;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

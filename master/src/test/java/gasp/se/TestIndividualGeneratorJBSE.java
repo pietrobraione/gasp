@@ -14,6 +14,8 @@ import java.util.Random;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import gasp.ga.jbse.IndividualGeneratorJBSE;
+
 public class TestIndividualGeneratorJBSE {
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
 	static {

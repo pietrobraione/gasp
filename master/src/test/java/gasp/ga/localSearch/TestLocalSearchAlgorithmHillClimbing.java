@@ -2,13 +2,11 @@ package gasp.ga.localSearch;
 
 import org.junit.jupiter.api.Test;
 
-import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
+import gasp.ga.jbse.GeneJBSE;
+import gasp.ga.jbse.IndividualGeneratorJBSE;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
-import gasp.se.GeneJBSE;
-import gasp.se.IndividualGeneratorJBSE;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -51,10 +49,12 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	}
 	
 	@Test
-	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch() returns an Individual with a (possibly) higher fitness than the input one")
+	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch(), if returns a different Individual, this has a higher fitness than the input one")
 	public void testLocalSearch3() {
 		final Individual<GeneJBSE> indRandom = ig().generateRandomIndividual();
 		final Individual<GeneJBSE> indSearch = localSearch().doLocalSearch(indRandom.clone());
+		assumeFalse(indSearch == null);
+		assumeFalse(indRandom.equals(indSearch));
 		assertTrue(indSearch.getFitness() >= indRandom.getFitness());
 	}
 	
@@ -63,6 +63,7 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	public void testLocalSearch4() {
 		final Individual<GeneJBSE> indRandom = ig().generateRandomIndividual();
 		final Individual<GeneJBSE> indSearch = localSearch().doLocalSearch(indRandom.clone());
+		assumeFalse(indSearch == null);
 		assumeFalse(indRandom.equals(indSearch));
 		boolean hasANegativeConstraint = false;
 		for (int i = 0; i < indSearch.getChromosome().size(); ++i) {

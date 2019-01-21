@@ -21,22 +21,22 @@ import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
 import gasp.ga.Gene;
 import gasp.ga.IndividualGenerator;
+import gasp.ga.jbse.GeneJBSE;
+import gasp.ga.jbse.IndividualGeneratorJBSE;
 import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 import gasp.ga.localSearch.LocalSearchAlgorithm;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
 import gasp.ga.operators.crossover.CrossoverFunction;
-import gasp.ga.operators.crossover.CrossoverFunctionExclude_NotUsedYet;
-import gasp.ga.operators.crossover.CrossoverFunctionPrefix_NotUsedYet;
+import gasp.ga.operators.crossover.CrossoverFunctionTwoPoints;
+import gasp.ga.operators.crossover.CrossoverFunctionPrefix;
 import gasp.ga.operators.crossover.CrossoverFunctionSinglePoint;
-import gasp.ga.operators.crossover.CrossoverFunctionUnion_NotUsedYet;
+import gasp.ga.operators.crossover.CrossoverFunctionUnion;
 import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.mutation.MutationFunctionDeleteConstraint;
 import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegateConstraint;
 import gasp.ga.operators.selection.SelectionFunction;
 import gasp.ga.operators.selection.SelectionFunctionRank;
-import gasp.se.GeneJBSE;
-import gasp.se.IndividualGeneratorJBSE;
 
 public class Main {
 	private final Options o;
@@ -114,51 +114,48 @@ public class Main {
 										  this.o.getMethodName());
 		final GeneticAlgorithm<GeneJBSE> retVal = 
 				new GeneticAlgorithm<GeneJBSE>(cm,
-													 this.o.getGenerations(),
-									    			 this.o.getLocalSearchRate(),
-									    			 this.o.getPopulationSize(),
-									    			 this.o.getEliteSize(),
-									    			 crossoverFunction(cm), 
-									    			 selectionFunction(cm),
-									    			 localSearchAlgorithm(cm));	
+											   this.o.getGenerations(),
+											   this.o.getLocalSearchRate(),
+											   this.o.getPopulationSize(),
+											   this.o.getEliteSize(),
+											   crossoverFunction(),
+											   mutationFunction(),
+											   selectionFunction(),
+											   localSearchAlgorithm(cm));	
 		return retVal;
 	}
 	
-	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction(IndividualGenerator<T> cm) {
+	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction() {
 		switch (this.o.getCrossoverFunctionType()) {
-		case EXCLUDE:
-			return new CrossoverFunctionExclude_NotUsedYet<T>(this.o.getRandom());
-		case PREFIX:
-			return new CrossoverFunctionPrefix_NotUsedYet<T>(cm,
-														     this.o.getRandom());
 		case SINGLE_POINT:
-			return new CrossoverFunctionSinglePoint<T>(cm, 
-													   mutationFunction(cm),
-													   this.o.getMutationSizeRatio(),
-													   this.o.getRandom());
+			return new CrossoverFunctionSinglePoint<T>(this.o.getRandom());
+		case TWO_POINTS:
+			return new CrossoverFunctionTwoPoints<T>(this.o.getRandom());
+		case PREFIX:
+			return new CrossoverFunctionPrefix<T>(this.o.getRandom());
 		case UNION:
-			return new CrossoverFunctionUnion_NotUsedYet<T>(cm);
+			return new CrossoverFunctionUnion<T>(this.o.getRandom());
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a crossover function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> MutationFunction<T> mutationFunction(IndividualGenerator<T> cm) {
+	private <T extends Gene<T>> MutationFunction<T> mutationFunction() {
 		switch (this.o.getMutationFunctionType()) {
 		case DELETE_CONSTRAINT:
-			return new MutationFunctionDeleteConstraint<T>(cm, 
-														   this.o.getMutationProbability(), 
+			return new MutationFunctionDeleteConstraint<T>(this.o.getMutationProbability(),
+														   this.o.getMutationSizeRatio(),
 														   this.o.getRandom());
 		case DELETE_OR_NEGATE_CONSTRAINT:
-			return new MutationFunctionDeleteOrNegateConstraint<T>(cm, 
-																   this.o.getMutationProbability(), 
+			return new MutationFunctionDeleteOrNegateConstraint<T>(this.o.getMutationProbability(), 
+																   this.o.getMutationSizeRatio(),
 																   this.o.getRandom());
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> SelectionFunction<T> selectionFunction(IndividualGenerator<T> cm) {
+	private <T extends Gene<T>> SelectionFunction<T> selectionFunction() {
 		switch (this.o.getSelectionFunctionType()) {
 		case RANK:
 			return new SelectionFunctionRank<T>(this.o.getRandom());
