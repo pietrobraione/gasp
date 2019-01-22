@@ -3,11 +3,10 @@ package gasp.ga;
 import java.util.ArrayList;
 import java.util.List;
 
-/* Individuals are immutable */
-
 public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Individual<T>> {
 	private final List<T> chromosome;
 	private final int fitness;
+	private final String toString;
 	
 	public Individual(List<T> chromosome, int fitness) {
 		if (chromosome == null || chromosome.isEmpty()) {
@@ -16,6 +15,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		
 		this.chromosome = new ArrayList<>(chromosome);
 		this.fitness = fitness;
+		this.toString = "Individual [fitness = " + this.fitness + ", chromosome = " + this.chromosome + "]";
 	}
 
 	public List<T> getChromosome() {
@@ -36,13 +36,12 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 	
 	@Override
 	public String toString() {
-		return "Individual [fitness = " + this.fitness + ", chromosome = " + this.chromosome + "]";
+		return this.toString;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Individual<T> clone() {
-    	//TODO should be a deep copy???
     	try {
     		return (Individual<T>) super.clone();
     	} catch (CloneNotSupportedException e) {
@@ -72,11 +71,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		}
 		@SuppressWarnings("unchecked")
 		final Individual<T> other = (Individual<T>) obj;
-		if (this.chromosome == null) {
-			if (other.chromosome != null) {
-				return false;
-			}
-		} else if (!this.chromosome.equals(other.chromosome)) {
+		if (!this.chromosome.equals(other.chromosome)) {
 			return false;
 		}
 		if (this.fitness != other.fitness) {

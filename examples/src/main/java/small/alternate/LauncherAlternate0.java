@@ -1,4 +1,4 @@
-package small.palindrome;
+package small.alternate;
 
 import static settings.Settings.PATH_EXAMPLES;
 import static settings.Settings.PATH_JBSE;
@@ -7,7 +7,7 @@ import static settings.Settings.PATH_Z3;
 import gasp.Main;
 import gasp.Options;
 
-public class LauncherPalindrome {
+public class LauncherAlternate0 {
 	public static void main(String[] s) {
 		final Options o = new Options();
 		
@@ -15,9 +15,7 @@ public class LauncherPalindrome {
 		o.setJBSEPath(PATH_JBSE);
 		o.setZ3Path(PATH_Z3);
 
-		o.setMethodSignature("small/palindrome/Palindrome:([I)Z:isPalindrome");
-		
-		o.setSeed(1548106144972L);
+		o.setMethodSignature("small/alternate/Alternate0:([I)V:alternate_0");
 		
 		final Main m = new Main(o);
 		m.run();

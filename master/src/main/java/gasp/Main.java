@@ -5,6 +5,7 @@ import static gasp.utils.Utils.getVendor;
 import static gasp.utils.Utils.getVersion;
 
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -72,10 +73,11 @@ public class Main {
 		final Logger logger = LogManager.getLogger(Main.class);
 		
 		logger.info(getName() + " version " + getVersion() + ", © 2019 " + getVendor());
-		logger.info("Started, going to evolve " + o.getGenerations()  + " generations");
-		logger.info("Estimated fitness evaluation: " + o.estimateFitnessEvaluations());
+		logger.info("Analyzing method " + o.getMethodClassName() + ":" + o.getMethodDescriptor() + ":" + o.getMethodName());
+		logger.info("Going to evolve " + o.getGenerations()  + " generations, seed " + this.o.getSeed());
+		logger.info("Estimated number of fitness evaluations: " + o.estimateFitnessEvaluations());
 
-		final GeneticAlgorithm<?> ga = geneticAlgorithm();
+		final GeneticAlgorithm<?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
 		ga.evolve();
 		final Individual<?> solution = ga.getBestIndividuals(1).get(0);
 		
@@ -103,73 +105,73 @@ public class Main {
 		Configurator.initialize(builder.build());
 	}
 	
-	private GeneticAlgorithm<?> geneticAlgorithm() {
-		final IndividualGenerator<GeneJBSE> cm = 
-				new IndividualGeneratorJBSE(this.o.getRandom(),
-										  this.o.getClasspath(),
-										  this.o.getJBSEPath(), 
-										  this.o.getZ3Path(),
-										  this.o.getMethodClassName(), 
-										  this.o.getMethodDescriptor(), 
-										  this.o.getMethodName());
+	private GeneticAlgorithm<?> geneticAlgorithm(Random random) {
+		final IndividualGenerator<GeneJBSE> ig = 
+				new IndividualGeneratorJBSE(random,
+										    this.o.getClasspath(),
+										    this.o.getJBSEPath(), 
+										    this.o.getZ3Path(),
+										    this.o.getMethodClassName(), 
+										    this.o.getMethodDescriptor(), 
+										    this.o.getMethodName());
 		final GeneticAlgorithm<GeneJBSE> retVal = 
-				new GeneticAlgorithm<GeneJBSE>(cm,
+				new GeneticAlgorithm<GeneJBSE>(ig,
 											   this.o.getGenerations(),
 											   this.o.getLocalSearchRate(),
 											   this.o.getPopulationSize(),
 											   this.o.getEliteSize(),
-											   crossoverFunction(),
-											   mutationFunction(),
-											   selectionFunction(),
-											   localSearchAlgorithm(cm));	
+											   crossoverFunction(random),
+											   mutationFunction(random),
+											   selectionFunction(random),
+											   localSearchAlgorithm(ig, random));	
 		return retVal;
 	}
 	
-	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction() {
+	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction(Random random) {
 		switch (this.o.getCrossoverFunctionType()) {
 		case SINGLE_POINT:
-			return new CrossoverFunctionSinglePoint<T>(this.o.getRandom());
+			return new CrossoverFunctionSinglePoint<T>(random);
 		case TWO_POINTS:
-			return new CrossoverFunctionTwoPoints<T>(this.o.getRandom());
+			return new CrossoverFunctionTwoPoints<T>(random);
 		case PREFIX:
-			return new CrossoverFunctionPrefix<T>(this.o.getRandom());
+			return new CrossoverFunctionPrefix<T>(random);
 		case UNION:
-			return new CrossoverFunctionUnion<T>(this.o.getRandom());
+			return new CrossoverFunctionUnion<T>(random);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a crossover function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> MutationFunction<T> mutationFunction() {
+	private <T extends Gene<T>> MutationFunction<T> mutationFunction(Random random) {
 		switch (this.o.getMutationFunctionType()) {
 		case DELETE_CONSTRAINT:
 			return new MutationFunctionDeleteConstraint<T>(this.o.getMutationProbability(),
 														   this.o.getMutationSizeRatio(),
-														   this.o.getRandom());
+														   random);
 		case DELETE_OR_NEGATE_CONSTRAINT:
 			return new MutationFunctionDeleteOrNegateConstraint<T>(this.o.getMutationProbability(), 
 																   this.o.getMutationSizeRatio(),
-																   this.o.getRandom());
+																   random);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> SelectionFunction<T> selectionFunction() {
+	private <T extends Gene<T>> SelectionFunction<T> selectionFunction(Random random) {
 		switch (this.o.getSelectionFunctionType()) {
 		case RANK:
-			return new SelectionFunctionRank<T>(this.o.getRandom());
+			return new SelectionFunctionRank<T>(random);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a selection function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> LocalSearchAlgorithm<T> localSearchAlgorithm(IndividualGenerator<T> cm) {
+	private <T extends Gene<T>> LocalSearchAlgorithm<T> localSearchAlgorithm(IndividualGenerator<T> ig, Random random) {
 		switch (this.o.getLocalSearchAlgorithmType()) {
 		case HILL_CLIMBING:
-			return new LocalSearchAlgorithmHillClimbing<T>(cm,
+			return new LocalSearchAlgorithmHillClimbing<T>(ig,
 														   this.o.getPopulationSize(),
-														   this.o.getRandom());
+														   random);
 		case NONE:
 			return null;
 		default:

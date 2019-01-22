@@ -29,12 +29,12 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	private List<Individual<T>> population = new ArrayList<>();
 	private int currentGeneration = 0;
 
-	public GeneticAlgorithm(IndividualGenerator<T> constraintManager, int generations, 
+	public GeneticAlgorithm(IndividualGenerator<T> individualGenerator, int generations, 
 							int localSearchRate, int populationSize, int eliteSize, 
 							CrossoverFunction<T> crossoverFunction, MutationFunction<T> mutationFunction, 
 							SelectionFunction<T> selectionFunction, LocalSearchAlgorithm<T> localSearchAlgorithm) {
-		if (constraintManager == null) {
-			throw new IllegalArgumentException("Constraint manager cannot be null.");
+		if (individualGenerator == null) {
+			throw new IllegalArgumentException("The individual generator cannot be null.");
 		}
 		if (generations <= 0) {
 			throw new IllegalArgumentException("Number of generations cannot be less or equal to 0.");
@@ -64,7 +64,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 			throw new IllegalArgumentException("Local search algorithm cannot be null.");
 		}
 		
-		this.individualGenerator = constraintManager;
+		this.individualGenerator = individualGenerator;
 		this.generations = generations;
 		this.localSearchRate = localSearchRate;
 		this.populationSize = populationSize;
@@ -81,11 +81,13 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		for (int i = 0; i < this.populationSize; ++i) {
 			this.population.add(this.individualGenerator.generateRandomIndividual());
 		}
+		Collections.sort(this.population);
 	}
 	
 	public void evolve() {
 		logger.debug("Generation " + this.currentGeneration + ":");
 		logIndividuals(this.population);
+        logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
 
 		while (!isFinished()) {
 			++this.currentGeneration;
@@ -94,6 +96,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 			
         	logger.debug("Generation " + this.currentGeneration + ":");
         	logIndividuals(this.population);
+            logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
 		}
 	}
 	
@@ -124,7 +127,6 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
         
     	logger.debug("Performing local search");
 
-    	Collections.sort(this.population);
         final Individual<T> best = this.population.get(0);
         final Individual<T> optimizedBest = this.localSearchAlgorithm.doLocalSearch(best);
         
@@ -145,48 +147,47 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	void deriveNextGeneration() {
 		final List<Individual<T>> offsprings = breedOffsprings();
         Collections.sort(offsprings);
-        this.population.addAll(offsprings);
 
         logger.debug("Offsprings after crossover and mutation:");
         logIndividuals(offsprings);
         
+        this.population.addAll(offsprings);
+        Collections.sort(this.population);
+
         final List<Individual<T>> elite = elitism();
         
-        logger.debug("Best individual: " + elite.get(0));
+        logger.debug("Elite:");
+        logIndividuals(elite);
 
-        this.population = this.selectionFunction.survivalSelection(this.population, this.populationSize - elite.size());
+        this.population = survivingIndividuals();
         this.population.addAll(elite);
-
-        logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
-		
+        Collections.sort(this.population);
 	}
 
 	List<Individual<T>> elitism() {
-        Collections.sort(this.population);
         final ArrayList<Individual<T>> elite = new ArrayList<>(this.population.subList(0, this.eliteSize));
         this.population.subList(0, this.eliteSize).clear();
         return elite;
 	}
 	
 	List<Individual<T>> breedOffsprings() {
-        Collections.sort(this.population);
-        
         final List<Individual<T>> offsprings = new ArrayList<>();
         for (int i = 0; i < this.populationSize / 2; ++i) {
         	offsprings.addAll(generateOffspringsFromTwoParents());
-        }
-        
+        }        
         return offsprings;
 	}
 	
 	List<Individual<T>> generateOffspringsFromTwoParents() {
-		final Pair<Individual<T>> parents = this.selectionFunction.selectParents(this.population, true);
-        logger.debug("Selected parents: [" + parents.ind1.getFitness() + "], [" + parents.ind2.getFitness() + "]");
+		final List<Integer> parents = this.selectionFunction.select(this.population, 2);
+        logger.debug("Selected parents: " + (parents.get(0) + 1) + ", " + (parents.get(1) + 1));
         
-        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(parents.ind1.getChromosome(), parents.ind2.getChromosome());
-        final List<T> chromosomeCombinedAndMutated1 = this.mutationFunction.mutate(chromosomesCrossover.ind1);
+		final Individual<T> individual1 = this.population.get(parents.get(0));
+		final Individual<T> individual2 = this.population.get(parents.get(1));
+        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(individual1.getChromosome(), individual2.getChromosome());
+        final List<T> chromosomeCombinedAndMutated1 = this.mutationFunction.mutate(chromosomesCrossover.first);
         final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated1);
-        final List<T> chromosomeCombinedAndMutated2 = this.mutationFunction.mutate(chromosomesCrossover.ind2);
+        final List<T> chromosomeCombinedAndMutated2 = this.mutationFunction.mutate(chromosomesCrossover.second);
         final Individual<T> offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated2);
 
         final ArrayList<Individual<T>> retVal = new ArrayList<>();
@@ -195,6 +196,16 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
         }
         if (offspring2 != null) {
         	retVal.add(offspring2);
+        }
+        return retVal;
+	}
+	
+	List<Individual<T>> survivingIndividuals() {
+        final List<Integer> indices = this.selectionFunction.select(this.population, this.populationSize - this.eliteSize);
+        final List<Individual<T>> oldPopulation = this.population;
+        final List<Individual<T>> retVal = new ArrayList<>();
+        for (int index : indices) {
+        	retVal.add(oldPopulation.get(index));
         }
         return retVal;
 	}

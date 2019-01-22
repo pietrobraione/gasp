@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import gasp.utils.Utils;
@@ -38,7 +37,7 @@ public class Options {
 	private LocalSearchAlgorithmType localSearchAlgorithmType = LocalSearchAlgorithmType.HILL_CLIMBING;
 	private double mutationProbability = 0.1;
 	private double mutationSizeRatio = 0.1;
-	private Random random = new Random(System.currentTimeMillis());		   
+	private long seed = System.currentTimeMillis();		   
 	private List<Path> classpath = Collections.singletonList(Paths.get("."));
 	private Path jbsePath = Paths.get(".");
 	private Path z3Path = Paths.get(".");	
@@ -205,11 +204,11 @@ public class Options {
 	
 	@Option(names = {"-S", "--seed"}, description = "Seed for random number generator (by default it is picked from the current time).")
 	public void setSeed(long seed) {
-		this.random = new Random(seed);
+		this.seed = seed;
 	}
 	
-	public Random getRandom() {
-		return this.random;
+	public long getSeed() {
+		return this.seed;
 	}
 	
 	@Option(names = {"-C", "--classpath"}, defaultValue = ".", description = "The classpath for the target application (default: current directory).")
@@ -288,7 +287,6 @@ public class Options {
 		return this.methodName;
 	}
 	
-	//Returns an estimation of the number of fitness evaluations when running with this configuration
 	public int estimateFitnessEvaluations() {
 	    int g = this.generations;
 	    int p = this.populationSize;

@@ -1,6 +1,5 @@
 package gasp.ga.operators.selection;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -19,44 +18,37 @@ public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFuncti
 	}
 
 	@Override
-	public int selectIndividual(List<Individual<T>> individuals, boolean populationIsSorted) {
-		if (!populationIsSorted) {
-			Collections.sort(individuals);
-		}
-		
-		Collections.reverse(individuals);
-		
+	public int selectIndividual(List<Individual<T>> individuals) {
         final int[] ranking = getRanks(individuals);
 
         int rankSum = 0;
-        for (int i = 0; i < ranking.length; ++i){
+        for (int i = 0; i < ranking.length; ++i) {
         	rankSum += ranking[i];
         }
         
         final int pick = this.random.nextInt(rankSum);
         int current = 0;
-        for (int i = 0; i < ranking.length; ++i){
+        for (int i = ranking.length - 1; i >= 0; --i){
             current += ranking[i];
             if (current > pick) {
                 return i;
             }	
         }
         
-        return ranking.length - 1; //should never happen
+        throw new AssertionError("Reached an unreachable statement."); //should never happen
 	}
 
 	private int[] getRanks(List<Individual<T>> population) {
-		int[] ranking = new int[population.size()];
+		final int[] ranking = new int[population.size()];
 		int currRank = 0;
-        int currFitness = 0;
-        for (int i = 0; i < population.size(); ++i){
+        int currFitness = Integer.MIN_VALUE;
+        for (int i = population.size() - 1; i >= 0; --i) {
         	if (population.get(i).getFitness() > currFitness) {
         		currFitness = population.get(i).getFitness();
-                currRank = i + 1;
+                currRank = population.size() - i;
         	}
         	ranking[i] = currRank;
         }
         return ranking;
 	}
-
 }

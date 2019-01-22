@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("gasp.ga.GeneticAlgorithm test suite")
 public class TestGeneticAlgorithm {
+	private static final int GENERATIONS = 1;
+	private static final int LOCAL_SEARCH_RATE = 1;
 	private static final int POPULATION_SIZE = 5;
 	private static final int ELITE_SIZE = 5;
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
@@ -29,9 +31,10 @@ public class TestGeneticAlgorithm {
 	}
 	
 	private GeneticAlgorithm<GeneStub> ga() {
-		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), 1, 1, POPULATION_SIZE, ELITE_SIZE, 
+		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), GENERATIONS, 
+									  LOCAL_SEARCH_RATE, POPULATION_SIZE, ELITE_SIZE, 
 									  (c1, c2) -> { return new Pair<>(c1, c2); }, c -> c,
-									  (pop, sorted) -> 0, i -> i);
+									  pop -> 0, i -> i);
 	}
 	
 	@Test
