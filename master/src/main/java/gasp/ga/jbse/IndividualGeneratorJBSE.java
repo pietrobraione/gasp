@@ -221,75 +221,27 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		}		
 	}
 
-	/**
-	 * Performs symbolic execution of the target method guided by a test case 
-	 * up to some depth, then peeks the states on the next branch.  
-	 * 
-	 * @param testCase a {@link TestCase}, it will guide symbolic execution.
-	 * @param testDepth the maximum depth up to which {@code t} guides 
-	 *        symbolic execution, or a negative value.
-	 * @return a {@link List}{@code <}{@link State}{@code >} containing
-	 *         all the states on branch at depth {@code stateDepth + 1}. 
-	 *         In case {@code stateDepth < 0} executes the test up to the 
-	 *         final state and returns a list containing only the final state.
-	 * @throws DecisionException
-	 * @throws CannotBuildEngineException
-	 * @throws InitializationException
-	 * @throws InvalidClassFileFactoryClassException
-	 * @throws NonexistingObservedVariablesException
-	 * @throws ClasspathException
-	 * @throws CannotBacktrackException
-	 * @throws CannotManageStateException
-	 * @throws ThreadStackEmptyException
-	 * @throws ContradictionException
-	 * @throws EngineStuckException
-	 * @throws FailureException
-	 */
 	private Runner newRunner(Actions actions)
-		throws DecisionException, CannotBuildEngineException, InitializationException, 
-		InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
-		ClasspathException, CannotBacktrackException, CannotManageStateException, 
-		ThreadStackEmptyException, ContradictionException, EngineStuckException, 
-		FailureException {
+	throws DecisionException, CannotBuildEngineException, InitializationException, 
+	InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
+	ClasspathException, CannotBacktrackException, CannotManageStateException, 
+	ThreadStackEmptyException, ContradictionException, EngineStuckException, 
+	FailureException {
 		return newRunner(actions, null);
 	}
 	
-	/**
-	 * Performs symbolic execution of the target method guided by a test case 
-	 * up to some depth, then peeks the states on the next branch.  
-	 * 
-	 * @param testCase a {@link TestCase}, it will guide symbolic execution.
-	 * @param testDepth the maximum depth up to which {@code t} guides 
-	 *        symbolic execution, or a negative value.
-	 * @return a {@link List}{@code <}{@link State}{@code >} containing
-	 *         all the states on branch at depth {@code stateDepth + 1}. 
-	 *         In case {@code stateDepth < 0} executes the test up to the 
-	 *         final state and returns a list containing only the final state.
-	 * @throws DecisionException
-	 * @throws CannotBuildEngineException
-	 * @throws InitializationException
-	 * @throws InvalidClassFileFactoryClassException
-	 * @throws NonexistingObservedVariablesException
-	 * @throws ClasspathException
-	 * @throws CannotBacktrackException
-	 * @throws CannotManageStateException
-	 * @throws ThreadStackEmptyException
-	 * @throws ContradictionException
-	 * @throws EngineStuckException
-	 * @throws FailureException
-	 */
 	private Runner newRunner(Actions actions, State sInitial)
-			throws DecisionException, CannotBuildEngineException, InitializationException, 
-			InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
-			ClasspathException, CannotBacktrackException, CannotManageStateException, 
-			ThreadStackEmptyException, ContradictionException, EngineStuckException, 
-			FailureException {
+	throws DecisionException, CannotBuildEngineException, InitializationException, 
+	InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
+	ClasspathException, CannotBacktrackException, CannotManageStateException, 
+	ThreadStackEmptyException, ContradictionException, EngineStuckException, 
+	FailureException {
 
 		//builds the parameters
 		final RunnerParameters params = this.commonParams.clone();
 		
 		//sets the calculator
-		final CalculatorRewriting calc = new CalculatorRewriting();
+		final CalculatorRewriting calc = new CalculatorRewritingSynchronized();
 		calc.addRewriter(new RewriterOperationOnSimplex());
 		params.setCalculator(calc);
 		

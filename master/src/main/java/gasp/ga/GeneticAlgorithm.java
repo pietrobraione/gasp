@@ -3,6 +3,11 @@ package gasp.ga;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -171,9 +176,20 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	}
 	
 	List<Individual<T>> breedOffsprings() {
-        final List<Individual<T>> offsprings = new ArrayList<>();
+		final ExecutorService executor = Executors.newFixedThreadPool(4);
+		final ExecutorCompletionService<List<Individual<T>>> completionService = new ExecutorCompletionService<>(executor);
         for (int i = 0; i < this.populationSize / 2; ++i) {
-        	offsprings.addAll(generateOffspringsFromTwoParents());
+        	completionService.submit(this::generateOffspringsFromTwoParents);
+        }
+        executor.shutdown();
+        final ArrayList<Individual<T>> offsprings = new ArrayList<>();
+        for (int i = 0; i < this.populationSize / 2; ++i) {
+        	try {
+            	final Future<List<Individual<T>>> f = completionService.take();
+				offsprings.addAll(f.get());
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
         }        
         return offsprings;
 	}
@@ -185,10 +201,10 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		final Individual<T> individual1 = this.population.get(parents.get(0));
 		final Individual<T> individual2 = this.population.get(parents.get(1));
         final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(individual1.getChromosome(), individual2.getChromosome());
-        final List<T> chromosomeCombinedAndMutated1 = this.mutationFunction.mutate(chromosomesCrossover.first);
-        final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated1);
-        final List<T> chromosomeCombinedAndMutated2 = this.mutationFunction.mutate(chromosomesCrossover.second);
-        final Individual<T> offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCombinedAndMutated2);
+        final List<T> chromosomeCrossoverMutation1 = this.mutationFunction.mutate(chromosomesCrossover.first);
+        final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation1);
+        final List<T> chromosomeCrossoverMutation2 = this.mutationFunction.mutate(chromosomesCrossover.second);
+        final Individual<T> offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation2);
 
         final ArrayList<Individual<T>> retVal = new ArrayList<>();
         if (offspring1 != null) {
