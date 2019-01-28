@@ -1,4 +1,4 @@
-# GASP
+# <img width="10%" src="gasp.png"> GASP
 
 ## About
 
