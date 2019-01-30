@@ -9,8 +9,4 @@ public interface IndividualGenerator<T extends Gene<T>> {
 	default Individual<T> generateRandomIndividual() {
 		return generateRandomIndividual(Collections.emptyList());
 	}
-	
-	default List<T> slice(List<T> chromosome, T gene) {
-		return chromosome; //no slicing
-	}
 }

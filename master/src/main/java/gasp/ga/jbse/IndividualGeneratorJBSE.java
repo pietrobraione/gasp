@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Random;
 
 import gasp.ga.Individual;
@@ -294,8 +296,8 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		State s = null;
 
 		try {
-			final State sInitial = this.initialState.clone();
 			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
+			final State sInitial = this.initialState.clone();
 			final Runner r = newRunner(actions, sInitial);
 			r.run();
 			s = actions.endState;
@@ -303,7 +305,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			if (s == null) {
 				return null;
 			}
-			return new Individual<>(actions.chromosome, s.getDepth() + 1);
+			return new Individual<>(simplify(actions.chromosome), s.getDepth() + 1);
 		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
@@ -311,6 +313,52 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			//TODO improve!
 			throw new RuntimeException(e);
 		}
+	}
+	
+	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {
+		final CalculatorRewriting calc = new CalculatorRewriting();
+		calc.addRewriter(new RewriterOperationOnSimplex());
+		final ArrayList<GeneJBSE> retVal = new ArrayList<>();
+		try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine)) {
+			for (GeneJBSE gene : reverse(toSimplify)) {
+				final Clause clause = gene.getClause();
+				if (clause instanceof ClauseAssumeReferenceSymbolic) {
+					retVal.add(0, gene);
+				} else if (clause instanceof ClauseAssume) {
+					final Expression conditionNegated = (Expression) ((ClauseAssume) clause).getCondition().not();
+					if (dec.isSat(conditionNegated)) {
+						retVal.add(0, gene);
+						dec.pushAssumption(clause);
+					} //else, discard it
+				} //else, discard it
+			}
+		}
+		return retVal;
+	}
+	
+	private <T> Iterable<T> reverse(List<T> list) {
+		return new Iterable<T>() {
+			final ListIterator<T> it = list.listIterator(list.size());
+			@Override
+			public Iterator<T> iterator() {
+				return new Iterator<T>() {
+					@Override
+					public boolean hasNext() {
+						return it.hasPrevious();
+					}
+
+					@Override
+					public T next() {
+						return it.previous();
+					}
+					
+					@Override
+					public void remove() {
+						it.remove();
+					}
+				};
+			}
+		};
 	}
 	
 	private class ChromosomeChecker {
@@ -327,81 +375,81 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			Primitive precondition = null;
 			final CalculatorRewriting calc = new CalculatorRewriting();
 			calc.addRewriter(new RewriterOperationOnSimplex());
-			final DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine);
-			for (int i = 0; i < chromosome.size(); ++i) {
-				final GeneJBSE gene = chromosome.get(i);
-				final Clause clause = gene.getClause();
-				if (clause instanceof ClauseAssume) {
-					Primitive condition = ((ClauseAssume) clause).getCondition();
-					if (gene.isNegated()) {
-						condition = condition.not();
-					}
-					if (contradicts(dec, precondition, condition)) {
-						contradictoryGenesPositions.add(i);
-					} else {
-						precondition = (precondition == null ? condition : precondition.and(condition));
-					}
-				} else if (clause instanceof ClauseAssumeReferenceSymbolic) {
-					if (gene.isNegated()) {
-						if (clause instanceof ClauseAssumeAliases) {
-							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
-							final String originString1 = ca.getReference().asOriginString();
-							final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-							if (contradictsNotAlias(originString1, originString2)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addNotAlias(originString1, originString2);
+			try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine)) {
+				for (int i = 0; i < chromosome.size(); ++i) {
+					final GeneJBSE gene = chromosome.get(i);
+					final Clause clause = gene.getClause();
+					if (clause instanceof ClauseAssume) {
+						Primitive condition = ((ClauseAssume) clause).getCondition();
+						if (gene.isNegated()) {
+							condition = condition.not();
+						}
+						if (contradicts(dec, precondition, condition)) {
+							contradictoryGenesPositions.add(i);
+						} else {
+							precondition = (precondition == null ? condition : precondition.and(condition));
+						}
+					} else if (clause instanceof ClauseAssumeReferenceSymbolic) {
+						if (gene.isNegated()) {
+							if (clause instanceof ClauseAssumeAliases) {
+								final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+								final String originString1 = ca.getReference().asOriginString();
+								final String originString2 = ca.getObjekt().getOrigin().asOriginString();
+								if (contradictsNotAlias(originString1, originString2)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addNotAlias(originString1, originString2);
+								}
+							} else if (clause instanceof ClauseAssumeExpands) {
+								final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+								final String originString = ce.getReference().asOriginString();
+								final String className = ce.getObjekt().getType().getClassName();
+								if (contradictsDoesNotPointTo(originString, className)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addDoesNotPointTo(originString, className);
+								}
+							} else { //clause instanceof ClauseAssumeNull
+								final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+								final String originString = cn.getReference().asOriginString();
+								if (contradictsNotNull(originString)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addNotNull(originString);
+								}
 							}
-						} else if (clause instanceof ClauseAssumeExpands) {
-							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
-							final String originString = ce.getReference().asOriginString();
-							final String className = ce.getObjekt().getType().getClassName();
-							if (contradictsDoesNotPointTo(originString, className)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addDoesNotPointTo(originString, className);
-							}
-						} else { //clause instanceof ClauseAssumeNull
-							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
-							final String originString = cn.getReference().asOriginString();
-							if (contradictsNotNull(originString)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addNotNull(originString);
+						} else {
+							if (clause instanceof ClauseAssumeAliases) {
+								final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+								final String originString1 = ca.getReference().asOriginString();
+								final String originString2 = ca.getObjekt().getOrigin().asOriginString();
+								if (contradictsAlias(originString1, originString2)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addAlias(originString1, originString2);
+								}
+							} else if (clause instanceof ClauseAssumeExpands) {
+								final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+								final String originString = ce.getReference().asOriginString();
+								final String className = ce.getObjekt().getType().getClassName();
+								if (contradictsExpands(originString, className)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addExpands(originString, className);
+								}
+							} else { //clause instanceof ClauseAssumeNull
+								final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+								final String originString = cn.getReference().asOriginString();
+								if (contradictsNull(originString)) {
+									contradictoryGenesPositions.add(i);
+								} else {
+									addNull(originString);
+								}
 							}
 						}
-					} else {
-						if (clause instanceof ClauseAssumeAliases) {
-							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
-							final String originString1 = ca.getReference().asOriginString();
-							final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-							if (contradictsAlias(originString1, originString2)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addAlias(originString1, originString2);
-							}
-						} else if (clause instanceof ClauseAssumeExpands) {
-							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
-							final String originString = ce.getReference().asOriginString();
-							final String className = ce.getObjekt().getType().getClassName();
-							if (contradictsExpands(originString, className)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addExpands(originString, className);
-							}
-						} else { //clause instanceof ClauseAssumeNull
-							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
-							final String originString = cn.getReference().asOriginString();
-							if (contradictsNull(originString)) {
-								contradictoryGenesPositions.add(i);
-							} else {
-								addNull(originString);
-							}
-						}
-					}
-				} //else skip
+					} //else skip
+				}
 			}
-			dec.close();
 			
 			//builds the filtered chromosome
 			for (int i = 0; i < chromosome.size(); ++i) {
