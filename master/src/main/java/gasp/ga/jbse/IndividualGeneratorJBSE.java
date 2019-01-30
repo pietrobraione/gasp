@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import gasp.ga.Individual;
 import gasp.ga.IndividualGenerator;
@@ -94,10 +93,10 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		this.classpath[classpath.size()] = jbsePath.toString();
 		this.z3Path = z3Path.toString(); 
 		this.z3CommandLine  = new ArrayList<>();
-		z3CommandLine.add(this.z3Path);
-		z3CommandLine.add(SWITCH_CHAR + "smt2");
-		z3CommandLine.add(SWITCH_CHAR + "in");
-		z3CommandLine.add(SWITCH_CHAR + "t:10");
+		this.z3CommandLine.add(this.z3Path);
+		this.z3CommandLine.add(SWITCH_CHAR + "smt2");
+		this.z3CommandLine.add(SWITCH_CHAR + "in");
+		this.z3CommandLine.add(SWITCH_CHAR + "t:10");
 		this.commonParams = new RunnerParameters();
 		this.commonParams.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParams.addUserClasspath(this.classpath);
@@ -110,7 +109,8 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		try {
 			final Runner r = newRunner(actions);
 			r.run();
-			this.initialState = r.getEngine().getInitialState();
+			this.initialState = r.getEngine().getInitialState().clone();
+			r.getEngine().close();
 		} catch (DecisionException | CannotBuildEngineException | InitializationException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
@@ -122,22 +122,20 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 
 	private class ActionsRunner extends Actions {
 		private final ChromosomeChecker chk;
+		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
 		private State endState = null;
 		
 		public ActionsRunner(ChromosomeChecker chk) {
 			this.chk = chk;
 		}
 		
-		public State getEndState() {
-			return this.endState;
+		@Override
+		public boolean atRoot() {
+			final Engine engine = getEngine();
+			addGenes(engine.getCurrentState().getPathCondition());
+			return super.atInitial();
 		}
 		
-		@Override
-		public boolean atTraceEnd() {
-			this.endState = this.getEngine().getCurrentState();
-			return true;
-		}
-
 		@Override
 		public boolean atBranch(BranchPoint bp) {
 			final Engine engine = getEngine();
@@ -154,14 +152,17 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			//looks for a state that complies with the ClauseAssumeReferenceSymbolic
 			final int none = -1;
 			int compliantStateIndex = none;
+			int numberOfCompliantStates = 0;
 			for (int index : indices) {
 				try {
 					final State s = (index == 0 ? engine.getCurrentState() : engine.getStateAtBranch(bp, index - 1));
 					if (contradictsReferencePrecondition(s)) {
 						continue;
 					} else {
-						compliantStateIndex = index;
-						break;
+						++numberOfCompliantStates;
+						if (compliantStateIndex == none) {
+							compliantStateIndex = index;
+						}
 					}
 				} catch (InvalidInputException e) {
 					//this should never happen
@@ -183,7 +184,22 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 					throw new RuntimeException(e);
 				}
 			}
+			
+			//get the last added clauses in the state and add them to the chromosome, 
+			//given that they are not redundant w.r.t. the preconditions
+			if (numberOfCompliantStates > 1) {
+				addGenes(engine.getCurrentState().getLastPathConditionPushedClauses());
+			}
+			
 			return super.atBranch(bp);
+		}
+		
+		private void addGenes(Iterable<Clause> clauses) {
+			for (Clause clause : clauses) {
+				if (clause instanceof ClauseAssume || clause instanceof ClauseAssumeReferenceSymbolic) {
+					this.chromosome.add(new GeneJBSE(clause));
+				}
+			}
 		}
 
 		private boolean contradictsReferencePrecondition(State s) {
@@ -211,6 +227,12 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 				}  //else, do nothing
 			}
 			return false;
+		}
+
+		@Override
+		public boolean atTraceEnd() {
+			this.endState = this.getEngine().getCurrentState().clone();
+			return true;
 		}
 
 		@Override
@@ -276,7 +298,12 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
 			final Runner r = newRunner(actions, sInitial);
 			r.run();
-			s = actions.getEndState();
+			s = actions.endState;
+			r.getEngine().close();
+			if (s == null) {
+				return null;
+			}
+			return new Individual<>(actions.chromosome, s.getDepth() + 1);
 		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
@@ -284,16 +311,6 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			//TODO improve!
 			throw new RuntimeException(e);
 		}
-		
-		if (s == null) {
-			return null;
-		}
-		
-		final List<GeneJBSE> chromosomeIndividual = 
-				s.getPathCondition().stream()
-				.filter(clause -> (clause instanceof ClauseAssume || clause instanceof ClauseAssumeReferenceSymbolic))
-				.map(clause -> new GeneJBSE(clause)).collect(Collectors.toList());		
-		return new Individual<>(chromosomeIndividual, s.getDepth() + 1);
 	}
 	
 	private class ChromosomeChecker {
@@ -384,6 +401,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 					}
 				} //else skip
 			}
+			dec.close();
 			
 			//builds the filtered chromosome
 			for (int i = 0; i < chromosome.size(); ++i) {

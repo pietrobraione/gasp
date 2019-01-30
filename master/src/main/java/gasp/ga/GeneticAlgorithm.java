@@ -176,7 +176,10 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 
 	List<Individual<T>> elitism() {
         final ArrayList<Individual<T>> elite = new ArrayList<>(this.population.subList(0, this.eliteSize));
-        this.population.subList(0, this.eliteSize).clear();
+        final int actualEliteSize = (this.population.size() > this.eliteSize ? eliteSize : 
+        	                         this.population.size() > 2 ? this.populationSize - 2 :
+        	                         0);
+        this.population.subList(0, actualEliteSize).clear();
         return elite;
 	}
 	
@@ -200,18 +203,29 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	}
 	
 	List<Individual<T>> generateOffspringsFromTwoParents() {
+        final ArrayList<Individual<T>> retVal = new ArrayList<>();
+        
+        //selection
 		final List<Integer> parents = this.selectionFunction.select(this.population, 2);
         logger.debug("Selected parents: " + (parents.get(0) + 1) + ", " + (parents.get(1) + 1));
         
+        //crossover
 		final Individual<T> individual1 = this.population.get(parents.get(0));
 		final Individual<T> individual2 = this.population.get(parents.get(1));
         final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(individual1.getChromosome(), individual2.getChromosome());
+        if (chromosomesCrossover == null) {
+        	//too short chromosomes for the crossover function: no offsprings
+        	return retVal;
+        }
+        
+        //mutation
         final List<T> chromosomeCrossoverMutation1 = this.mutationFunction.mutate(chromosomesCrossover.first);
-        final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation1);
         final List<T> chromosomeCrossoverMutation2 = this.mutationFunction.mutate(chromosomesCrossover.second);
+        
+        //generation
+        final Individual<T> offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation1);
         final Individual<T> offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation2);
 
-        final ArrayList<Individual<T>> retVal = new ArrayList<>();
         if (offspring1 != null) {
         	retVal.add(offspring1);
         }
