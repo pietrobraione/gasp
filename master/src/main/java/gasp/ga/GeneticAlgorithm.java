@@ -22,6 +22,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	private static final Logger logger = LogManager.getLogger(GeneticAlgorithm.class);
 
 	private final IndividualGenerator<T> individualGenerator;
+	private final int numberOfThreads;
 	private final int generations;
 	private final int localSearchRate;
 	private final int populationSize;
@@ -34,12 +35,15 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	private List<Individual<T>> population = new ArrayList<>();
 	private int currentGeneration = 0;
 
-	public GeneticAlgorithm(IndividualGenerator<T> individualGenerator, int generations, 
-							int localSearchRate, int populationSize, int eliteSize, 
+	public GeneticAlgorithm(IndividualGenerator<T> individualGenerator, int numberOfThreads, 
+							int generations, int localSearchRate, int populationSize, int eliteSize, 
 							CrossoverFunction<T> crossoverFunction, MutationFunction<T> mutationFunction, 
 							SelectionFunction<T> selectionFunction, LocalSearchAlgorithm<T> localSearchAlgorithm) {
 		if (individualGenerator == null) {
 			throw new IllegalArgumentException("The individual generator cannot be null.");
+		}
+		if (numberOfThreads <= 0) {
+			throw new IllegalArgumentException("Number of threads cannot be less or equal to 0.");
 		}
 		if (generations <= 0) {
 			throw new IllegalArgumentException("Number of generations cannot be less or equal to 0.");
@@ -70,6 +74,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		}
 		
 		this.individualGenerator = individualGenerator;
+		this.numberOfThreads = numberOfThreads;
 		this.generations = generations;
 		this.localSearchRate = localSearchRate;
 		this.populationSize = populationSize;
@@ -97,7 +102,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		while (!isFinished()) {
 			++this.currentGeneration;
 			possiblyDoLocalSearch();
-			deriveNextGeneration();
+			produceNextGeneration();
 			
         	logger.debug("Generation " + this.currentGeneration + ":");
         	logIndividuals(this.population);
@@ -149,7 +154,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		return this.currentGeneration > this.generations;
 	}
 
-	void deriveNextGeneration() {
+	void produceNextGeneration() {
 		final List<Individual<T>> offsprings = breedOffsprings();
         Collections.sort(offsprings);
 
@@ -176,7 +181,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	}
 	
 	List<Individual<T>> breedOffsprings() {
-		final ExecutorService executor = Executors.newFixedThreadPool(4);
+		final ExecutorService executor = Executors.newFixedThreadPool(this.numberOfThreads);
 		final ExecutorCompletionService<List<Individual<T>>> completionService = new ExecutorCompletionService<>(executor);
         for (int i = 0; i < this.populationSize / 2; ++i) {
         	completionService.submit(this::generateOffspringsFromTwoParents);

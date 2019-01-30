@@ -116,6 +116,7 @@ public class Main {
 										    this.o.getMethodName());
 		final GeneticAlgorithm<GeneJBSE> retVal = 
 				new GeneticAlgorithm<GeneJBSE>(ig,
+											   this.o.getNumberOfThreads(),
 											   this.o.getGenerations(),
 											   this.o.getLocalSearchRate(),
 											   this.o.getPopulationSize(),

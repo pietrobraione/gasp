@@ -26,6 +26,7 @@ public class Options {
 	
 	private boolean help = false;
 	private boolean version = false;
+	private int numberOfThreads = 2;
 	private int generations = 5;
 	private int localSearchRate = 5;
 	private int populationSize = 10;
@@ -67,6 +68,18 @@ public class Options {
 	
 	public boolean getVersion() {
 		return this.version;
+	}
+	
+	@Option(names = {"-t", "--threads"}, defaultValue = "2", description = "Number of threads for concurrent execution (default: ${DEFAULT-VALUE}).")
+	public void setNumberOfThreads(int numberOfThreads) {
+		if (numberOfThreads <= 0) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Number of threads %d is zero or negative.", numberOfThreads));
+		}
+		this.numberOfThreads = numberOfThreads;
+	}
+	
+	public int getNumberOfThreads() {
+		return this.numberOfThreads;
 	}
 	
 	@Option(names = {"-g", "--generations"}, defaultValue = "5", description = "Number of generations to be executed (default: ${DEFAULT-VALUE}).")
