@@ -27,7 +27,6 @@ import jbse.jvm.Runner;
 import jbse.jvm.RunnerBuilder;
 import jbse.jvm.RunnerParameters;
 import jbse.jvm.Engine;
-import jbse.jvm.EngineParameters.BreadthMode;
 import jbse.jvm.Runner.Actions;
 import jbse.jvm.exc.CannotBacktrackException;
 import jbse.jvm.exc.CannotBuildEngineException;
@@ -102,7 +101,6 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		this.commonParams = new RunnerParameters();
 		this.commonParams.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParams.addUserClasspath(this.classpath);
-		this.commonParams.setBreadthMode(BreadthMode.ALL_DECISIONS_NONTRIVIAL);
 		final Actions actions = new Actions() {
 			@Override
 			public boolean atInitial() {
