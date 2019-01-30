@@ -32,7 +32,7 @@ public class Options {
 	private int populationSize = 10;
 	private int eliteSize = 5;
 	private CrossoverFunctionType crossoverFunctionType = CrossoverFunctionType.SINGLE_POINT; 
-	private MutationFunctionType mutationFunctionType = MutationFunctionType.DELETE_CONSTRAINT; 
+	private MutationFunctionType mutationFunctionType = MutationFunctionType.DELETE; 
 	private SelectionFunctionType selectionFunctionType = SelectionFunctionType.RANK;
 	private FitnessFunctionType fitnessFunctionType = FitnessFunctionType.SYMBOLIC_EXECUTION;
 	private LocalSearchAlgorithmType localSearchAlgorithmType = LocalSearchAlgorithmType.HILL_CLIMBING;
@@ -47,7 +47,7 @@ public class Options {
 	private String methodName = "m";
 	
 	public enum CrossoverFunctionType { SINGLE_POINT, TWO_POINTS, PREFIX, UNION } 
-	public enum MutationFunctionType { DELETE_CONSTRAINT, DELETE_OR_NEGATE_CONSTRAINT }
+	public enum MutationFunctionType { DELETE, DELETE_OR_NEGATE }
 	public enum SelectionFunctionType { RANK }
 	public enum FitnessFunctionType { SYMBOLIC_EXECUTION }
 	public enum LocalSearchAlgorithmType { HILL_CLIMBING, NONE }
@@ -143,7 +143,7 @@ public class Options {
 		return this.crossoverFunctionType;
 	}
 	
-	@Option(names = {"-m", "--mutation-function"}, defaultValue = "DELETE_CONSTRAINT", description = "The mutation function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-m", "--mutation-function"}, defaultValue = "DELETE", description = "The mutation function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
 	public void setMutationFunctionType(MutationFunctionType type) {
 		if (type == null) {
 			throw new ParameterException(this.spec.commandLine(), "Mutation function is null.");

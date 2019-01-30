@@ -1,7 +1,6 @@
 package gasp.ga.operators.mutation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -36,14 +35,10 @@ public abstract class AbstractMutationFunction<T extends Gene<T>> implements Mut
 		
 		final ArrayList<T> retVal = new ArrayList<>(chromosome);
 		final int numOfMutations = (int) Math.round(this.mutationSizeRatio * chromosome.size());
-		final ArrayList<Integer> positions = new ArrayList<Integer>();
-		for (int i = 0; i < chromosome.size(); ++i) {
-			positions.add(i);
-		}
-		Collections.shuffle(positions, this.random);
 		for (int i = 0; i < numOfMutations; ++i) {
 	        if (this.random.nextDouble() < this.mutationProbability) {
-	        	mutateGene(retVal, positions.get(i));
+	        	final int position = this.random.nextInt(retVal.size());
+	        	mutateGene(retVal, position);
 	        }
         }
 		return retVal;

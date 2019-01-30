@@ -35,13 +35,13 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 	
 	@Override
 	public Individual<T> doLocalSearch(Individual<T> individual) {
-		int index = this.random.nextInt(individual.size());
+		Individual<T> retValue = individual;
+		int index = this.random.nextInt(retValue.size());
 		
 		logger.info("Local search starts at index " + index);
 		
-		Individual<T> retValue = individual;
 		for (int remainingAttempts = this.populationSize / 2; remainingAttempts > 0; --remainingAttempts) {			
-			final List<T> currentChromosome = individual.getChromosome();
+			final List<T> currentChromosome = retValue.getChromosome();
 			final T mutatedGene = currentChromosome.get(index).not();
 			currentChromosome.remove(index);
 			currentChromosome.add(index, mutatedGene);
@@ -50,6 +50,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 			
 			if (newIndividual == null) {
 				//unsuccessful mutation
+				index = this.random.nextInt(retValue.size());
 				continue;
 			}
 			

@@ -5,8 +5,8 @@ import java.util.Random;
 
 import gasp.ga.Gene;
 
-public class MutationFunctionDeleteConstraint<T extends Gene<T>> extends AbstractMutationFunction<T> {
-	public MutationFunctionDeleteConstraint(double mutationProbability, double mutationSizeRatio, Random random) {
+public class MutationFunctionDelete<T extends Gene<T>> extends AbstractMutationFunction<T> {
+	public MutationFunctionDelete(double mutationProbability, double mutationSizeRatio, Random random) {
 		super(mutationProbability, mutationSizeRatio, random);
 	}
 	

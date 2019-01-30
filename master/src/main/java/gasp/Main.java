@@ -34,8 +34,8 @@ import gasp.ga.operators.crossover.CrossoverFunctionPrefix;
 import gasp.ga.operators.crossover.CrossoverFunctionSinglePoint;
 import gasp.ga.operators.crossover.CrossoverFunctionUnion;
 import gasp.ga.operators.mutation.MutationFunction;
-import gasp.ga.operators.mutation.MutationFunctionDeleteConstraint;
-import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegateConstraint;
+import gasp.ga.operators.mutation.MutationFunctionDelete;
+import gasp.ga.operators.mutation.MutationFunctionDeleteOrNegate;
 import gasp.ga.operators.selection.SelectionFunction;
 import gasp.ga.operators.selection.SelectionFunctionRank;
 
@@ -145,12 +145,12 @@ public class Main {
 	
 	private <T extends Gene<T>> MutationFunction<T> mutationFunction(Random random) {
 		switch (this.o.getMutationFunctionType()) {
-		case DELETE_CONSTRAINT:
-			return new MutationFunctionDeleteConstraint<T>(this.o.getMutationProbability(),
+		case DELETE:
+			return new MutationFunctionDelete<T>(this.o.getMutationProbability(),
 														   this.o.getMutationSizeRatio(),
 														   random);
-		case DELETE_OR_NEGATE_CONSTRAINT:
-			return new MutationFunctionDeleteOrNegateConstraint<T>(this.o.getMutationProbability(), 
+		case DELETE_OR_NEGATE:
+			return new MutationFunctionDeleteOrNegate<T>(this.o.getMutationProbability(), 
 																   this.o.getMutationSizeRatio(),
 																   random);
 		default:

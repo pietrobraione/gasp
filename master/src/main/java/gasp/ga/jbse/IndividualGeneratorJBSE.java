@@ -121,14 +121,18 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private enum Outcome { FOUND, ASSUMPTION_VIOLATED, PRECONDITION_TOO_STRICT };
 
 	private class ActionsRunner extends Actions {
 		private final ChromosomeChecker chk;
 		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
-		private State endState = null;
+		private Outcome outcome = null;
+		private int depth = 0;
 		
 		public ActionsRunner(ChromosomeChecker chk) {
 			this.chk = chk;
+			chk.addAllNoncontradictoryGenes(this.chromosome);
 		}
 		
 		@Override
@@ -172,8 +176,9 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 				}
 			}
 			
-			//if none found, just terminate
+			//if none found, terminate
 			if (compliantStateIndex == none) {
+				this.outcome = Outcome.PRECONDITION_TOO_STRICT;
 				return true;
 			}
 			
@@ -230,10 +235,17 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			}
 			return false;
 		}
+		
+		@Override
+		public boolean atContradictionException(ContradictionException e) {
+			this.outcome = Outcome.ASSUMPTION_VIOLATED;
+			return true;
+		}
 
 		@Override
 		public boolean atTraceEnd() {
-			this.endState = this.getEngine().getCurrentState().clone();
+			this.outcome = Outcome.FOUND;
+			this.depth = getEngine().getCurrentState().getDepth() + 1;
 			return true;
 		}
 
@@ -252,13 +264,12 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		return newRunner(actions, null);
 	}
 	
-	private Runner newRunner(Actions actions, State sInitial)
+	private Runner newRunner(Actions actions, List<GeneJBSE> chromosome)
 	throws DecisionException, CannotBuildEngineException, InitializationException, 
 	InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
 	ClasspathException, CannotBacktrackException, CannotManageStateException, 
 	ThreadStackEmptyException, ContradictionException, EngineStuckException, 
 	FailureException {
-
 		//builds the parameters
 		final RunnerParameters params = this.commonParams.clone();
 		
@@ -281,8 +292,22 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		params.setActions(actions);
 
 		//sets the initial state
-		if (sInitial != null) {
-			params.setInitialState(sInitial);
+		final State initialState = (this.initialState == null ? null : this.initialState.clone());
+		if (initialState != null) {
+			if (chromosome != null) {
+				for (GeneJBSE gene : chromosome) {
+					final Clause clause = gene.getClause();
+					if (clause instanceof ClauseAssume) {
+						try {
+							initialState.assume(((ClauseAssume) clause).getCondition());
+						} catch (InvalidInputException e) {
+							//this should never happen
+							throw new AssertionError("Found an invalid condition in a clause.", e);
+						}
+					}
+				}
+			}
+			params.setInitialState(initialState);
 		}
 
 		//builds the runner and returns it
@@ -293,19 +318,16 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 	
 	@Override
 	public Individual<GeneJBSE> generateRandomIndividual(List<GeneJBSE> chromosome) {
-		State s = null;
-
 		try {
 			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
-			final State sInitial = this.initialState.clone();
-			final Runner r = newRunner(actions, sInitial);
+			final Runner r = newRunner(actions, chromosome);
 			r.run();
-			s = actions.endState;
 			r.getEngine().close();
-			if (s == null) {
-				return null;
+			if (actions.outcome == Outcome.FOUND) {
+				return new Individual<>(simplify(actions.chromosome), actions.depth);
+			} else {
+				return null; //TODO distinguish the two remaining subcases of action.outcome
 			}
-			return new Individual<>(simplify(actions.chromosome), s.getDepth() + 1);
 		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
@@ -316,9 +338,11 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 	}
 	
 	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {
+		final ArrayList<GeneJBSE> retVal = new ArrayList<>();
+		
+		//first pass: delete redundant numeric clauses
 		final CalculatorRewriting calc = new CalculatorRewriting();
 		calc.addRewriter(new RewriterOperationOnSimplex());
-		final ArrayList<GeneJBSE> retVal = new ArrayList<>();
 		try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine)) {
 			for (GeneJBSE gene : reverse(toSimplify)) {
 				final Clause clause = gene.getClause();
@@ -333,6 +357,21 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 				} //else, discard it
 			}
 		}
+		
+		//second pass delete redundant reference clauses
+		final HashSet<ClauseAssumeReferenceSymbolic> seen = new HashSet<>();
+		for (Iterator<GeneJBSE> it = retVal.iterator(); it.hasNext(); ) {
+			final GeneJBSE gene = it.next();
+			final Clause clause = gene.getClause();
+			if (clause instanceof ClauseAssumeReferenceSymbolic) {
+				if (seen.contains(clause)) {
+					it.remove();
+				} else {
+					seen.add((ClauseAssumeReferenceSymbolic) clause);
+				}
+			} //else, do nothing
+		}
+		
 		return retVal;
 	}
 	
@@ -459,6 +498,10 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 					this.chromosomeFiltered.add(chromosome.get(i));
 				}
 			}
+		}
+		
+		void addAllNoncontradictoryGenes(List<GeneJBSE> chromosome) {
+			chromosome.addAll(this.chromosomeFiltered);
 		}
 	
 		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition) 

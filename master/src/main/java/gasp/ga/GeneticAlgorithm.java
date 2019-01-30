@@ -88,8 +88,13 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	}
 	
 	void generateInitialPopulation() {
-		for (int i = 0; i < this.populationSize; ++i) {
-			this.population.add(this.individualGenerator.generateRandomIndividual());
+		int generated = 0;
+		while (generated < this.populationSize) {
+			Individual<T> individual = this.individualGenerator.generateRandomIndividual();
+			if (individual != null) {
+				this.population.add(individual);
+				++generated;
+			}
 		}
 		Collections.sort(this.population);
 	}
@@ -158,7 +163,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 		final List<Individual<T>> offsprings = breedOffsprings();
         Collections.sort(offsprings);
 
-        logger.debug("Offsprings after crossover and mutation:");
+        logger.debug("Offsprings:");
         logIndividuals(offsprings);
         
         this.population.addAll(offsprings);
