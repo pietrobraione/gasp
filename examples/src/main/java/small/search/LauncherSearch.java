@@ -14,7 +14,7 @@ public class LauncherSearch {
 		o.setClasspath(PATH_EXAMPLES);
 		o.setJBSEPath(PATH_JBSE);
 		o.setZ3Path(PATH_Z3);
-
+		o.setGenerations(50);
 		o.setMethodSignature("small/search/Search:(Lsmall/search/Node;Lsmall/search/Node;)Z:depthFirstSearch");
 		
 		final Main m = new Main(o);
