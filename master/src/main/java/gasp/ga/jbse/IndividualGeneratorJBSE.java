@@ -349,7 +349,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 				if (clause instanceof ClauseAssumeReferenceSymbolic) {
 					retVal.add(0, gene);
 				} else if (clause instanceof ClauseAssume) {
-					final Expression conditionNegated = (Expression) ((ClauseAssume) clause).getCondition().not();
+					final Expression conditionNegated = gene.isNegated() ? (Expression) ((ClauseAssume) clause).getCondition() : (Expression) ((ClauseAssume) clause).getCondition().not();
 					if (dec.isSat(conditionNegated)) {
 						retVal.add(0, gene);
 						dec.pushAssumption(clause);
@@ -358,16 +358,16 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			}
 		}
 		
-		//second pass delete redundant reference clauses
-		final HashSet<ClauseAssumeReferenceSymbolic> seen = new HashSet<>();
+		//second pass: delete redundant reference genes
+		final HashSet<GeneJBSE> seen = new HashSet<>();
 		for (Iterator<GeneJBSE> it = retVal.iterator(); it.hasNext(); ) {
 			final GeneJBSE gene = it.next();
 			final Clause clause = gene.getClause();
 			if (clause instanceof ClauseAssumeReferenceSymbolic) {
-				if (seen.contains(clause)) {
+				if (seen.contains(gene)) {
 					it.remove();
 				} else {
-					seen.add((ClauseAssumeReferenceSymbolic) clause);
+					seen.add(gene);
 				}
 			} //else, do nothing
 		}
