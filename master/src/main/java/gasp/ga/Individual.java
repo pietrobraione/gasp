@@ -5,10 +5,10 @@ import java.util.List;
 
 public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Individual<T>> {
 	private final List<T> chromosome;
-	private final int fitness;
+	private final long fitness;
 	private final String toString;
 	
-	public Individual(List<T> chromosome, int fitness) {
+	public Individual(List<T> chromosome, long fitness) {
 		if (chromosome == null || chromosome.isEmpty()) {
 			throw new IllegalArgumentException("The chromosome can't be null or an empty list of genes.");
 		}
@@ -26,7 +26,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		return this.chromosome.size();
 	}
 
-	public int getFitness() {
+	public long getFitness() {
 		return this.fitness;
 	}
 
@@ -37,6 +37,17 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 	@Override
 	public String toString() {
 		return this.toString;
+	}
+
+	@Override
+	public int compareTo(Individual<T> other) {
+		if (this.fitness > other.fitness) {
+			return -1;
+		} else if (this.fitness == other.fitness) {
+			return 0;
+		} else {
+			return 1;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -54,7 +65,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + this.chromosome.hashCode();
-		result = prime * result + this.fitness;
+		result = prime * result + (int) (fitness ^ (fitness >>> 32));
 		return result;
 	}
 
@@ -79,16 +90,5 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		}
 		
 		return true;
-	}
-
-	@Override
-	public int compareTo(Individual<T> other) {
-		if (this.fitness > other.fitness) {
-			return -1;
-		} else if (this.fitness == other.fitness) {
-			return 0;
-		} else {
-			return 1;
-		}
 	}
 }

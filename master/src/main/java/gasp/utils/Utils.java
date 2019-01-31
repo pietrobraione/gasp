@@ -19,16 +19,16 @@ public interface Utils {
 	}
 	
 	public static <T extends Gene<T>> String logFitnessStats(List<Individual<T>> individuals) {
-		final ArrayList<Integer> fitnesses = new ArrayList<Integer>();
+		final ArrayList<Long> fitnesses = new ArrayList<>();
 		int sum = 0;
 		for (int i = 0; i < individuals.size(); i++) {
 			fitnesses.add(individuals.get(i).getFitness());
 			sum += individuals.get(i).getFitness();
 		}
 		
-        final int minFitness = Collections.min(fitnesses);
-        final int maxFitness = Collections.max(fitnesses);
-        final int avgFitness = sum / fitnesses.size();
+        final long minFitness = Collections.min(fitnesses);
+        final long maxFitness = Collections.max(fitnesses);
+        final long avgFitness = sum / fitnesses.size();
         return "max: " + maxFitness + ", min: " + minFitness + ", avg: " + avgFitness;
 	}
 }

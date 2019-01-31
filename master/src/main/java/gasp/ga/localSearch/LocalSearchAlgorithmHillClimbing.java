@@ -65,7 +65,6 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 				if (found) {
 					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
 					retValue = newIndividual;
-					remainingAttempts = retValue.size();
 				} else {
 					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
 					--remainingAttempts;

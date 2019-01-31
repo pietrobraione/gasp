@@ -1,7 +1,10 @@
 package small.alternate;
 
+import jbse.meta.Analysis;
+
 public class Alternate0 {
 	public void alternate_0(int[] l) {
+		Analysis.assume(l.length == 20);
 		int check;
 		for (int i = 0; i < l.length; ++i) {
 			if (l[i] == 0) {

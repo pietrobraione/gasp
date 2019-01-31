@@ -41,7 +41,7 @@ public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFuncti
 	private int[] getRanks(List<Individual<T>> population) {
 		final int[] ranking = new int[population.size()];
 		int currRank = 0;
-        int currFitness = Integer.MIN_VALUE;
+        long currFitness = Long.MIN_VALUE;
         for (int i = population.size() - 1; i >= 0; --i) {
         	if (population.get(i).getFitness() > currFitness) {
         		currFitness = population.get(i).getFitness();

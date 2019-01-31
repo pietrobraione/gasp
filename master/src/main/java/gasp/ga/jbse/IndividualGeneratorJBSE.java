@@ -128,7 +128,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		private final ChromosomeChecker chk;
 		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
 		private Outcome outcome = null;
-		private int depth = 0;
+		private long analyzedStates = 0;
 		
 		public ActionsRunner(ChromosomeChecker chk) {
 			this.chk = chk;
@@ -245,7 +245,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		@Override
 		public boolean atTraceEnd() {
 			this.outcome = Outcome.FOUND;
-			this.depth = getEngine().getCurrentState().getDepth() + 1;
+			this.analyzedStates = getEngine().getAnalyzedStates() + 1;
 			return true;
 		}
 
@@ -324,7 +324,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 			r.run();
 			r.getEngine().close();
 			if (actions.outcome == Outcome.FOUND) {
-				return new Individual<>(simplify(actions.chromosome), actions.depth);
+				return new Individual<>(simplify(actions.chromosome), actions.analyzedStates);
 			} else {
 				return null; //TODO distinguish the two remaining subcases of action.outcome
 			}
