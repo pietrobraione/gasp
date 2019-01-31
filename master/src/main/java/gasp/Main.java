@@ -24,6 +24,7 @@ import gasp.ga.Gene;
 import gasp.ga.IndividualGenerator;
 import gasp.ga.jbse.GeneJBSE;
 import gasp.ga.jbse.IndividualGeneratorJBSE;
+import gasp.ga.jbse.IndividualJBSE;
 import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 import gasp.ga.localSearch.LocalSearchAlgorithm;
@@ -77,7 +78,7 @@ public class Main {
 		logger.info("Going to evolve " + o.getGenerations()  + " generations, seed " + this.o.getSeed());
 		logger.info("Estimated number of fitness evaluations: " + o.estimateFitnessEvaluations());
 
-		final GeneticAlgorithm<?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
+		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
 		ga.evolve();
 		final Individual<?> solution = ga.getBestIndividuals(1).get(0);
 		
@@ -105,8 +106,8 @@ public class Main {
 		Configurator.initialize(builder.build());
 	}
 	
-	private GeneticAlgorithm<?> geneticAlgorithm(Random random) {
-		final IndividualGenerator<GeneJBSE> ig = 
+	private GeneticAlgorithm<?, ?> geneticAlgorithm(Random random) {
+		final IndividualGenerator<GeneJBSE, IndividualJBSE> ig = 
 				new IndividualGeneratorJBSE(random,
 										    this.o.getClasspath(),
 										    this.o.getJBSEPath(), 
@@ -114,17 +115,17 @@ public class Main {
 										    this.o.getMethodClassName(), 
 										    this.o.getMethodDescriptor(), 
 										    this.o.getMethodName());
-		final GeneticAlgorithm<GeneJBSE> retVal = 
-				new GeneticAlgorithm<GeneJBSE>(ig,
-											   this.o.getNumberOfThreads(),
-											   this.o.getGenerations(),
-											   this.o.getLocalSearchRate(),
-											   this.o.getPopulationSize(),
-											   this.o.getEliteSize(),
-											   crossoverFunction(random),
-											   mutationFunction(random),
-											   selectionFunction(random),
-											   localSearchAlgorithm(ig, random));	
+		final GeneticAlgorithm<GeneJBSE, IndividualJBSE> retVal = 
+				new GeneticAlgorithm<GeneJBSE, IndividualJBSE>(ig,
+											   				   this.o.getNumberOfThreads(),
+											   				   this.o.getGenerations(),
+											   				   this.o.getLocalSearchRate(),
+											   				   this.o.getPopulationSize(),
+											   				   this.o.getEliteSize(),
+											   				   crossoverFunction(random),
+											   				   mutationFunction(random),
+											   				   selectionFunction(random),
+											   				   localSearchAlgorithm(ig, random));	
 		return retVal;
 	}
 	
@@ -147,30 +148,30 @@ public class Main {
 		switch (this.o.getMutationFunctionType()) {
 		case DELETE:
 			return new MutationFunctionDelete<T>(this.o.getMutationProbability(),
-														   this.o.getMutationSizeRatio(),
-														   random);
+												 this.o.getMutationSizeRatio(),
+												 random);
 		case DELETE_OR_NEGATE:
 			return new MutationFunctionDeleteOrNegate<T>(this.o.getMutationProbability(), 
-																   this.o.getMutationSizeRatio(),
-																   random);
+														 this.o.getMutationSizeRatio(),
+														 random);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> SelectionFunction<T> selectionFunction(Random random) {
+	private <T extends Gene<T>, U extends Individual<T>> SelectionFunction<T, U> selectionFunction(Random random) {
 		switch (this.o.getSelectionFunctionType()) {
 		case RANK:
-			return new SelectionFunctionRank<T>(random);
+			return new SelectionFunctionRank<T, U>(random);
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a selection function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> LocalSearchAlgorithm<T> localSearchAlgorithm(IndividualGenerator<T> ig, Random random) {
+	private <T extends Gene<T>, U extends Individual<T>> LocalSearchAlgorithm<T, U> localSearchAlgorithm(IndividualGenerator<T, U> ig, Random random) {
 		switch (this.o.getLocalSearchAlgorithmType()) {
 		case HILL_CLIMBING:
-			return new LocalSearchAlgorithmHillClimbing<T>(ig,
+			return new LocalSearchAlgorithmHillClimbing<T, U>(ig,
 														   this.o.getPopulationSize(),
 														   random);
 		case NONE:

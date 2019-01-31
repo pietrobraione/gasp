@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 
-import gasp.ga.Individual;
 import gasp.ga.IndividualGenerator;
 import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
@@ -54,7 +53,7 @@ import jbse.val.Primitive;
 import jbse.val.exc.InvalidOperandException;
 import jbse.val.exc.InvalidTypeException;
 
-public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
+public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE, IndividualJBSE> {
 	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
 	private final Random random;
@@ -129,6 +128,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
 		private Outcome outcome = null;
 		private long analyzedStates = 0;
+		private String pathIdentifier = null;
 		
 		public ActionsRunner(ChromosomeChecker chk) {
 			this.chk = chk;
@@ -246,6 +246,7 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 		public boolean atTraceEnd() {
 			this.outcome = Outcome.FOUND;
 			this.analyzedStates = getEngine().getAnalyzedStates() + 1;
+			this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
 			return true;
 		}
 
@@ -317,14 +318,14 @@ public class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE> {
 	}
 	
 	@Override
-	public Individual<GeneJBSE> generateRandomIndividual(List<GeneJBSE> chromosome) {
+	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) {
 		try {
 			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
 			final Runner r = newRunner(actions, chromosome);
 			r.run();
 			r.getEngine().close();
 			if (actions.outcome == Outcome.FOUND) {
-				return new Individual<>(simplify(actions.chromosome), actions.analyzedStates);
+				return new IndividualJBSE(simplify(actions.chromosome), actions.analyzedStates, actions.pathIdentifier);
 			} else {
 				return null; //TODO distinguish the two remaining subcases of action.outcome
 			}

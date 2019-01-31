@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public final class IndividualGeneratorStub implements IndividualGenerator<GeneStub> {
+public final class IndividualGeneratorStub implements IndividualGenerator<GeneStub, Individual<GeneStub>> {
 	private final Random random;
 	
 	public IndividualGeneratorStub(Random random) {

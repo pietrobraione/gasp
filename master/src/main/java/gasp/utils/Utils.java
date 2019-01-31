@@ -18,7 +18,7 @@ public interface Utils {
 		return Utils.class.getPackage().getImplementationVersion();
 	}
 	
-	public static <T extends Gene<T>> String logFitnessStats(List<Individual<T>> individuals) {
+	public static <T extends Gene<T>, U extends Individual<T>> String logFitnessStats(List<U> individuals) {
 		final ArrayList<Long> fitnesses = new ArrayList<>();
 		int sum = 0;
 		for (int i = 0; i < individuals.size(); i++) {

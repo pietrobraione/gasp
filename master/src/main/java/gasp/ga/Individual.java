@@ -7,6 +7,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 	private final List<T> chromosome;
 	private final long fitness;
 	private final String toString;
+	private final int hashCode;
 	
 	public Individual(List<T> chromosome, long fitness) {
 		if (chromosome == null || chromosome.isEmpty()) {
@@ -16,6 +17,13 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		this.chromosome = new ArrayList<>(chromosome);
 		this.fitness = fitness;
 		this.toString = "Individual [fitness = " + this.fitness + ", chromosome = " + this.chromosome + "]";
+		
+		//hashCode
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + this.chromosome.hashCode();
+		result = prime * result + (int) (fitness ^ (fitness >>> 32));
+		this.hashCode = result;
 	}
 
 	public List<T> getChromosome() {
@@ -62,11 +70,7 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
     
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + this.chromosome.hashCode();
-		result = prime * result + (int) (fitness ^ (fitness >>> 32));
-		return result;
+		return this.hashCode;
 	}
 
 	@Override

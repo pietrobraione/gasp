@@ -6,7 +6,7 @@ import java.util.Random;
 import gasp.ga.Gene;
 import gasp.ga.Individual;
 
-public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFunction<T> {
+public class SelectionFunctionRank<T extends Gene<T>, U extends Individual<T>> implements SelectionFunction<T, U> {
 	private final Random random;
 	
 	public SelectionFunctionRank(Random random) {
@@ -18,7 +18,7 @@ public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFuncti
 	}
 
 	@Override
-	public int selectIndividual(List<Individual<T>> individuals) {
+	public int selectIndividual(List<U> individuals) {
         final int[] ranking = getRanks(individuals);
 
         int rankSum = 0;
@@ -38,7 +38,7 @@ public class SelectionFunctionRank<T extends Gene<T>> implements SelectionFuncti
         throw new AssertionError("Reached an unreachable statement."); //should never happen
 	}
 
-	private int[] getRanks(List<Individual<T>> population) {
+	private int[] getRanks(List<U> population) {
 		final int[] ranking = new int[population.size()];
 		int currRank = 0;
         long currFitness = Long.MIN_VALUE;

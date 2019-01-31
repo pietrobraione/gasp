@@ -23,7 +23,7 @@ import jbse.val.Term;
 import jbse.val.WideningConversion;
 import jbse.val.exc.InvalidTypeException;
 
-public class GeneJBSE extends Gene<GeneJBSE> {
+public final class GeneJBSE extends Gene<GeneJBSE> {
 	private final Clause clause;
 	private final boolean negated;
 	private final int hashCode;

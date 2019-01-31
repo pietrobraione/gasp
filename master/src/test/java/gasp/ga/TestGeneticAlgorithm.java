@@ -6,9 +6,6 @@ import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -26,12 +23,8 @@ public class TestGeneticAlgorithm {
 	private static final int LOCAL_SEARCH_RATE = 1;
 	private static final int POPULATION_SIZE = 5;
 	private static final int ELITE_SIZE = 5;
-	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
-	static {
-		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
-	}
 	
-	private GeneticAlgorithm<GeneStub> ga() {
+	private GeneticAlgorithm<GeneStub, Individual<GeneStub>> ga() {
 		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), NUM_THREADS, 
 								      GENERATIONS, LOCAL_SEARCH_RATE, POPULATION_SIZE, ELITE_SIZE, 
 									  (c1, c2) -> { return new Pair<>(c1, c2); }, c -> c,
@@ -41,7 +34,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism does not return an empty list")
 	public void testElitism1() {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertFalse(algo.elitism().isEmpty());
 	}
@@ -49,7 +42,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism does not return null")
 	public void testElitism2() {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertNotEquals(algo.elitism(), null);
 	}
@@ -57,7 +50,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism returns a list with size of the corresponding configuration parameter")
 	public void testElitism5() {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertEquals(algo.elitism().size(), ELITE_SIZE);
 	}
@@ -65,7 +58,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism returns a list sorted by fitness")
 	public void testElitism4() {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		final List<? extends Individual<?>> elite = algo.elitism();
 		boolean eliteIsSortedByFitness = true;
@@ -81,7 +74,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.getBestIndividuals does not return null")
 	public void testAlgorithm1() throws IOException {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
  		algo.evolve();
 		assertNotEquals(algo.getBestIndividuals(POPULATION_SIZE), null);
 	}
@@ -89,7 +82,7 @@ public class TestGeneticAlgorithm {
 	@Test
 	@DisplayName("GeneticAlgorithm.getBestIndividuals does not return an empty list")
 	public void testAlgorithm2() throws IOException {
-		final GeneticAlgorithm<?> algo = ga();
+		final GeneticAlgorithm<?, ?> algo = ga();
  		algo.evolve();
  		assertFalse(algo.getBestIndividuals(POPULATION_SIZE).isEmpty());
 	}

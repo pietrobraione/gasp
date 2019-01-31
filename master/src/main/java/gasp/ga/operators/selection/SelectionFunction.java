@@ -7,11 +7,11 @@ import gasp.ga.Gene;
 import gasp.ga.Individual;
 
 @FunctionalInterface
-public interface SelectionFunction<T extends Gene<T>> {
-	int selectIndividual(List<Individual<T>> population);
+public interface SelectionFunction<T extends Gene<T>, U extends Individual<T>> {
+	int selectIndividual(List<U> population);
 	
-	default List<Integer> select(List<Individual<T>> population, int n) {
-		final ArrayList<Individual<T>> populationCopy = new ArrayList<>(population);
+	default List<Integer> select(List<U> population, int n) {
+		final ArrayList<U> populationCopy = new ArrayList<>(population);
 
 		final ArrayList<Integer> indices = new ArrayList<>();
 		for (int i = 0; i < population.size(); ++i) {

@@ -2,9 +2,9 @@ package gasp.ga.localSearch;
 
 import org.junit.jupiter.api.Test;
 
-import gasp.ga.Individual;
 import gasp.ga.jbse.GeneJBSE;
 import gasp.ga.jbse.IndividualGeneratorJBSE;
+import gasp.ga.jbse.IndividualJBSE;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
 
 import org.junit.jupiter.api.DisplayName;
@@ -36,23 +36,23 @@ public class TestLocalSearchAlgorithmHillClimbing {
 		return new IndividualGeneratorJBSE(new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 	}
 
-	private LocalSearchAlgorithmHillClimbing<GeneJBSE> localSearch() {
+	private LocalSearchAlgorithmHillClimbing<GeneJBSE, IndividualJBSE> localSearch() {
 		return new LocalSearchAlgorithmHillClimbing<>(ig(), POPULATION_SIZE, new Random(0));
 	}
 
 	@Test
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch() does not return null")
 	public void testLocalSearch1() {
-		final Individual<GeneJBSE> indRandom = ig().generateRandomIndividual();
-		final Individual<GeneJBSE> indSearch = localSearch().doLocalSearch(indRandom.clone());
+		final IndividualJBSE indRandom = ig().generateRandomIndividual();
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(indRandom.clone());
 		assertNotEquals(indSearch, null);
 	}
 	
 	@Test
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch(), if returns a different Individual, this has a higher fitness than the input one")
 	public void testLocalSearch3() {
-		final Individual<GeneJBSE> indRandom = ig().generateRandomIndividual();
-		final Individual<GeneJBSE> indSearch = localSearch().doLocalSearch(indRandom.clone());
+		final IndividualJBSE indRandom = ig().generateRandomIndividual();
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(indRandom.clone());
 		assumeFalse(indSearch == null);
 		assumeFalse(indRandom.equals(indSearch));
 		assertTrue(indSearch.getFitness() >= indRandom.getFitness());
@@ -61,8 +61,8 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	@Test
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch(), if returns a different individual, this has at least a negative constraint")
 	public void testLocalSearch4() {
-		final Individual<GeneJBSE> indRandom = ig().generateRandomIndividual();
-		final Individual<GeneJBSE> indSearch = localSearch().doLocalSearch(indRandom.clone());
+		final IndividualJBSE indRandom = ig().generateRandomIndividual();
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(indRandom.clone());
 		assumeFalse(indSearch == null);
 		assumeFalse(indRandom.equals(indSearch));
 		boolean hasANegativeConstraint = false;

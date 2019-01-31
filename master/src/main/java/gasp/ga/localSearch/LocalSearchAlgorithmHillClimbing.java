@@ -10,14 +10,14 @@ import gasp.ga.Gene;
 import gasp.ga.IndividualGenerator;
 import gasp.ga.Individual;
 
-public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implements LocalSearchAlgorithm<T> { 
+public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends Individual<T>> implements LocalSearchAlgorithm<T, U> { 
 	private static final Logger logger = LogManager.getLogger(LocalSearchAlgorithmHillClimbing.class);
 
-	private final IndividualGenerator<T> individualGenerator;
+	private final IndividualGenerator<T, U> individualGenerator;
 	private final int populationSize;
 	private final Random random;
 	
-	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T> individualGenerator, int populationSize, Random random) {
+	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T, U> individualGenerator, int populationSize, Random random) {
 		if (individualGenerator == null) {
 			throw new IllegalArgumentException("The individual generator cannot be null.");
 		}
@@ -34,8 +34,8 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 	}
 	
 	@Override
-	public Individual<T> doLocalSearch(Individual<T> individual) {
-		Individual<T> retValue = individual;
+	public U doLocalSearch(U individual) {
+		U retValue = individual;
 		int index = this.random.nextInt(retValue.size());
 		int remainingAttempts = Math.min(retValue.size(), this.populationSize);
 		
@@ -47,7 +47,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 			currentChromosome.remove(index);
 			currentChromosome.add(index, mutatedGene);
 			
-			Individual<T> newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
+			U newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 			if (newIndividual == null) {
 				logger.info("Local search at index " + index + ": no individual generated");
 				--remainingAttempts;
