@@ -570,7 +570,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		boolean contradictsDoesNotPointTo(String originString, String className) {
 			for (int i = 0; i < this.aliases.size(); ++i) {
 				final HashSet<String> aliasSet = this.aliases.get(i);
-				if (aliasSet.contains(originString) && this.pointsTo.get(i).equals(className)) {
+				if (aliasSet.contains(originString) && className.equals(this.pointsTo.get(i))) {
 					return true;
 				}
 			}

@@ -82,7 +82,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		this.crossoverFunction = crossoverFunction;
 		this.mutationFunction = mutationFunction;
 		this.selectionFunction = selectionFunction;
-		this.localSearchAlgorithm = localSearchAlgorithm;
+		this.localSearchAlgorithm = localSearchAlgorithm;		
 	}
 	
 	@SuppressWarnings("unchecked")
