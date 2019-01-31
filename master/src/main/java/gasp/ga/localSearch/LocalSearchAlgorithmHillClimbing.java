@@ -59,10 +59,10 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 						found = true;
 						break;
 					}
-					--remainingAttemptsIndividual;
 					if (remainingAttemptsIndividual == 0) {
 						break;
 					}
+					--remainingAttemptsIndividual;
 					newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 				}
 				if (found) {
