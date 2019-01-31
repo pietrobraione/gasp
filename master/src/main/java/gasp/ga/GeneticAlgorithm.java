@@ -156,7 +156,7 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
 	}
 
 	boolean isFinished() {
-		return this.currentGeneration > this.generations;
+		return this.currentGeneration == this.generations;
 	}
 
 	void produceNextGeneration() {
