@@ -33,7 +33,7 @@ public class TestGeneticAlgorithm {
 	
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism does not return an empty list")
-	public void testElitism1() {
+	public void testElitism1() throws FoundWorstIndividualException {
 		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertFalse(algo.elitism().isEmpty());
@@ -41,7 +41,7 @@ public class TestGeneticAlgorithm {
 	
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism does not return null")
-	public void testElitism2() {
+	public void testElitism2() throws FoundWorstIndividualException {
 		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertNotEquals(algo.elitism(), null);
@@ -49,7 +49,7 @@ public class TestGeneticAlgorithm {
 	
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism returns a list with size of the corresponding configuration parameter")
-	public void testElitism5() {
+	public void testElitism5() throws FoundWorstIndividualException {
 		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertEquals(algo.elitism().size(), ELITE_SIZE);
@@ -57,7 +57,7 @@ public class TestGeneticAlgorithm {
 	
 	@Test
 	@DisplayName("GeneticAlgorithm.elitism returns a list sorted by fitness")
-	public void testElitism4() {
+	public void testElitism4() throws FoundWorstIndividualException {
 		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		final List<? extends Individual<?>> elite = algo.elitism();

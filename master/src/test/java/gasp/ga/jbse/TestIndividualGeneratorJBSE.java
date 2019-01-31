@@ -14,9 +14,12 @@ import java.util.Random;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.jbse.IndividualGeneratorJBSE;
 
+@DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite")
 public class TestIndividualGeneratorJBSE {
+	private static final long MAX_FITNESS = 1_000_000;
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
 	static {
 		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
@@ -28,30 +31,30 @@ public class TestIndividualGeneratorJBSE {
 	private static final String METHOD_NAME = "m";
 	
 	private IndividualGeneratorJBSE ig() {
-		return new IndividualGeneratorJBSE(new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
+		return new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 	}
 
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual does not return null")
-	public void testRandomIndividual1() {
+	public void testRandomIndividual1() throws FoundWorstIndividualException {
 		assertNotNull(ig().generateRandomIndividual());
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a nonnull constraint set")
-	public void testRandomIndividual2() {
+	public void testRandomIndividual2() throws FoundWorstIndividualException {
 		assertNotEquals(ig().generateRandomIndividual().getChromosome(), null);
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a nonempty constraint set")
-	public void testRandomIndividual3() {
+	public void testRandomIndividual3() throws FoundWorstIndividualException {
 		assertFalse(ig().generateRandomIndividual().getChromosome().isEmpty());
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a fitness value greater than 0")
-	public void testRandomIndividual4() {
+	public void testRandomIndividual4() throws FoundWorstIndividualException {
 		assertTrue(ig().generateRandomIndividual().getFitness() > 0);
 	}
 }

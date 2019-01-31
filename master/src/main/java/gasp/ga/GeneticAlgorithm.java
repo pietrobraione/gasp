@@ -83,11 +83,32 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		this.mutationFunction = mutationFunction;
 		this.selectionFunction = selectionFunction;
 		this.localSearchAlgorithm = localSearchAlgorithm;
-		
-		generateInitialPopulation();
 	}
 	
-	void generateInitialPopulation() {
+	@SuppressWarnings("unchecked")
+	public void evolve()  {
+        try {
+    		generateInitialPopulation();
+    		
+    		logger.debug("Generation " + this.currentGeneration + ":");
+    		logIndividuals(this.population);
+            logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
+
+        	while (!isFinished()) {
+        		++this.currentGeneration;
+        		possiblyDoLocalSearch();
+        		produceNextGeneration();
+
+        		logger.debug("Generation " + this.currentGeneration + ":");
+        		logIndividuals(this.population);
+        		logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
+        	}
+		} catch (FoundWorstIndividualException e) {
+			this.population.set(0, (U) e.getIndividual());
+		}
+	}
+	
+	void generateInitialPopulation() throws FoundWorstIndividualException {
 		int generated = 0;
 		while (generated < this.populationSize) {
 			final U individual = this.individualGenerator.generateRandomIndividual();
@@ -97,22 +118,6 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 			}
 		}
 		Collections.sort(this.population);
-	}
-	
-	public void evolve() {
-		logger.debug("Generation " + this.currentGeneration + ":");
-		logIndividuals(this.population);
-        logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
-
-		while (!isFinished()) {
-			++this.currentGeneration;
-			possiblyDoLocalSearch();
-			produceNextGeneration();
-			
-        	logger.debug("Generation " + this.currentGeneration + ":");
-        	logIndividuals(this.population);
-            logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
-		}
 	}
 	
 	public List<Individual<T>> getBestIndividuals(int n) {
@@ -131,7 +136,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		}
 	}
 
-	void possiblyDoLocalSearch() {
+	void possiblyDoLocalSearch() throws FoundWorstIndividualException {
 		if (this.localSearchAlgorithm == null) {
 			return;
 		}
@@ -157,7 +162,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		return this.currentGeneration == this.generations;
 	}
 
-	void produceNextGeneration() {
+	void produceNextGeneration() throws FoundWorstIndividualException {
 		final List<U> offsprings = breedOffsprings();
         Collections.sort(offsprings);
 
@@ -186,7 +191,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         return elite;
 	}
 	
-	List<U> breedOffsprings() {
+	List<U> breedOffsprings() throws FoundWorstIndividualException {
 		final ExecutorService executor = Executors.newFixedThreadPool(this.numberOfThreads);
 		final ExecutorCompletionService<List<U>> completionService = new ExecutorCompletionService<>(executor);
         for (int i = 0; i < this.populationSize / 2; ++i) {
@@ -198,14 +203,21 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         	try {
             	final Future<List<U>> f = completionService.take();
 				offsprings.addAll(f.get());
-			} catch (InterruptedException | ExecutionException e) {
-				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				if (e.getCause() instanceof FoundWorstIndividualException) {
+					throw (FoundWorstIndividualException) e.getCause();
+				} else {
+					throw new RuntimeException(e); //TODO report better
+				}
+			} catch (InterruptedException e) {
+				//this should never happen
+				throw new AssertionError("Unreachable code reached: thread interrupted.", e);
 			}
         }        
         return offsprings;
 	}
 	
-	List<U> generateOffspringsFromTwoParents() {
+	List<U> generateOffspringsFromTwoParents() throws FoundWorstIndividualException {
         final ArrayList<U> retVal = new ArrayList<>();
         
         //selection

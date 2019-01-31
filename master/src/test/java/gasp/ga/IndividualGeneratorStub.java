@@ -1,6 +1,7 @@
 package gasp.ga;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -20,6 +21,11 @@ public final class IndividualGeneratorStub implements IndividualGenerator<GeneSt
 		final List<GeneStub> chromosome = new ArrayList<>(precondition);
 		chromosome.addAll(generateRandomChromosome());
 		return new Individual<>(chromosome, chromosome.size());
+	}
+	
+	@Override
+	public Individual<GeneStub> generateRandomIndividual() {
+		return generateRandomIndividual(Collections.emptyList());
 	}
 
 	private List<GeneStub> generateRandomChromosome() {

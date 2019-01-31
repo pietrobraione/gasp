@@ -63,7 +63,7 @@ public final class GeneJBSE extends Gene<GeneJBSE> {
 				this.toString = cs.result;
 			} catch (Exception e) {
 				//this should never happen
-				throw new AssertionError("Unreachable invalid expression type while negating a clause.");
+				throw new AssertionError("Unreachable invalid expression type while negating a clause.", e);
 			}
 		} else {
 			this.toString = "-";

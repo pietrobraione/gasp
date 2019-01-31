@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 
 @DisplayName("gasp.ga.Individual test suite")
 public class TestIndividual {
+	private static final long MAX_FITNESS = 1_000_000;
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
 	static {
 		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
@@ -29,12 +30,12 @@ public class TestIndividual {
 	private static final String METHOD_NAME = "m";
 	
 	private IndividualGeneratorJBSE ig() {
-		return new IndividualGeneratorJBSE(new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
+		return new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 	}
 
 	@Test
 	@DisplayName("Individual.clone() generates an individual that is equal to the cloned one")
-	public void testCloneIndividual1() {
+	public void testCloneIndividual1() throws FoundWorstIndividualException {
 		final Individual<?> ind1 = ig().generateRandomIndividual();
 		final Individual<?> ind2 = ind1.clone();
 		assertEquals(ind1, ind2);
@@ -42,7 +43,7 @@ public class TestIndividual {
 	
 	@Test
 	@DisplayName("Individual.clone() has the same chromosome of the cloned individual")
-	public void testCloneIndividual2() {
+	public void testCloneIndividual2() throws FoundWorstIndividualException {
 		final Individual<?> ind1 = ig().generateRandomIndividual();
 		final Individual<?> ind2 = ind1.clone();
 		assertEquals(ind1.getChromosome(), ind2.getChromosome());
@@ -50,7 +51,7 @@ public class TestIndividual {
 	
 	@Test
 	@DisplayName("Individual.clone() has the same fitness of the cloned individual")
-	public void testCloneIndividual3() {
+	public void testCloneIndividual3() throws FoundWorstIndividualException {
 		final Individual<?> ind1 = ig().generateRandomIndividual();
 		final Individual<?> ind2 = ind1.clone();
 		assertEquals(ind1.getFitness(), ind2.getFitness());
@@ -58,7 +59,7 @@ public class TestIndividual {
 	
 	@Test
 	@DisplayName("Individual.getModel() does not return null")
-	public void testGetModel1() {
+	public void testGetModel1() throws FoundWorstIndividualException {
 		final Individual<?> ind = ig().generateRandomIndividual();
 		assertNotNull(ind.getModel());
 	}

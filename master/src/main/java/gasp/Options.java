@@ -31,6 +31,7 @@ public class Options {
 	private int localSearchRate = 5;
 	private int populationSize = 10;
 	private int eliteSize = 5;
+	private long maxFitness = 1_000_000;
 	private CrossoverFunctionType crossoverFunctionType = CrossoverFunctionType.SINGLE_POINT; 
 	private MutationFunctionType mutationFunctionType = MutationFunctionType.DELETE; 
 	private SelectionFunctionType selectionFunctionType = SelectionFunctionType.RANK;
@@ -129,6 +130,18 @@ public class Options {
 	
 	public int getEliteSize() {
 		return this.eliteSize;
+	}
+	
+	@Option(names = {"-M", "--max-fitness"}, defaultValue = "1000000", description = "Maximum fitness value beyond which the software under analysis is considered to be diverging (default: ${DEFAULT-VALUE}).")
+	public void setMaxFitness(long maxFitness) {
+		if (maxFitness <= 0) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Maximum fitness %d is zero or negative.", maxFitness));
+		}
+		this.maxFitness = maxFitness;
+	}
+	
+	public long getMaxFitness() {
+		return this.maxFitness;
 	}
 	
 	@Option(names = {"-c", "--crossover-function"}, defaultValue = "SINGLE_POINT", description = "The crossover function, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")

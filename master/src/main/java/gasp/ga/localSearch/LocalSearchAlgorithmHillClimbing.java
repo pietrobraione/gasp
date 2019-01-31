@@ -6,6 +6,7 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.Gene;
 import gasp.ga.IndividualGenerator;
 import gasp.ga.Individual;
@@ -34,7 +35,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 	}
 	
 	@Override
-	public U doLocalSearch(U individual) {
+	public U doLocalSearch(U individual) throws FoundWorstIndividualException {
 		U retValue = individual;
 		int index = this.random.nextInt(retValue.size());
 		int remainingAttempts = Math.min(retValue.size(), this.populationSize);
@@ -48,31 +49,28 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 			currentChromosome.add(index, mutatedGene);
 			
 			U newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
-			if (newIndividual == null) {
-				logger.info("Local search at index " + index + ": no individual generated");
-				--remainingAttempts;
-			} else {
-				boolean found = false;
-				int remainingAttemptsIndividual = Math.max(1, this.populationSize * 10 / ((int) retValue.getFitness()));
-				while (true) {
-					if (newIndividual.getFitness() > retValue.getFitness()) {
-						found = true;
-						break;
-					}
-					if (remainingAttemptsIndividual == 0) {
-						break;
-					}
-					--remainingAttemptsIndividual;
-					newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
+			boolean found = false;
+			int remainingAttemptsIndividual = Math.max(1, this.populationSize * 10 / ((int) retValue.getFitness()));
+			while (true) {
+				if (newIndividual != null && newIndividual.getFitness() > retValue.getFitness()) {
+					found = true;
+					break;
 				}
-				if (found) {
-					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
-					retValue = newIndividual;
-				} else {
-					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
-					--remainingAttempts;
+				if (remainingAttemptsIndividual == 0) {
+					break;
 				}
+				--remainingAttemptsIndividual;
+				newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 			}
+			if (found) {
+				logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
+				retValue = newIndividual;
+			} else if (newIndividual == null) {
+				logger.info("Local search at index " + index + ": no individual ** Unsuccessful");
+			} else {
+				logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
+			}
+			--remainingAttempts;
 			
             index = (index + 1) % retValue.size();
 		}

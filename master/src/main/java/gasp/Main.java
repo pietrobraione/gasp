@@ -81,10 +81,14 @@ public class Main {
 		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
 		ga.evolve();
 		final Individual<?> solution = ga.getBestIndividuals(1).get(0);
+		final boolean solutionHasMaxFitness = solution.getFitness() >= this.o.getMaxFitness();
 		
+		if (solutionHasMaxFitness) {
+			logger.info("The worst case individual has maximum fitness (possibly diverging execution).");
+		}
 		logger.info("Worst case input: " + solution.getChromosome());
 		logger.info("Worst case model: " + solution.getModel());
-		logger.info("Worst case cost: " + solution.getFitness());	
+		logger.info("Worst case cost: " + solution.getFitness());
 		logger.info(getName() + " ended");
 	}
 	
@@ -108,7 +112,8 @@ public class Main {
 	
 	private GeneticAlgorithm<?, ?> geneticAlgorithm(Random random) {
 		final IndividualGenerator<GeneJBSE, IndividualJBSE> ig = 
-				new IndividualGeneratorJBSE(random,
+				new IndividualGeneratorJBSE(this.o.getMaxFitness(),
+											random,
 										    this.o.getClasspath(),
 										    this.o.getJBSEPath(), 
 										    this.o.getZ3Path(),

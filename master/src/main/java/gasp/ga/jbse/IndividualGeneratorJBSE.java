@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 
+import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.IndividualGenerator;
 import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
@@ -56,6 +57,7 @@ import jbse.val.exc.InvalidTypeException;
 public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE, IndividualJBSE> {
 	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
+	private final long maxFitness;
 	private final Random random;
 	private final String[] classpath;
 	private final String z3Path;
@@ -63,7 +65,10 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private final RunnerParameters commonParams;
 	private final State initialState;
 	
-	public IndividualGeneratorJBSE(Random random, List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
+	public IndividualGeneratorJBSE(long maxFitness, Random random, List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
+		if (maxFitness <= 0) {
+			throw new IllegalArgumentException("The maximum fitness cannot be  less or equal to 0.");
+		}
 		if (random == null) {
 			throw new IllegalArgumentException("The random generator cannot be null.");
 		}
@@ -86,6 +91,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			throw new IllegalArgumentException("Method name cannot be null");
 		}
 		
+		this.maxFitness = maxFitness;
 		this.random = random;
 		this.classpath = new String[classpath.size() + 1];
 		for (int i = 0; i < classpath.size(); ++i) {
@@ -121,18 +127,46 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 	}
 	
-	private enum Outcome { FOUND, ASSUMPTION_VIOLATED, PRECONDITION_TOO_STRICT };
+	@Override
+	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) throws FoundWorstIndividualException {
+		try {
+			final ChromosomeChecker chk = new ChromosomeChecker(chromosome);
+			final ActionsRunner actions = new ActionsRunner(chk);
+			final Runner r = newRunner(actions, chk.chromosomeFiltered);
+			r.run();
+			r.getEngine().close();
+			if (actions.outcome == Outcome.FOUND) {
+				return new IndividualJBSE(simplify(actions.chromosome), actions.fitness, actions.pathIdentifier);
+			} else if (actions.outcome == Outcome.MAXIMUM_FITNESS_REACHED) {
+				throw new FoundWorstIndividualException(new IndividualJBSE(simplify(actions.chromosome), actions.fitness, actions.pathIdentifier));
+			} else {
+				return null; //TODO distinguish the two remaining subcases of action.outcome
+			}
+		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
+				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
+				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
+				| ContradictionException | EngineStuckException | FailureException | InvalidInputException | InvalidOperandException e) {
+			//TODO improve!
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private enum Outcome { FOUND, ASSUMPTION_VIOLATED, PRECONDITION_TOO_STRICT, MAXIMUM_FITNESS_REACHED };
 
 	private class ActionsRunner extends Actions {
 		private final ChromosomeChecker chk;
 		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
 		private Outcome outcome = null;
-		private long analyzedStates = 0;
+		private long fitness = 0;
 		private String pathIdentifier = null;
 		
 		public ActionsRunner(ChromosomeChecker chk) {
 			this.chk = chk;
-			chk.addAllNoncontradictoryGenes(this.chromosome);
+			this.chromosome.addAll(chk.chromosomeFiltered);
+		}
+		
+		private long fitness() {
+			return getEngine().getAnalyzedStates() + 1;
 		}
 		
 		@Override
@@ -140,6 +174,18 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			final Engine engine = getEngine();
 			addGenes(engine.getCurrentState().getPathCondition());
 			return super.atInitial();
+		}
+		
+		@Override
+		public boolean atStepPost() {
+			final long fitness = fitness();
+			if (fitness >= IndividualGeneratorJBSE.this.maxFitness) {
+				this.outcome = Outcome.MAXIMUM_FITNESS_REACHED;
+				this.fitness = fitness;
+				this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
+				return true;
+			}
+			return super.atStepPost();
 		}
 		
 		@Override
@@ -245,7 +291,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		@Override
 		public boolean atTraceEnd() {
 			this.outcome = Outcome.FOUND;
-			this.analyzedStates = getEngine().getAnalyzedStates() + 1;
+			this.fitness = fitness();
 			this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
 			return true;
 		}
@@ -300,8 +346,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 					final Clause clause = gene.getClause();
 					if (clause instanceof ClauseAssume) {
 						try {
-							initialState.assume(((ClauseAssume) clause).getCondition());
-						} catch (InvalidInputException e) {
+							final Primitive condition = gene.isNegated() ? ((ClauseAssume) clause).getCondition().not() : ((ClauseAssume) clause).getCondition();
+							initialState.assume(condition);
+						} catch (InvalidInputException | InvalidTypeException e) {
 							//this should never happen
 							throw new AssertionError("Found an invalid condition in a clause.", e);
 						}
@@ -315,27 +362,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		final RunnerBuilder rb = new RunnerBuilder();
 		final Runner r = rb.build(params);		
 		return r;
-	}
-	
-	@Override
-	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) {
-		try {
-			final ActionsRunner actions = new ActionsRunner(new ChromosomeChecker(chromosome));
-			final Runner r = newRunner(actions, chromosome);
-			r.run();
-			r.getEngine().close();
-			if (actions.outcome == Outcome.FOUND) {
-				return new IndividualJBSE(simplify(actions.chromosome), actions.analyzedStates, actions.pathIdentifier);
-			} else {
-				return null; //TODO distinguish the two remaining subcases of action.outcome
-			}
-		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
-				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
-				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException | InvalidInputException | InvalidOperandException e) {
-			//TODO improve!
-			throw new RuntimeException(e);
-		}
 	}
 	
 	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {
@@ -501,10 +527,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			}
 		}
 		
-		void addAllNoncontradictoryGenes(List<GeneJBSE> chromosome) {
-			chromosome.addAll(this.chromosomeFiltered);
-		}
-	
 		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition) 
 				throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
 			final Primitive conditionAnd = (precondition == null ? condition : precondition.and(condition));
@@ -513,7 +535,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			} else if (conditionAnd.surelyTrue()) {
 				return false;
 			} else {
-				return dec.isSat((Expression) conditionAnd);
+				return !dec.isSat((Expression) conditionAnd);
 			}
 		}
 
