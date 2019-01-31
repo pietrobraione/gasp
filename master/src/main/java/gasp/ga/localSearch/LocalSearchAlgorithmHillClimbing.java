@@ -37,7 +37,10 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 	public Individual<T> doLocalSearch(Individual<T> individual) {
 		Individual<T> retValue = individual;
 		int index = this.random.nextInt(retValue.size());
-		int remainingAttempts = retValue.size();
+		int remainingAttempts = Math.min(retValue.size(), this.populationSize);
+		
+    	logger.debug("Performing local search, number of attempts: " + remainingAttempts);
+
 		while (remainingAttempts > 0) {			
 			final List<T> currentChromosome = retValue.getChromosome();
 			final T mutatedGene = currentChromosome.get(index).not();
@@ -50,7 +53,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 				--remainingAttempts;
 			} else {
 				boolean found = false;
-				int remainingAttemptsIndividual = this.populationSize / 2;
+				int remainingAttemptsIndividual = Math.max(1, this.populationSize * 10 / ((int) retValue.getFitness()));
 				while (true) {
 					if (newIndividual.getFitness() > retValue.getFitness()) {
 						found = true;

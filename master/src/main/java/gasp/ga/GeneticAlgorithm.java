@@ -140,8 +140,6 @@ public final class GeneticAlgorithm<T extends Gene<T>> {
         	return; //not this time
         }
         
-    	logger.debug("Performing local search");
-
         final Individual<T> best = this.population.get(0);
         final Individual<T> optimizedBest = this.localSearchAlgorithm.doLocalSearch(best);
         
