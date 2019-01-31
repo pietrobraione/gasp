@@ -37,30 +37,41 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>> implement
 	public Individual<T> doLocalSearch(Individual<T> individual) {
 		Individual<T> retValue = individual;
 		int index = this.random.nextInt(retValue.size());
-		
-		logger.info("Local search starts at index " + index);
-		
-		for (int remainingAttempts = this.populationSize / 2; remainingAttempts > 0; --remainingAttempts) {			
+		int remainingAttempts = retValue.size();
+		while (remainingAttempts > 0) {			
 			final List<T> currentChromosome = retValue.getChromosome();
 			final T mutatedGene = currentChromosome.get(index).not();
 			currentChromosome.remove(index);
 			currentChromosome.add(index, mutatedGene);
 			
-			final Individual<T> newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
-			
+			Individual<T> newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 			if (newIndividual == null) {
-				//unsuccessful mutation
-				index = this.random.nextInt(retValue.size());
-				continue;
+				logger.info("Local search at index " + index + ": no individual generated");
+				--remainingAttempts;
+			} else {
+				boolean found = false;
+				int remainingAttemptsIndividual = this.populationSize / 2;
+				while (true) {
+					if (newIndividual.getFitness() > retValue.getFitness()) {
+						found = true;
+						break;
+					}
+					--remainingAttemptsIndividual;
+					if (remainingAttemptsIndividual == 0) {
+						break;
+					}
+					newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
+				}
+				if (found) {
+					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
+					retValue = newIndividual;
+					remainingAttempts = retValue.size();
+				} else {
+					logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
+					--remainingAttempts;
+				}
 			}
 			
-			logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness());
-
-			if (newIndividual.getFitness() > retValue.getFitness()) {
-				logger.info(" ** Successful");
-				retValue = newIndividual;
-			}
-
             index = (index + 1) % retValue.size();
 		}
 		
