@@ -3,6 +3,10 @@ package small.alternate;
 import jbse.meta.Analysis;
 
 public class Alternate0 {
+	/**
+	 * Iterates an expensive task based on the values of the input list.
+	 * Worst case: a list that alternates zeros and non-zero values.
+	 */
 	public void alternate_0(int[] l) {
 		Analysis.assume(l.length == 20);
 		int check;

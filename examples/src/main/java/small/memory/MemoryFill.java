@@ -1,7 +1,14 @@
 package small.memory;
 
+import jbse.meta.Analysis;
+
 public class MemoryFill {
+	/**
+	 * Copy non-zero values in a buffer of 16 cells. 
+	 * Worst case: a list of non-zero values.
+	 */
 	public void memoryFill(int[] l) {
+		Analysis.assume(l.length <= 20);
 		int[] memory = new int[16];
 		int free = 16;
 		
@@ -12,6 +19,8 @@ public class MemoryFill {
 			return;
 		}
 		
+		//compresses by skipping zeros, and fills
+		//until space is available
 		for (int i = 0; i < l.length; ++i) {
 			if (l[i] != 0) {
 				free -= 1;

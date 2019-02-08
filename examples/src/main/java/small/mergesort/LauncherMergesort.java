@@ -1,4 +1,4 @@
-package small.search;
+package small.mergesort;
 
 import static settings.Settings.PATH_EXAMPLES;
 import static settings.Settings.PATH_JBSE;
@@ -7,7 +7,7 @@ import static settings.Settings.PATH_Z3;
 import gasp.Main;
 import gasp.Options;
 
-public class LauncherSearch {
+public class LauncherMergesort {
 	public static void main(String[] s) {
 		final Options o = new Options();
 		
@@ -15,10 +15,7 @@ public class LauncherSearch {
 		o.setJBSEPath(PATH_JBSE);
 		o.setZ3Path(PATH_Z3);
 		o.setGenerations(50);
-		o.setMethodSignature("small/search/Search:(Lsmall/search/Node;Lsmall/search/Node;)Z:depthFirstSearch");
-		
-		o.setSeed(1548922954114L);
-		o.setNumberOfThreads(1);
+		o.setMethodSignature("small/mergesort/Mergesort:([I)V:sort");
 		
 		final Main m = new Main(o);
 		m.run();
