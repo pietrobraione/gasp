@@ -49,7 +49,7 @@ public final class GeneJBSE extends Gene<GeneJBSE> {
 			this.toString = clauseAliases.getReference().asOriginString() + (this.negated ? " does not alias " : " aliases ") + clauseAliases.getObjekt().getOrigin().asOriginString(); 
 		} else if (this.clause instanceof ClauseAssumeExpands) {
 			final ClauseAssumeExpands clauseExpands = (ClauseAssumeExpands) this.clause;
-			this.toString = clauseExpands.getReference().asOriginString() + (this.negated ? " has not class " : " has class ") + clauseExpands.getObjekt().getType().getClassName(); 
+			this.toString = clauseExpands.getReference().asOriginString() + (this.negated ? " does not expand to " : " expands to ") + clauseExpands.getObjekt().getType().getClassName(); 
 		} else if (this.clause instanceof ClauseAssumeNull) {
 			final ClauseAssumeNull clauseNull = (ClauseAssumeNull) this.clause;
 			this.toString = clauseNull.getReference().asOriginString() + (this.negated ? " not null" : " null"); 

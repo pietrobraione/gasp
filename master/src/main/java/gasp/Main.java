@@ -80,15 +80,15 @@ public class Main {
 
 		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
 		ga.evolve();
-		final Individual<?> solution = ga.getBestIndividuals(1).get(0);
-		final boolean solutionHasMaxFitness = solution.getFitness() >= this.o.getMaxFitness();
+		final Individual<?> bestIndividual = ga.getBestIndividuals(1).get(0);
+		final boolean bestIndividualHasMaxFitness = bestIndividual.getFitness() >= this.o.getMaxFitness();
 		
-		if (solutionHasMaxFitness) {
+		if (bestIndividualHasMaxFitness) {
 			logger.info("The worst case individual has maximum fitness (possibly diverging execution).");
 		}
-		logger.info("Worst case input: " + solution.getChromosome());
-		logger.info("Worst case model: " + solution.getModel());
-		logger.info("Worst case cost: " + solution.getFitness());
+		logger.info("Worst case chromosome: " + bestIndividual.getChromosome());
+		logger.info("Worst case model: " + bestIndividual.getModel());
+		logger.info("Worst case cost: " + bestIndividual.getFitness());
 		logger.info(getName() + " ended");
 	}
 	

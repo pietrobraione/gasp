@@ -3,11 +3,13 @@ package gasp.ga.jbse;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Random;
 
 import gasp.ga.FoundWorstIndividualException;
@@ -16,7 +18,6 @@ import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
 import jbse.common.exc.InvalidInputException;
-import jbse.common.exc.UnexpectedInternalException;
 import jbse.dec.DecisionProcedureAlgorithms;
 import jbse.dec.DecisionProcedureAlwSat;
 import jbse.dec.DecisionProcedureClassInit;
@@ -43,6 +44,7 @@ import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.State;
 import jbse.mem.exc.ContradictionException;
+import jbse.mem.exc.HeapMemoryExhaustedException;
 import jbse.mem.exc.ThreadStackEmptyException;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.RewriterOperationOnSimplex;
@@ -51,6 +53,8 @@ import jbse.rules.LICSRulesRepo;
 import jbse.tree.StateTree.BranchPoint;
 import jbse.val.Expression;
 import jbse.val.Primitive;
+import jbse.val.ReferenceSymbolic;
+import jbse.val.ReferenceSymbolicMember;
 import jbse.val.exc.InvalidOperandException;
 import jbse.val.exc.InvalidTypeException;
 
@@ -121,8 +125,8 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		} catch (DecisionException | CannotBuildEngineException | InitializationException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException e) {
-			// TODO throw better exception
+				| ContradictionException | EngineStuckException | FailureException | HeapMemoryExhaustedException e) {
+			//TODO throw better exception
 			throw new RuntimeException(e);
 		}
 	}
@@ -130,7 +134,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	@Override
 	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) throws FoundWorstIndividualException {
 		try {
-			final ChromosomeChecker chk = new ChromosomeChecker(chromosome);
+			final ArrayList<GeneJBSE> chromosomeShuffled = new ArrayList<>(chromosome);
+			Collections.shuffle(chromosomeShuffled, this.random);
+			final ChromosomeChecker chk = new ChromosomeChecker(chromosomeShuffled);
 			final ActionsRunner actions = new ActionsRunner(chk);
 			final Runner r = newRunner(actions, chk.chromosomeFiltered);
 			r.run();
@@ -145,8 +151,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException | InvalidInputException | InvalidOperandException e) {
-			//TODO improve!
+				| ContradictionException | EngineStuckException | FailureException | InvalidInputException 
+				| InvalidOperandException | HeapMemoryExhaustedException e) {
+			//TODO throw better exception
 			throw new RuntimeException(e);
 		}
 	}
@@ -218,7 +225,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 					}
 				} catch (InvalidInputException e) {
 					//this should never happen
-					throw new UnexpectedInternalException(e);
+					throw new AssertionError(e);
 				}
 			}
 			
@@ -259,22 +266,22 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			for (Clause c : s.getPathCondition()) {
 				if (c instanceof ClauseAssumeAliases) {
 					final ClauseAssumeAliases ca = (ClauseAssumeAliases) c; 
-					final String originString1 = ca.getReference().asOriginString();
-					final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-					if (this.chk.contradictsAlias(originString1, originString2)) {
+					final ReferenceSymbolic reference = ca.getReference();
+					final ReferenceSymbolic originAlias = ca.getObjekt().getOrigin();
+					if (this.chk.contradictsAlias(reference, originAlias)) {
 						return true;
 					}
 				} else if (c instanceof ClauseAssumeExpands) {
 					final ClauseAssumeExpands ce = (ClauseAssumeExpands) c;
-					final String originString = ce.getReference().asOriginString();
+					final ReferenceSymbolic reference = ce.getReference();
 					final String className = ce.getObjekt().getType().getClassName();
-					if (this.chk.contradictsExpands(originString, className)) {
+					if (this.chk.contradictsExpands(reference, className)) {
 						return true;
 					}
 				} else if (c instanceof ClauseAssumeNull) {
 					final ClauseAssumeNull cn = (ClauseAssumeNull) c;
-					final String originString = cn.getReference().asOriginString();
-					if (this.chk.contradictsNull(originString)) {
+					final ReferenceSymbolic reference = cn.getReference();
+					if (this.chk.contradictsNull(reference)) {
 						return true;
 					}
 				}  //else, do nothing
@@ -307,7 +314,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
 	ClasspathException, CannotBacktrackException, CannotManageStateException, 
 	ThreadStackEmptyException, ContradictionException, EngineStuckException, 
-	FailureException {
+	FailureException, HeapMemoryExhaustedException {
 		return newRunner(actions, null);
 	}
 	
@@ -316,7 +323,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	InvalidClassFileFactoryClassException, NonexistingObservedVariablesException, 
 	ClasspathException, CannotBacktrackException, CannotManageStateException, 
 	ThreadStackEmptyException, ContradictionException, EngineStuckException, 
-	FailureException {
+	FailureException, HeapMemoryExhaustedException {
 		//builds the parameters
 		final RunnerParameters params = this.commonParams.clone();
 		
@@ -341,17 +348,41 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		//sets the initial state
 		final State initialState = (this.initialState == null ? null : this.initialState.clone());
 		if (initialState != null) {
-			if (chromosome != null) {
+			if (chromosome != null) {				
+				//sorts the chromosome
+				final ArrayList<GeneJBSE> chromosomeSorted = new ArrayList<>(chromosome);
+				Collections.sort(chromosomeSorted, new ComparatorGeneJBSE());
+				
+				//assumes all the positive clauses in the chromosome
 				for (GeneJBSE gene : chromosome) {
-					final Clause clause = gene.getClause();
-					if (clause instanceof ClauseAssume) {
-						try {
+					try {
+						final Clause clause = gene.getClause();
+						if (clause instanceof ClauseAssumeAliases) {
+							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+							if (!gene.isNegated()) {
+								initialState.assumeAliases(ca.getReference(), ca.getObjekt().getOrigin());
+							}
+						} else if (clause instanceof ClauseAssumeExpands) {
+							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+							if (!gene.isNegated()) {
+								initialState.assumeExpands(ce.getReference(), ce.getObjekt().getType());
+							}
+						} else if (clause instanceof ClauseAssumeNull) {
+							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+							if (!gene.isNegated()) {
+								initialState.assumeNull(cn.getReference());
+							}
+						} else if (clause instanceof ClauseAssume) {
 							final Primitive condition = gene.isNegated() ? ((ClauseAssume) clause).getCondition().not() : ((ClauseAssume) clause).getCondition();
 							initialState.assume(condition);
-						} catch (InvalidInputException | InvalidTypeException e) {
-							//this should never happen
-							throw new AssertionError("Found an invalid condition in a clause.", e);
 						}
+					} catch (ContradictionException e) {
+						//found a duplicate or contradictory reference clause that
+						//survived filtering: just skip it
+						continue; //pleonastic
+					} catch (InvalidInputException | InvalidTypeException e) {
+						//this should never happen
+						throw new AssertionError("Found an invalid condition in a clause.", e);
 					}
 				}
 			}
@@ -428,12 +459,39 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	}
 	
 	private class ChromosomeChecker {
-		final ArrayList<HashSet<String>> aliases = new ArrayList<>();
-		final HashMap<String, HashSet<String>> notAliases = new HashMap<>();
-		final ArrayList<String> pointsTo = new ArrayList<>();
-		final ArrayList<HashSet<String>> doesNotPointTo = new ArrayList<>();
-		final HashSet<String> nulls = new HashSet<>();
-		final HashSet<String> notNulls = new HashSet<>();
+		/** 
+		 * Maps a ReferenceSymbolic that must expand to the set of 
+		 * the ReferenceSymbolic that must alias it. 
+		 */
+		final HashMap<ReferenceSymbolic, HashSet<ReferenceSymbolic>> aliases = new HashMap<>();
+
+		/** 
+		 * Maps a ReferenceSymbolic that may expand to the set of 
+		 * the ReferenceSymbolic that may not alias it (i.e., that
+		 * either are not alias or alias something else). 
+		 */
+		final HashMap<ReferenceSymbolic, HashSet<ReferenceSymbolic>> notAliases = new HashMap<>();
+		
+		/** 
+		 * Maps a ReferenceSymbolic that must expand to the name of 
+		 * the class of the object it must points to (or null if we
+		 * just assume expansion without any assumption on the class). 
+		 */
+		final HashMap<ReferenceSymbolic, String> expands = new HashMap<>();
+
+		/** 
+		 * Maps a ReferenceSymbolic that may expands to the name of 
+		 * the classes of the object it may not point to. 
+		 */
+		final HashMap<ReferenceSymbolic, HashSet<String>> doesNotExpandTo = new HashMap<>();
+		
+		/** Set of ReferenceSymbolic that are nulls. */
+		final HashSet<ReferenceSymbolic> nulls = new HashSet<>();
+		
+		/** Set of ReferenceSymbolic that are not nulls. */
+		final HashSet<ReferenceSymbolic> notNulls = new HashSet<>();
+		
+		/** The filtered chromosome. */
 		final ArrayList<GeneJBSE> chromosomeFiltered = new ArrayList<>();
 		
 		ChromosomeChecker(List<GeneJBSE> chromosome) throws DecisionException, InvalidTypeException, InvalidOperandException, InvalidInputException {
@@ -459,57 +517,57 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 						if (gene.isNegated()) {
 							if (clause instanceof ClauseAssumeAliases) {
 								final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
-								final String originString1 = ca.getReference().asOriginString();
-								final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-								if (contradictsNotAlias(originString1, originString2)) {
+								final ReferenceSymbolic reference = ca.getReference();
+								final ReferenceSymbolic originAlias = ca.getObjekt().getOrigin();
+								if (contradictsNotAlias(reference, originAlias)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addNotAlias(originString1, originString2);
+									addNotAlias(reference, originAlias);
 								}
 							} else if (clause instanceof ClauseAssumeExpands) {
 								final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
-								final String originString = ce.getReference().asOriginString();
+								final ReferenceSymbolic origin = ce.getReference();
 								final String className = ce.getObjekt().getType().getClassName();
-								if (contradictsDoesNotPointTo(originString, className)) {
+								if (contradictsDoesNotExpand(origin, className)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addDoesNotPointTo(originString, className);
+									addDoesNotExpand(origin, className);
 								}
 							} else { //clause instanceof ClauseAssumeNull
 								final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
-								final String originString = cn.getReference().asOriginString();
-								if (contradictsNotNull(originString)) {
+								final ReferenceSymbolic origin = cn.getReference();
+								if (contradictsNotNull(origin)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addNotNull(originString);
+									addNotNull(origin);
 								}
 							}
 						} else {
 							if (clause instanceof ClauseAssumeAliases) {
 								final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
-								final String originString1 = ca.getReference().asOriginString();
-								final String originString2 = ca.getObjekt().getOrigin().asOriginString();
-								if (contradictsAlias(originString1, originString2)) {
+								final ReferenceSymbolic reference = ca.getReference();
+								final ReferenceSymbolic originAlias = ca.getObjekt().getOrigin();
+								if (contradictsAlias(reference, originAlias)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addAlias(originString1, originString2);
+									addAlias(reference, originAlias);
 								}
 							} else if (clause instanceof ClauseAssumeExpands) {
 								final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
-								final String originString = ce.getReference().asOriginString();
+								final ReferenceSymbolic reference = ce.getReference();
 								final String className = ce.getObjekt().getType().getClassName();
-								if (contradictsExpands(originString, className)) {
+								if (contradictsExpands(reference, className)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addExpands(originString, className);
+									addExpands(reference, className);
 								}
 							} else { //clause instanceof ClauseAssumeNull
 								final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
-								final String originString = cn.getReference().asOriginString();
-								if (contradictsNull(originString)) {
+								final ReferenceSymbolic reference = cn.getReference();
+								if (contradictsNull(reference)) {
 									contradictoryGenesPositions.add(i);
 								} else {
-									addNull(originString);
+									addNull(reference);
 								}
 							}
 						}
@@ -528,7 +586,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 		
 		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition) 
-				throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
+		throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
 			final Primitive conditionAnd = (precondition == null ? condition : precondition.and(condition));
 			if (conditionAnd.surelyFalse()) {
 				return true;
@@ -539,146 +597,259 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			}
 		}
 
-		boolean contradictsNotAlias(String originString1, String originString2) {
-			if (this.nulls.contains(originString1) || this.nulls.contains(originString2)) {
-				return false;
-			}
-			HashSet<String> aliasSet1 = null, aliasSet2 = null;
-			for (HashSet<String> aliasSet : this.aliases) {
-				if (aliasSet.contains(originString1)) {
-					aliasSet1 = aliasSet;
-				}
-				if (aliasSet.contains(originString2)) {
-					aliasSet2 = aliasSet;
-				}
-			}
-			if (aliasSet1 != null && aliasSet2 != null && aliasSet1 == aliasSet2) {
-				return true;
-			}
-			return false;
-		}
-
-		void addNotAlias(String originString1, String originString2) {
-			final HashSet<String> inequivalent1 = (this.notAliases.containsKey(originString1) ? this.notAliases.get(originString1) : new HashSet<>());
-			inequivalent1.add(originString2);
-			notAliases.put(originString1, inequivalent1);
-			final HashSet<String> inequivalent2 = (this.notAliases.containsKey(originString2) ? this.notAliases.get(originString2) : new HashSet<>());
-			inequivalent2.add(originString1);
-			notAliases.put(originString2, inequivalent2);
-		}
-
-		boolean contradictsDoesNotPointTo(String originString, String className) {
-			for (int i = 0; i < this.aliases.size(); ++i) {
-				final HashSet<String> aliasSet = this.aliases.get(i);
-				if (aliasSet.contains(originString) && className.equals(this.pointsTo.get(i))) {
+		boolean contradictsNotAlias(ReferenceSymbolic reference, ReferenceSymbolic originAlias) {
+			//if originAlias expands, then reference does not alias, or aliases
+			//something else; Note that this.expands.keySet().equals(this.aliases.keySet(), 
+			//thus this.aliases.containsKey(originAlias) iff originAlias expands
+			if (this.aliases.containsKey(originAlias)) { 
+				final HashSet<ReferenceSymbolic> aliasSet = this.aliases.get(originAlias);
+				if (aliasSet.contains(reference)) {
 					return true;
 				}
 			}
+			
+			//all checks ok: it is possible to assume that reference does
+			//not alias originAlias
 			return false;
 		}
 
-		void addDoesNotPointTo(String originString, String className) {
-			for (int i = 0; i < this.aliases.size(); ++i) {
-				final HashSet<String> aliasSet = this.aliases.get(i);
-				if (aliasSet.contains(originString)) {
-					this.doesNotPointTo.get(i).add(className);
-					return;
-				}
+		void addNotAlias(ReferenceSymbolic reference, ReferenceSymbolic originAlias) {
+			if (!this.notAliases.containsKey(originAlias)) {
+				this.notAliases.put(originAlias, new HashSet<>());
 			}
-			this.aliases.add(new HashSet<>());
-			this.aliases.get(aliases.size() - 1).add(originString);
-			this.pointsTo.add(null);
-			this.doesNotPointTo.add(new HashSet<>());
-			this.doesNotPointTo.get(doesNotPointTo.size() - 1).add(className);
+			this.notAliases.get(originAlias).add(reference);
 		}
 
-		boolean contradictsNotNull(String originString) {
-			return this.nulls.contains(originString);
-		}
-
-		void addNotNull(String originString) {
-			this.notNulls.add(originString);
-		}
-
-		boolean contradictsAlias(String originString1, String originString2) {
-			if (this.nulls.contains(originString1) || this.nulls.contains(originString2)) {
-				return true;
-			}
-			if (this.notAliases.containsKey(originString1) && this.notAliases.get(originString1).contains(originString2)) {
-				return true;
-			}
-			if (this.notAliases.containsKey(originString2) && this.notAliases.get(originString2).contains(originString1)) {
-				return true;
-			}
-			HashSet<String> aliasSet1 = null, aliasSet2 = null;
-			for (HashSet<String> aliasSet : this.aliases) {
-				if (aliasSet.contains(originString1)) {
-					aliasSet1 = aliasSet;
-				}
-				if (aliasSet.contains(originString2)) {
-					aliasSet2 = aliasSet;
-				}
-			}
-			if (aliasSet1 != null && aliasSet2 != null && aliasSet1 != aliasSet2) {
-				return true;
-			}
-			return false;
-		}
-
-		void addAlias(String originString1, String originString2) {
-			for (HashSet<String> aliasSet : this.aliases) {
-				if (aliasSet.contains(originString1) || aliasSet.contains(originString2)) {
-					aliasSet.add(originString1);
-					aliasSet.add(originString2);
-					return;
-				}
-			}
-			this.aliases.add(new HashSet<>());
-			this.aliases.get(aliases.size() - 1).add(originString1);
-			this.aliases.get(aliases.size() - 1).add(originString2);
-			this.pointsTo.add(null);
-			this.doesNotPointTo.add(new HashSet<>());
-		}
-
-		boolean contradictsExpands(String originString, String className) {
-			for (int i = 0; i < this.aliases.size(); ++i) {
-				final HashSet<String> aliasSet = this.aliases.get(i);
-				if (aliasSet.contains(originString)) {
-					return (this.doesNotPointTo.get(i).contains(className) ||
-							(this.pointsTo.get(i) != null && !className.equals(this.pointsTo.get(i))));
-				}
-			}
-			return false;
-		}
-
-		void addExpands(String originString, String className) {
-			for (int i = 0; i < this.aliases.size(); ++i) {
-				final HashSet<String> aliasSet = this.aliases.get(i);
-				if (aliasSet.contains(originString)) {
-					this.pointsTo.set(i, className);
-					return;
-				}
-			}
-			this.aliases.add(new HashSet<>());
-			this.aliases.get(aliases.size() - 1).add(originString);
-			this.pointsTo.add(className);
-			this.doesNotPointTo.add(new HashSet<>());
-		}
-
-		boolean contradictsNull(String originString) {
-			if (this.notNulls.contains(originString)) {
-				return true;
-			}
-			for (HashSet<String> aliasSet : aliases) {
-				if (aliasSet.contains(originString)) {
+		boolean contradictsDoesNotExpand(ReferenceSymbolic reference, String className) {
+			//if reference expands, then it must not expand to className
+			if (this.expands.containsKey(reference)) {
+				final String assumedClassName = this.expands.get(reference);
+				if (assumedClassName != null && !assumedClassName.equals(className)) {
 					return true;
 				}
 			}
+			
+			//all checks ok: it is possible to assume that reference does
+			//not expand to className
 			return false;
 		}
 
-		void addNull(String originString) {
-			this.nulls.add(originString);
+		void addDoesNotExpand(ReferenceSymbolic reference, String className) {
+			if (!this.doesNotExpandTo.containsKey(reference)) {
+				this.doesNotExpandTo.put(reference, new HashSet<>());
+			}
+			this.doesNotExpandTo.get(reference).add(className);
+		}
+
+		boolean contradictsNotNull(ReferenceSymbolic reference) {
+			return this.nulls.contains(reference);
+		}
+
+		void addNotNull(ReferenceSymbolic reference) {
+			this.notNulls.add(reference);
+		}
+
+		boolean contradictsAlias(ReferenceSymbolic reference, ReferenceSymbolic originAlias) {
+			//originAlias must expand
+			if (contradictsExpands(originAlias, null)) {
+				return true;
+			}
+			
+			//reference must not be null
+			if (this.nulls.contains(reference)) {
+				return true;
+			}
+			
+			//reference must not expand
+			if (this.expands.containsKey(reference)) {
+				return true;
+			}
+			
+			//if reference was already assumed to alias something, 
+			//then it must be originAlias
+			for (Map.Entry<ReferenceSymbolic, HashSet<ReferenceSymbolic>> entry : this.aliases.entrySet()) {
+				if (entry.getValue().contains(reference) && !entry.getKey().equals(originAlias)) {
+					return true;
+				}
+			}
+			
+			//reference must not be in the set of the forbidden
+			//aliases for originAlias
+			if (this.notAliases.containsKey(originAlias) && this.notAliases.get(originAlias).contains(reference)) {
+				return true;
+			}
+			
+			//if reference has a container, then assuming the expansion of the 
+			//container must not yield a contradiction 
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				if (contradictsExpands(container, null)) {
+					return true;
+				}
+			}
+			
+			//all checks ok: reference may alias originAlias
+			return false;
+		}
+
+		void addAlias(ReferenceSymbolic reference, ReferenceSymbolic originAlias) {
+			//assume originAlias to expand
+			addExpands(originAlias, null);
+			
+			//add the alias to this.aliases
+			this.aliases.get(originAlias).add(reference);
+			
+			//if reference has a container, assume the expansion 
+			//of the container recursive closure
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				addExpands(container, null);
+			}
+		}
+
+		boolean contradictsExpands(ReferenceSymbolic reference, String className) {
+			//reference must not be null
+			if (this.nulls.contains(reference)) {
+				return true;
+			}
+			
+			//reference must not alias
+			for (HashSet<ReferenceSymbolic> aliasSet : this.aliases.values()) {
+				if (aliasSet.contains(reference)) {
+					return true;
+				}
+			}
+			
+			//if reference was already assumed to expand to some class, 
+			//then it must not expand to a class different from className
+			//(if present)
+			if (this.expands.containsKey(reference)) {
+				final String assumedClassName = this.expands.get(reference);
+				if (className != null && assumedClassName != null && !assumedClassName.equals(className)) {
+					return true;
+				}
+			}
+		
+			//className (if present) must not be contained in the 
+			//forbidden expansions of reference (if any)
+			if (className != null && this.doesNotExpandTo.containsKey(reference)) {
+				if (this.doesNotExpandTo.get(reference).contains(className)) {
+					return true;
+				}
+			}
+			
+			//if reference has a container, then assuming the expansion of the 
+			//container must not yield a contradiction 
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				if (contradictsExpands(container, null)) {
+					return true;
+				}
+			}
+			
+			//all checks ok: reference may expand to an object with 
+			//class className
+			return false;
+		}
+
+		void addExpands(ReferenceSymbolic reference, String className) {
+			//this.aliases must contain the expansion, and must not
+			//weaken the associated alias set
+			if (!this.aliases.containsKey(reference)) {
+				this.aliases.put(reference, new HashSet<>());
+			}
+			
+			//this.expands must contain the expansion, and must not
+			//weaken the associated class name 
+			if (this.expands.containsKey(reference)) {
+				final String assumedClassName = this.expands.get(reference);
+				if (assumedClassName == null) {
+					this.expands.put(reference, className);
+				}
+			} else {
+				this.expands.put(reference, className);
+			}
+			
+			//if reference has a container, assume the expansion 
+			//of the container recursive closure
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				addExpands(container, null);
+			}
+		}
+
+		boolean contradictsNull(ReferenceSymbolic reference) {
+			//reference must not alias
+			for (HashSet<ReferenceSymbolic> aliasSet : this.aliases.values()) {
+				if (aliasSet.contains(reference)) {
+					return true;
+				}
+			}
+			
+			//reference must not expand
+			if (this.expands.containsKey(reference)) {
+				return true;
+			}
+			
+			//reference must not be previously assumed to be not null
+			if (this.notNulls.contains(reference)) {
+				return true;
+			}
+			
+			//if reference has a container, then assuming the expansion of the 
+			//container must not yield a contradiction 
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				if (contradictsExpands(container, null)) {
+					return true;
+				}
+			}
+			
+			//all checks ok: reference may be null 
+			return false;
+		}
+
+		void addNull(ReferenceSymbolic reference) {
+			//add reference to nulls
+			this.nulls.add(reference);
+			
+			//if reference has a container, assume the expansion 
+			//of the container recursive closure
+			if (reference instanceof ReferenceSymbolicMember) {
+				final ReferenceSymbolic container = ((ReferenceSymbolicMember) reference).getContainer();
+				addExpands(container, null);
+			}
+		}
+	}
+	
+	private static class ComparatorGeneJBSE implements Comparator<GeneJBSE> {
+		@Override
+		public int compare(GeneJBSE o1, GeneJBSE o2) {
+			final Clause c1 = o1.getClause();
+			final Clause c2 = o2.getClause();
+			//1- reference clauses come before numeric clauses
+			//2- reference clause A comes before reference clause B if A resolves a
+			//   container of what B resolves
+			if (c1 instanceof ClauseAssume && c2 instanceof ClauseAssumeReferenceSymbolic) {
+				return 1;
+			} else if (c1 instanceof ClauseAssumeReferenceSymbolic && c2 instanceof ClauseAssume) {
+				return -1;
+			} else if (c1 instanceof ClauseAssume && c2 instanceof ClauseAssume) {
+				return 0;
+			} else if (c1 instanceof ClauseAssumeReferenceSymbolic && c2 instanceof ClauseAssumeReferenceSymbolic) {
+				final ReferenceSymbolic r1 = ((ClauseAssumeReferenceSymbolic) c1).getReference();
+				final ReferenceSymbolic r2 = ((ClauseAssumeReferenceSymbolic) c2).getReference();
+				if (r1.hasContainer(r2)) {
+					return 1;
+				} else if (r2.hasContainer(r1)) {
+					return -1;
+				} else {
+					return 0;
+				}
+			} else {
+				//this should never happen
+				throw new AssertionError("Reached unreachable point: Possibly some unforeseen clause remained in a filtered chromosome.");
+			}
 		}
 	}
 }

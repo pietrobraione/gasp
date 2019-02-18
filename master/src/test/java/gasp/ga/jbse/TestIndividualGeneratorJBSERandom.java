@@ -11,14 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.jbse.IndividualGeneratorJBSE;
 
-@DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite")
-public class TestIndividualGeneratorJBSE {
+@DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite (purely random generation)")
+public class TestIndividualGeneratorJBSERandom {
 	private static final long MAX_FITNESS = 1_000_000;
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
 	static {
@@ -30,31 +31,34 @@ public class TestIndividualGeneratorJBSE {
 	private static final String METHOD_DESCRIPTOR = "(I)V";
 	private static final String METHOD_NAME = "m";
 	
-	private IndividualGeneratorJBSE ig() {
-		return new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
+	private IndividualGeneratorJBSE ig;
+	
+	@BeforeEach
+	private void beforeEach() {
+		this.ig = new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 	}
 
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual does not return null")
 	public void testRandomIndividual1() throws FoundWorstIndividualException {
-		assertNotNull(ig().generateRandomIndividual());
+		assertNotNull(this.ig.generateRandomIndividual());
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a nonnull constraint set")
 	public void testRandomIndividual2() throws FoundWorstIndividualException {
-		assertNotEquals(ig().generateRandomIndividual().getChromosome(), null);
+		assertNotEquals(this.ig.generateRandomIndividual().getChromosome(), null);
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a nonempty constraint set")
 	public void testRandomIndividual3() throws FoundWorstIndividualException {
-		assertFalse(ig().generateRandomIndividual().getChromosome().isEmpty());
+		assertFalse(this.ig.generateRandomIndividual().getChromosome().isEmpty());
 	}
 	
 	@Test
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual returns an individual with a fitness value greater than 0")
 	public void testRandomIndividual4() throws FoundWorstIndividualException {
-		assertTrue(ig().generateRandomIndividual().getFitness() > 0);
+		assertTrue(this.ig.generateRandomIndividual().getFitness() > 0);
 	}
 }

@@ -1,5 +1,6 @@
 package gasp.ga.jbse;
 
+import jbse.common.exc.InvalidInputException;
 import jbse.rewr.CalculatorRewriting;
 import jbse.rewr.Rewriter;
 import jbse.val.Any;
@@ -255,19 +256,19 @@ public final class CalculatorRewritingSynchronized extends CalculatorRewriting {
 
 	@Override
 	public synchronized Primitive applyFunctionPrimitive(char type, HistoryPoint historyPoint, String operator, Value... args)
-			throws InvalidOperandException, InvalidTypeException {
+	throws InvalidOperandException, InvalidTypeException, InvalidInputException {
 		return super.applyFunctionPrimitive(type, historyPoint, operator, args);
 	}
 	
 	@Override
 	public synchronized Primitive applyUnary(Operator operator, Primitive operand)
-			throws InvalidOperatorException, InvalidOperandException, InvalidTypeException {
+	throws InvalidOperatorException, InvalidOperandException, InvalidTypeException {
 		return super.applyUnary(operator, operand);
 	}
 	
 	@Override
 	public synchronized Primitive applyBinary(Primitive firstOperand, Operator operator, Primitive secondOperand)
-			throws InvalidOperatorException, InvalidOperandException, InvalidTypeException {
+	throws InvalidOperatorException, InvalidOperandException, InvalidTypeException {
 		return super.applyBinary(firstOperand, operator, secondOperand);
 	}
 	

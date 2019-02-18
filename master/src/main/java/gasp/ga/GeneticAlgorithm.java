@@ -109,14 +109,34 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	}
 	
 	void generateInitialPopulation() throws FoundWorstIndividualException {
+		final ExecutorService executor = Executors.newFixedThreadPool(this.numberOfThreads);
+		final ExecutorCompletionService<U> completionService = new ExecutorCompletionService<>(executor);
 		int generated = 0;
 		while (generated < this.populationSize) {
-			final U individual = this.individualGenerator.generateRandomIndividual();
-			if (individual != null) {
-				this.population.add(individual);
-				++generated;
+			for (int i = 0; i < this.populationSize - generated; ++i) {
+				completionService.submit(this.individualGenerator::generateRandomIndividual);
+			}
+			for (int i = 0; i < this.populationSize - generated; ++i) {
+				try {
+					final Future<U> f = completionService.take();
+					final U individual = f.get();
+					if (individual != null) {
+						this.population.add(individual);
+						++generated;
+					}
+				} catch (ExecutionException e) {
+					if (e.getCause() instanceof FoundWorstIndividualException) {
+						throw (FoundWorstIndividualException) e.getCause();
+					} else {
+						throw new RuntimeException(e); //TODO report better
+					}
+				} catch (InterruptedException e) {
+					//this should never happen
+					throw new AssertionError("Unreachable code reached: thread interrupted.", e);
+				}
 			}
 		}
+        executor.shutdown();
 		Collections.sort(this.population);
 	}
 	
