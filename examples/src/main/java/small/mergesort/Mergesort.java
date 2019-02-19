@@ -40,9 +40,4 @@ public class Mergesort {
 			}
 		}
 	}
-	
-	public static void main(String[] s) {
-		final int[] l = { 1, 4, 0 , 3, 2 };
-		new Mergesort().sort(l);
-	}
 }

@@ -2,6 +2,9 @@ package small.quicksort;
 
 import jbse.meta.Analysis;
 
+/**
+ * Worst case: array sorted in same or reverse order.
+ */
 public class Quicksort {
 	public void sort(int[] l) {
 		Analysis.assume(l.length == 20);

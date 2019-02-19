@@ -16,6 +16,7 @@ public class LauncherAlternate0 {
 		o.setZ3Path(PATH_Z3);
 		o.setGenerations(50);
 		o.setMethodSignature("small/alternate/Alternate0:([I)V:alternate_0");
+		o.setSeed(1550524510400L);
 		
 		final Main m = new Main(o);
 		m.run();

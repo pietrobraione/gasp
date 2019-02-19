@@ -2,6 +2,9 @@ package small.bubblesort;
 
 import jbse.meta.Analysis;
 
+/**
+ * Worst case: array sorted in reverse order.
+ */
 public class Bubblesort {
 	public void sort(int[] l) {
 		Analysis.assume(l.length == 20);

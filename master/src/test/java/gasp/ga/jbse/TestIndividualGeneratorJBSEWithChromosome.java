@@ -50,10 +50,7 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	}
 	private static final Path JBSE_PATH = Paths.get("/Users", "pietro", "git", "gasp", "jbse", "build", "classes", "java", "main"); 
 	private static final Path Z3_PATH = Paths.get("/opt", "local", "bin", "z3");
-	/*private static final String METHOD_CLASS_NAME = "smalldemos/ifx/IfExample";
-	private static final String METHOD_DESCRIPTOR = "(I)V";
-	private static final String METHOD_NAME = "m";*/
-	private static final String METHOD_CLASS_NAME = "testgen/Testgen";
+	private static final String METHOD_CLASS_NAME = "smalldemos/ifx/IfExample";
 	private static final String METHOD_DESCRIPTOR = "(I)V";
 	private static final String METHOD_NAME = "m";
 	
