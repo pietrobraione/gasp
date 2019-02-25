@@ -6,6 +6,7 @@ import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 
@@ -20,13 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestGeneticAlgorithm {
 	private static final int NUM_THREADS = 1;
 	private static final int GENERATIONS = 1;
+	private static final Duration TIMEOUT = Duration.ofHours(1);
 	private static final int LOCAL_SEARCH_RATE = 1;
 	private static final int POPULATION_SIZE = 5;
 	private static final int ELITE_SIZE = 5;
 	
 	private GeneticAlgorithm<GeneStub, Individual<GeneStub>> ga() {
 		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), NUM_THREADS, 
-								      GENERATIONS, LOCAL_SEARCH_RATE, POPULATION_SIZE, ELITE_SIZE, 
+								      GENERATIONS, TIMEOUT, LOCAL_SEARCH_RATE, POPULATION_SIZE, ELITE_SIZE, 
 									  (c1, c2) -> { return new Pair<>(c1, c2); }, c -> c,
 									  pop -> 0, i -> i);
 	}

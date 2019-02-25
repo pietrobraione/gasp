@@ -1,5 +1,7 @@
 package gasp.ga;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +26,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	private final IndividualGenerator<T, U> individualGenerator;
 	private final int numberOfThreads;
 	private final int generations;
+	private final Duration timeout;
 	private final int localSearchRate;
 	private final int populationSize;
 	private final int eliteSize;
@@ -34,9 +37,10 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	
 	private List<U> population = new ArrayList<>();
 	private int currentGeneration = 0;
+	private Instant start;
 
 	public GeneticAlgorithm(IndividualGenerator<T, U> individualGenerator, int numberOfThreads, 
-							int generations, int localSearchRate, int populationSize, int eliteSize, 
+							int generations, Duration timeout, int localSearchRate, int populationSize, int eliteSize, 
 							CrossoverFunction<T> crossoverFunction, MutationFunction<T> mutationFunction, 
 							SelectionFunction<T, U> selectionFunction, LocalSearchAlgorithm<T, U> localSearchAlgorithm) {
 		if (individualGenerator == null) {
@@ -45,8 +49,14 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		if (numberOfThreads <= 0) {
 			throw new IllegalArgumentException("Number of threads cannot be less or equal to 0.");
 		}
-		if (generations <= 0) {
-			throw new IllegalArgumentException("Number of generations cannot be less or equal to 0.");
+		if (generations < 0) {
+			throw new IllegalArgumentException("Number of generations cannot be less than 0.");
+		}
+		if (timeout == null) {
+			throw new IllegalArgumentException("Timeout cannot be null.");
+		}
+		if (timeout.isNegative()) {
+			throw new IllegalArgumentException("Timeout cannot be negative.");
 		}
 		if (localSearchRate <= 0) {
 			throw new IllegalArgumentException("Local search rate cannot be less or equal to 0.");
@@ -76,6 +86,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		this.individualGenerator = individualGenerator;
 		this.numberOfThreads = numberOfThreads;
 		this.generations = generations;
+		this.timeout = timeout; 
 		this.localSearchRate = localSearchRate;
 		this.populationSize = populationSize;
 		this.eliteSize = eliteSize;
@@ -88,6 +99,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	@SuppressWarnings("unchecked")
 	public void evolve()  {
         try {
+        	this.start = Instant.now();
     		generateInitialPopulation();
     		
     		logger.debug("Generation " + this.currentGeneration + ":");
@@ -179,7 +191,8 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	}
 
 	boolean isFinished() {
-		return this.currentGeneration == this.generations;
+		return (this.generations > 0 && this.currentGeneration == this.generations) ||
+		       (!this.timeout.isZero() && Instant.now().isAfter(this.start.plus(this.timeout)));
 	}
 
 	void produceNextGeneration() throws FoundWorstIndividualException {

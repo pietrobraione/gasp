@@ -5,6 +5,10 @@ import jbse.meta.Analysis;
 public class Mergesort {
 	public void sort(int[] l) {
 		Analysis.assume(l.length == 20);
+		_sort(l);
+	}
+	
+	private void _sort(int[] l) {
 		if (l.length > 1) {
 			final int mid = l.length / 2;
 			final int[] left = new int[mid];

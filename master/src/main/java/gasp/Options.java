@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +28,8 @@ public class Options {
 	private boolean help = false;
 	private boolean version = false;
 	private int numberOfThreads = 2;
-	private int generations = 5;
+	private int generations = 50;
+	private Duration timeout = Duration.ofHours(1);
 	private int localSearchRate = 5;
 	private int populationSize = 10;
 	private int eliteSize = 5;
@@ -83,16 +85,31 @@ public class Options {
 		return this.numberOfThreads;
 	}
 	
-	@Option(names = {"-g", "--generations"}, defaultValue = "5", description = "Number of generations to be executed (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-g", "--generations"}, defaultValue = "50", description = "Number of generations to be executed, where 0 means unlimited (default: ${DEFAULT-VALUE}).")
 	public void setGenerations(int generations) {
-		if (generations <= 0) {
-			throw new ParameterException(this.spec.commandLine(), String.format("Number of generations %d is zero or negative.", generations));
+		if (generations < 0) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Number of generations %d is negative.", generations));
 		}
 		this.generations = generations;
 	}
 	
 	public int getGenerations() {
 		return this.generations;
+	}
+	
+	@Option(names = {"-T", "--timeout"}, defaultValue = "PT1H", description = "Execution timeout in java.time.Duration format, where  (default: ${DEFAULT-VALUE}).")
+	public void setTimeout(Duration timeout) {
+		if (timeout == null) {
+			throw new ParameterException(this.spec.commandLine(), "Timeout is null.");
+		}
+		if (timeout == null || timeout.isNegative()) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Timeout %d is negative.", timeout));
+		}
+		this.timeout = timeout;
+	}
+	
+	public Duration getTimeout() {
+		return this.timeout;
 	}
 	
 	@Option(names = {"-r", "--local-search-rate"}, defaultValue = "5", description = "Number of generations between two different applications of local search (default: ${DEFAULT-VALUE}).")

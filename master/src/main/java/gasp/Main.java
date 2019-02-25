@@ -5,6 +5,7 @@ import static gasp.utils.Utils.getVendor;
 import static gasp.utils.Utils.getVersion;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Random;
 
 import org.apache.logging.log4j.Level;
@@ -75,7 +76,8 @@ public class Main {
 		
 		logger.info(getName() + " version " + getVersion() + ", © 2019 " + getVendor());
 		logger.info("Analyzing method " + o.getMethodClassName() + ":" + o.getMethodDescriptor() + ":" + o.getMethodName());
-		logger.info("Going to evolve " + o.getGenerations()  + " generations, seed " + this.o.getSeed());
+		logger.info("Going to evolve " + o.getGenerations()  + " generations, timeout " + readableDuration(this.o.getTimeout()));
+		logger.info("Random seed " + this.o.getSeed());
 		logger.info("Estimated number of fitness evaluations: " + o.estimateFitnessEvaluations());
 
 		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
@@ -90,6 +92,10 @@ public class Main {
 		logger.info("Worst case model: " + bestIndividual.getModel());
 		logger.info("Worst case cost: " + bestIndividual.getFitness());
 		logger.info(getName() + " ended");
+	}
+	
+	private static String readableDuration(Duration d) {
+		return d.toString().substring(2).replace("H", " h ").replace("M", " min ").replace("S", " sec ");
 	}
 	
 	private void configureLogger() {
@@ -124,6 +130,7 @@ public class Main {
 				new GeneticAlgorithm<GeneJBSE, IndividualJBSE>(ig,
 											   				   this.o.getNumberOfThreads(),
 											   				   this.o.getGenerations(),
+											   				   this.o.getTimeout(),
 											   				   this.o.getLocalSearchRate(),
 											   				   this.o.getPopulationSize(),
 											   				   this.o.getEliteSize(),

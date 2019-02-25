@@ -192,6 +192,12 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 				this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
 				return true;
 			}
+			/*final State s = getEngine().getCurrentState();
+			try {
+				System.out.println(s.getIdentifier() + "[" + s.getSequenceNumber() + "]" + (s.isStuck() ? " stuck" : (" " + s.getCurrentMethodSignature() + ":" + s.getPC())));
+			} catch (FrozenStateException | ThreadStackEmptyException e) {
+				System.out.println(e);
+			}*/
 			return super.atStepPost();
 		}
 		
