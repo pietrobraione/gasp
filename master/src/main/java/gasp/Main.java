@@ -16,11 +16,13 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.builder.api.AppenderComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
-import org.apache.logging.log4j.core.config.builder.api.LoggerComponentBuilder;
+import org.apache.logging.log4j.core.config.builder.api.LayoutComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.api.RootLoggerComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
+
 import picocli.CommandLine;
 import picocli.CommandLine.MissingParameterException;
+
 import gasp.ga.Gene;
 import gasp.ga.IndividualGenerator;
 import gasp.ga.jbse.GeneJBSE;
@@ -114,15 +116,16 @@ public class Main {
 	private void configureLogger() {
 		ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
 		builder.setStatusLevel(Level.WARN);
+		
+		//appender
 		AppenderComponentBuilder appenderBuilder = builder.newAppender("Stdout", "CONSOLE");
-		appenderBuilder.addAttribute("target",ConsoleAppender.Target.SYSTEM_OUT);
-		appenderBuilder.add(builder.newLayout("PatternLayout")
-			                       .addAttribute("pattern", "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"));
+		appenderBuilder.addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
+		LayoutComponentBuilder layoutBuilder = builder.newLayout("PatternLayout");
+		layoutBuilder.addAttribute("pattern", "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n");
+		appenderBuilder.add(layoutBuilder);
 		builder.add(appenderBuilder);
-		LoggerComponentBuilder loggerBuilder = builder.newLogger("gasp.ga.GeneticAlgorithm", Level.TRACE);
-		loggerBuilder.addAttribute("additivity", false);
-		loggerBuilder.add(builder.newAppenderRef("Stdout"));
-		builder.add(loggerBuilder);
+		
+		//root logger
 		RootLoggerComponentBuilder rootLoggerBuilder = builder.newRootLogger(this.o.getVerbosity());
 		rootLoggerBuilder.add(builder.newAppenderRef("Stdout"));
 		builder.add(rootLoggerBuilder);

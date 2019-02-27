@@ -102,19 +102,12 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         try {
         	this.start = Instant.now();
     		generateInitialPopulation();
-    		
-    		logger.debug("Generation %d:", this.currentGeneration);
-    		logIndividuals(this.population);
-            logger.debug("Generation fitness summary: %s", logFitnessStats(this.population));
-
+    		logCurrentGeneration();
         	while (!isFinished()) {
         		++this.currentGeneration;
         		possiblyDoLocalSearch();
         		produceNextGeneration();
-
-        		logger.debug("Generation %d:", this.currentGeneration);
-        		logIndividuals(this.population);
-        		logger.debug("Generation fitness summary: %s", logFitnessStats(this.population));
+        		logCurrentGeneration();
         	}
 		} catch (FoundWorstIndividualException e) {
 			this.population.set(0, (U) e.getIndividual());
@@ -162,6 +155,13 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         return new ArrayList<>(this.population.subList(0, n));        
 	}
 	
+	void logCurrentGeneration() {
+		logger.debug("Generation %d", this.currentGeneration);
+		logger.debug("Population:");
+		logIndividuals(this.population);
+        logger.info("Generation %d fitness summary: %s", this.currentGeneration, logFitnessStats(this.population));
+	}
+	
 	void logIndividuals(List<U> individuals) {
 		int id = 1;
 		for (U ind : individuals) {
@@ -179,6 +179,8 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         	return; //not this time
         }
         
+    	logger.debug("Performing local search");
+    	
         final U best = this.population.get(0);
         final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(best);
         
@@ -218,10 +220,10 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	}
 
 	List<U> elitism() {
-        final ArrayList<U> elite = new ArrayList<>(this.population.subList(0, this.eliteSize));
-        final int actualEliteSize = (this.population.size() > this.eliteSize ? eliteSize : 
+        final int actualEliteSize = (this.population.size() > this.eliteSize ? this.eliteSize : 
         	                         this.population.size() > 2 ? this.populationSize - 2 :
         	                         0);
+        final ArrayList<U> elite = new ArrayList<>(this.population.subList(0, actualEliteSize));
         this.population.subList(0, actualEliteSize).clear();
         return elite;
 	}
