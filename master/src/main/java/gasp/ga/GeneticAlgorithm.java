@@ -22,7 +22,7 @@ import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.selection.SelectionFunction;
 
 public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> {
-	private static final Logger logger = LogManager.getLogger(GeneticAlgorithm.class);
+	private static final Logger logger = LogManager.getFormatterLogger(GeneticAlgorithm.class);
 
 	private final IndividualGenerator<T, U> individualGenerator;
 	private final int numberOfThreads;
@@ -103,18 +103,18 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         	this.start = Instant.now();
     		generateInitialPopulation();
     		
-    		logger.debug("Generation " + this.currentGeneration + ":");
+    		logger.debug("Generation %d:", this.currentGeneration);
     		logIndividuals(this.population);
-            logger.debug("Generation fitness summary: " + logFitnessStats(this.population));
+            logger.debug("Generation fitness summary: %s", logFitnessStats(this.population));
 
         	while (!isFinished()) {
         		++this.currentGeneration;
         		possiblyDoLocalSearch();
         		produceNextGeneration();
 
-        		logger.debug("Generation " + this.currentGeneration + ":");
+        		logger.debug("Generation %d:", this.currentGeneration);
         		logIndividuals(this.population);
-        		logger.debug("Generation fitness summary: " + logFitnessStats(this.population));
+        		logger.debug("Generation fitness summary: %s", logFitnessStats(this.population));
         	}
 		} catch (FoundWorstIndividualException e) {
 			this.population.set(0, (U) e.getIndividual());
@@ -165,7 +165,8 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	void logIndividuals(List<U> individuals) {
 		int id = 1;
 		for (U ind : individuals) {
-			logger.debug("" + (id++) + ". " + ind);
+			final int idFinal = (id++);
+			logger.debug("%d. %s", () -> idFinal, ind::toString);
 		}
 	}
 
@@ -182,7 +183,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(best);
         
         if (optimizedBest.getFitness() > best.getFitness()) {
-        	logger.debug("Local search found a better individual: " + optimizedBest);
+        	logger.debug("Local search found a better individual: %s", optimizedBest::toString);
         	
         	this.population.remove(0);
         	this.population.add(0, optimizedBest);
@@ -256,7 +257,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         
         //selection
 		final List<Integer> parents = this.selectionFunction.select(this.population, 2);
-        logger.debug("Selected parents: " + (parents.get(0) + 1) + ", " + (parents.get(1) + 1));
+        logger.debug("Selected parents: %d, %d", (parents.get(0) + 1), (parents.get(1) + 1));
         
         //crossover
 		final U individual1 = this.population.get(parents.get(0));

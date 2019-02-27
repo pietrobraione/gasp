@@ -73,13 +73,13 @@ public class Main {
 	
 	public void run() {
 		configureLogger();
-		final Logger logger = LogManager.getLogger(Main.class);
+		final Logger logger = LogManager.getFormatterLogger(Main.class);
 		
-		logger.info(getName() + " version " + getVersion() + ", © 2019 " + getVendor());
-		logger.info("Analyzing method " + o.getMethodClassName() + ":" + o.getMethodDescriptor() + ":" + o.getMethodName());
-		logger.info("Going to evolve " + o.getGenerations()  + " generations, timeout " + readableDuration(this.o.getTimeout()));
-		logger.info("Random seed " + this.o.getSeed());
-		logger.info("Estimated number of fitness evaluations: " + o.estimateFitnessEvaluations());
+		logger.info("%s version %s, © 2019 %s", getName(), getVersion(), getVendor());
+		logger.info("Analyzing method %s:%s:%s", this.o.getMethodClassName(), this.o.getMethodDescriptor(), this.o.getMethodName());
+		logger.info("Random seed %d", this.o.getSeed());
+		logger.info("Estimated number of fitness evaluations: %d", this.o.estimateFitnessEvaluations());
+		logger.info("Starting evolution, %s generations, %s timeout", readableGenerations(this.o.getGenerations()), readableDuration(this.o.getTimeout()));
 
 		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm();
 		ga.evolve();
@@ -89,14 +89,26 @@ public class Main {
 		if (bestIndividualHasMaxFitness) {
 			logger.info("The worst case individual has maximum fitness (possibly diverging execution).");
 		}
-		logger.info("Worst case chromosome: " + bestIndividual.getChromosome());
-		logger.info("Worst case model: " + bestIndividual.getModel());
-		logger.info("Worst case cost: " + bestIndividual.getFitness());
-		logger.info(getName() + " ended");
+		logger.info("Worst case chromosome: %s", bestIndividual.getChromosome().toString());
+		logger.info("Worst case model: %s", bestIndividual.getModel().toString());
+		logger.info("Worst case cost: %d", bestIndividual.getFitness());
+		logger.info("%s ended", getName());
+	}
+	
+	private static String readableGenerations(int generations) {
+		if (generations == 0) {
+			return "unlimited";
+		} else {
+			return Integer.toString(generations);
+		}
 	}
 	
 	private static String readableDuration(Duration d) {
-		return d.toString().substring(2).replace("H", " h ").replace("M", " min ").replace("S", " sec ");
+		if (d.isZero()) {
+			return "unlimited";
+		} else {
+			return d.toString().substring(2).replace("H", " h ").replace("M", " min ").replace("S", " sec ");
+		}
 	}
 	
 	private void configureLogger() {

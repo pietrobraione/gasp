@@ -110,7 +110,7 @@ public class Options {
 		return this.generations;
 	}
 	
-	@Option(names = {"-T", "--timeout"}, defaultValue = "PT1H", description = "Execution timeout in java.time.Duration format, where  (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-T", "--timeout"}, defaultValue = "PT1H", description = "Execution timeout in java.time.Duration format, where zero duration means unlimited (default: ${DEFAULT-VALUE}).")
 	public void setTimeout(Duration timeout) {
 		if (timeout == null) {
 			throw new ParameterException(this.spec.commandLine(), "Timeout is null.");
