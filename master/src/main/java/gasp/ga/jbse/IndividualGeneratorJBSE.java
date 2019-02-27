@@ -117,11 +117,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 				return true;
 			}
 		};
+		final Runner r;
 		try {
-			final Runner r = newRunner(actions);
-			r.run();
-			this.initialState = r.getEngine().getInitialState().clone();
-			r.getEngine().close();
+			r = newRunner(actions);
 		} catch (DecisionException | CannotBuildEngineException | InitializationException
 				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
 				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
@@ -129,18 +127,49 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			//TODO throw better exception
 			throw new RuntimeException(e);
 		}
+		try {
+			r.run();
+			this.initialState = r.getEngine().getInitialState().clone();
+		} catch (DecisionException | NonexistingObservedVariablesException | ClasspathException
+				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
+				| ContradictionException | EngineStuckException | FailureException e) {
+			//TODO throw better exception
+			throw new RuntimeException(e);
+		} finally {
+			try {
+				r.getEngine().close();
+			} catch (DecisionException e) {
+				//TODO throw better exception
+				throw new RuntimeException(e);
+			}
+		}
 	}
 	
 	@Override
 	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) throws FoundWorstIndividualException {
+		final ArrayList<GeneJBSE> chromosomeShuffled = new ArrayList<>(chromosome);
+		Collections.shuffle(chromosomeShuffled, this.random);
+		final ChromosomeChecker chk;
 		try {
-			final ArrayList<GeneJBSE> chromosomeShuffled = new ArrayList<>(chromosome);
-			Collections.shuffle(chromosomeShuffled, this.random);
-			final ChromosomeChecker chk = new ChromosomeChecker(chromosomeShuffled);
-			final ActionsRunner actions = new ActionsRunner(chk);
-			final Runner r = newRunner(actions, chk.chromosomeFiltered);
+			chk = new ChromosomeChecker(chromosomeShuffled);
+		} catch (DecisionException | InvalidTypeException | InvalidOperandException | InvalidInputException e) {
+			//TODO throw better exception
+			throw new RuntimeException(e);
+		}
+		final ActionsRunner actions = new ActionsRunner(chk);
+		final Runner r;
+		try {
+			r = newRunner(actions, chk.chromosomeFiltered);
+		} catch (DecisionException | CannotBuildEngineException | InitializationException
+				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
+				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
+				| ContradictionException | EngineStuckException | FailureException
+				| HeapMemoryExhaustedException e) {
+			//TODO throw better exception
+			throw new RuntimeException(e);
+		}
+		try {
 			r.run();
-			r.getEngine().close();
 			if (actions.outcome == Outcome.FOUND) {
 				return new IndividualJBSE(simplify(actions.chromosome), actions.fitness, actions.pathIdentifier);
 			} else if (actions.outcome == Outcome.MAXIMUM_FITNESS_REACHED) {
@@ -148,13 +177,19 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			} else {
 				return null; //TODO distinguish the two remaining subcases of action.outcome
 			}
-		} catch (DecisionException | CannotBuildEngineException | InitializationException | InvalidTypeException
-				| InvalidClassFileFactoryClassException | NonexistingObservedVariablesException | ClasspathException
-				| CannotBacktrackException | CannotManageStateException | ThreadStackEmptyException
-				| ContradictionException | EngineStuckException | FailureException | InvalidInputException 
-				| InvalidOperandException | HeapMemoryExhaustedException e) {
+		} catch (DecisionException | InvalidTypeException | NonexistingObservedVariablesException 
+				| ClasspathException | CannotBacktrackException | CannotManageStateException 
+				| ThreadStackEmptyException | ContradictionException | EngineStuckException 
+				| FailureException | InvalidInputException e) {
 			//TODO throw better exception
 			throw new RuntimeException(e);
+		} finally {
+			try {
+				r.getEngine().close();
+			} catch (DecisionException e) {
+				//TODO throw better exception
+				throw new RuntimeException(e);
+			}
 		}
 	}
 	
@@ -178,9 +213,12 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		
 		@Override
 		public boolean atRoot() {
-			final Engine engine = getEngine();
-			addGenes(engine.getCurrentState().getPathCondition());
-			return super.atInitial();
+			final List<Clause> pathCondition = getEngine().getCurrentState().getPathCondition();
+			final Clause lastPathConditionClause = pathCondition.get(pathCondition.size() - 1);
+			if (lastPathConditionClause instanceof ClauseAssumeExpands && "{ROOT}:this".equals(((ClauseAssumeExpands) lastPathConditionClause).getReference().asOriginString())) {
+				this.chromosome.add(new GeneJBSE(lastPathConditionClause));
+			}
+			return super.atRoot();
 		}
 		
 		@Override
@@ -839,12 +877,14 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			} else if (c1 instanceof ClauseAssumeReferenceSymbolic && c2 instanceof ClauseAssumeReferenceSymbolic) {
 				final ReferenceSymbolic r1 = ((ClauseAssumeReferenceSymbolic) c1).getReference();
 				final ReferenceSymbolic r2 = ((ClauseAssumeReferenceSymbolic) c2).getReference();
-				if (r1.hasContainer(r2)) {
+				if (r1.equals(r2)) {
+					return 0;
+				} else if (r1.hasContainer(r2)) {
 					return 1;
 				} else if (r2.hasContainer(r1)) {
 					return -1;
 				} else {
-					return 0;
+					return 0; //uncomparable, really
 				}
 			} else {
 				//this should never happen

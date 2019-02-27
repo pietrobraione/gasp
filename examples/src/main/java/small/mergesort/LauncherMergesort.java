@@ -16,6 +16,7 @@ public class LauncherMergesort {
 		o.setClasspath(PATH_EXAMPLES);
 		o.setJBSEPath(PATH_JBSE);
 		o.setZ3Path(PATH_Z3);
+		o.setNumberOfThreads(32);
 		o.setGenerations(0);
 		o.setTimeout(Duration.ofHours(1));
 		o.setPopulationSize(50);

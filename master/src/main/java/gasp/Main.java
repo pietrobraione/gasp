@@ -47,6 +47,7 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 		final Options o = new Options();
 		final CommandLine commandLine = new CommandLine(o);
+		commandLine.registerConverter(Level.class, Level::valueOf);
 		try {
 			commandLine.parse(args);
 		} catch (MissingParameterException e) {
@@ -110,7 +111,7 @@ public class Main {
 		loggerBuilder.addAttribute("additivity", false);
 		loggerBuilder.add(builder.newAppenderRef("Stdout"));
 		builder.add(loggerBuilder);
-		RootLoggerComponentBuilder rootLoggerBuilder = builder.newRootLogger(Level.DEBUG);
+		RootLoggerComponentBuilder rootLoggerBuilder = builder.newRootLogger(this.o.getVerbosity());
 		rootLoggerBuilder.add(builder.newAppenderRef("Stdout"));
 		builder.add(rootLoggerBuilder);
 		Configurator.initialize(builder.build());

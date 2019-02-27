@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
+
 import gasp.utils.Utils;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Command;
@@ -27,6 +29,7 @@ public class Options {
 	
 	private boolean help = false;
 	private boolean version = false;
+	private Level verbosity = Level.INFO;
 	private int numberOfThreads = 2;
 	private int generations = 50;
 	private Duration timeout = Duration.ofHours(1);
@@ -72,6 +75,15 @@ public class Options {
 	
 	public boolean getVersion() {
 		return this.version;
+	}
+	
+	@Option(names = {"-v", "--verbosity"}, defaultValue = "INFO", description = "Verbosity of log messages, valid values: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).")
+	public void setVerbosity(Level verbosity) {
+		this.verbosity = verbosity;
+	}
+	
+	public Level getVerbosity() {
+		return this.verbosity;
 	}
 	
 	@Option(names = {"-t", "--threads"}, defaultValue = "2", description = "Number of threads for concurrent execution (default: ${DEFAULT-VALUE}).")
