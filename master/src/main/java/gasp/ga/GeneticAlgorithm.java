@@ -1,5 +1,7 @@
 package gasp.ga;
 
+import static gasp.utils.Utils.logFitnessStats;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,7 +20,6 @@ import gasp.ga.localSearch.LocalSearchAlgorithm;
 import gasp.ga.operators.crossover.CrossoverFunction;
 import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.selection.SelectionFunction;
-import gasp.utils.Utils;
 
 public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> {
 	private static final Logger logger = LogManager.getLogger(GeneticAlgorithm.class);
@@ -104,7 +105,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
     		
     		logger.debug("Generation " + this.currentGeneration + ":");
     		logIndividuals(this.population);
-            logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
+            logger.debug("Generation fitness summary: " + logFitnessStats(this.population));
 
         	while (!isFinished()) {
         		++this.currentGeneration;
@@ -113,7 +114,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 
         		logger.debug("Generation " + this.currentGeneration + ":");
         		logIndividuals(this.population);
-        		logger.debug("Generation fitness summary: " + Utils.logFitnessStats(this.population));
+        		logger.debug("Generation fitness summary: " + logFitnessStats(this.population));
         	}
 		} catch (FoundWorstIndividualException e) {
 			this.population.set(0, (U) e.getIndividual());
@@ -164,7 +165,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	void logIndividuals(List<U> individuals) {
 		int id = 1;
 		for (U ind : individuals) {
-			logger.debug("" + (id++) + ". "+ ind);
+			logger.debug("" + (id++) + ". " + ind);
 		}
 	}
 

@@ -4,7 +4,7 @@ import jbse.meta.Analysis;
 
 public class Mergesort {
 	public void sort(int[] l) {
-		Analysis.assume(l.length == 20);
+		Analysis.assume(l.length == 100);
 		_sort(l);
 	}
 	
@@ -16,8 +16,8 @@ public class Mergesort {
 			System.arraycopy(l, 0, left, 0, mid);
 			System.arraycopy(l, mid, right, 0, l.length - mid);
 			
-			sort(left);
-			sort(right);
+			_sort(left);
+			_sort(right);
 			
 			int i = 0, j = 0, k = 0;
 			while (i < left.length && j < right.length) {

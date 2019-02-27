@@ -78,9 +78,9 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	public void testRandomIndividualWithChromosome1() throws Exception {
 		//builds a path condition
 		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
-		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a");
-		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b");
-		s.assumeExpands(R0, hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
+		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
+		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
+		s.assumeExpands(R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
 		s.assume(R0_a.widen(Type.INT).eq(this.calc.valInt(0)));
 		s.assume(R0_b.widen(Type.INT).ne(this.calc.valInt(0)));
 		final List<Clause> pathCondition = s.getPathCondition();
@@ -103,9 +103,9 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	public void testRandomIndividualWithChromosome2() throws Exception {
 		//builds a path condition
 		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
-		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a");
-		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b");
-		s.assumeExpands(R0, hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
+		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
+		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
+		s.assumeExpands(R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
 		s.assume(R0_a.widen(Type.INT).eq(this.calc.valInt(0)));
 		s.assume(R0_b.widen(Type.INT).ne(this.calc.valInt(0)));
 		final List<Clause> pathCondition = s.getPathCondition();

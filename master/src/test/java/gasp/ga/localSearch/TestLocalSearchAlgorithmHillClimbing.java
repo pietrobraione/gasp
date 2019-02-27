@@ -24,6 +24,7 @@ import java.util.Random;
 public class TestLocalSearchAlgorithmHillClimbing {
 	private static final long MAX_FITNESS = 1_000_000;
 	private static final int POPULATION_SIZE = 5;
+	private static final int ATTEMPTS = 5;
 	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
 	static {
 		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
@@ -39,7 +40,7 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	}
 
 	private LocalSearchAlgorithmHillClimbing<GeneJBSE, IndividualJBSE> localSearch() {
-		return new LocalSearchAlgorithmHillClimbing<>(ig(), POPULATION_SIZE, new Random(0));
+		return new LocalSearchAlgorithmHillClimbing<>(ig(), POPULATION_SIZE, ATTEMPTS, new Random(0));
 	}
 
 	@Test

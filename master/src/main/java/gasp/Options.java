@@ -30,7 +30,8 @@ public class Options {
 	private int numberOfThreads = 2;
 	private int generations = 50;
 	private Duration timeout = Duration.ofHours(1);
-	private int localSearchRate = 5;
+	private int localSearchPeriod = 5;
+	private int localSearchAttempts = 10;
 	private int populationSize = 10;
 	private int eliteSize = 5;
 	private long maxFitness = 1_000_000;
@@ -112,16 +113,28 @@ public class Options {
 		return this.timeout;
 	}
 	
-	@Option(names = {"-r", "--local-search-rate"}, defaultValue = "5", description = "Number of generations between two different applications of local search (default: ${DEFAULT-VALUE}).")
-	public void setLocalSearchRate(int localSearchRate) {
-		if (localSearchRate <= 0) {
-			throw new ParameterException(this.spec.commandLine(), String.format("Local search rate %d is zero or negative.", localSearchRate));
+	@Option(names = {"-r", "--local-search-period"}, defaultValue = "5", description = "Number of generations between two different applications of local search (default: ${DEFAULT-VALUE}).")
+	public void setLocalSearchPeriod(int localSearchPeriod) {
+		if (localSearchPeriod <= 0) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Local search period %d is zero or negative.", localSearchPeriod));
 		}
-		this.localSearchRate = localSearchRate;
+		this.localSearchPeriod = localSearchPeriod;
 	}
 	
-	public int getLocalSearchRate() {
-		return this.localSearchRate;
+	public int getLocalSearchPeriod() {
+		return this.localSearchPeriod;
+	}
+	
+	@Option(names = {"-L", "--local-search-attempts"}, defaultValue = "10", description = "Maximum number of local search attempts (default: ${DEFAULT-VALUE}).")
+	public void setLocalSearchAttempts(int localSearchAttempts) {
+		if (localSearchAttempts <= 0) {
+			throw new ParameterException(this.spec.commandLine(), String.format("Local search attempts %d is zero or negative.", localSearchAttempts));
+		}
+		this.localSearchAttempts = localSearchAttempts;
+	}
+	
+	public int getLocalSearchAttempts() {
+		return this.localSearchAttempts;
 	}
 	
 	@Option(names = {"-p", "--population-size"}, defaultValue = "10", description = "Number of individuals in the population (default: ${DEFAULT-VALUE}).")
@@ -149,7 +162,7 @@ public class Options {
 		return this.eliteSize;
 	}
 	
-	@Option(names = {"-M", "--max-fitness"}, defaultValue = "1000000", description = "Maximum fitness value beyond which the software under analysis is considered to be diverging (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-F", "--max-fitness"}, defaultValue = "1000000", description = "Maximum fitness value beyond which the software under analysis is considered to be diverging (default: ${DEFAULT-VALUE}).")
 	public void setMaxFitness(long maxFitness) {
 		if (maxFitness <= 0) {
 			throw new ParameterException(this.spec.commandLine(), String.format("Maximum fitness %d is zero or negative.", maxFitness));
@@ -221,7 +234,7 @@ public class Options {
 		return this.localSearchAlgorithmType;
 	}
 	
-	@Option(names = {"-P", "--mutation-probability"}, defaultValue = "0.1", description = "Probability of applying the mutation operator (default: ${DEFAULT-VALUE}).")
+	@Option(names = {"-M", "--mutation-probability"}, defaultValue = "0.1", description = "Probability of applying the mutation operator (default: ${DEFAULT-VALUE}).")
 	public void setMutationProbability(double mutationProbability) {
 		if (mutationProbability < 0 || mutationProbability > 1) {
 			throw new ParameterException(this.spec.commandLine(), String.format("Mutation probability %f is less than zero or greater than one.", mutationProbability));

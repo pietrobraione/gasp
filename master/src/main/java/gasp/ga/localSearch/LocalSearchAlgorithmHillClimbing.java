@@ -16,14 +16,18 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 
 	private final IndividualGenerator<T, U> individualGenerator;
 	private final int populationSize;
+	private final int attempts;
 	private final Random random;
 	
-	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T, U> individualGenerator, int populationSize, Random random) {
+	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T, U> individualGenerator, int populationSize, int attempts, Random random) {
 		if (individualGenerator == null) {
 			throw new IllegalArgumentException("The individual generator cannot be null.");
 		}
 		if (populationSize <= 0) {
 			throw new IllegalArgumentException("Population size cannot be less or equal to 0.");
+		}
+		if (attempts <= 0) {
+			throw new IllegalArgumentException("Attempts cannot be less or equal to 0.");
 		}
 		if (random == null) {
 			throw new IllegalArgumentException("The random generator cannot be null.");
@@ -31,6 +35,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 
 		this.individualGenerator = individualGenerator;
 		this.populationSize = populationSize;
+		this.attempts = attempts;
 		this.random = random;
 	}
 	
@@ -38,9 +43,9 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 	public U doLocalSearch(U individual) throws FoundWorstIndividualException {
 		U retValue = individual;
 		int index = this.random.nextInt(retValue.size());
-		int remainingAttempts = Math.min(retValue.size(), this.populationSize);
+		int remainingAttempts = Math.min(retValue.size(), this.attempts);
 		
-    	logger.debug("Performing local search, number of attempts: " + remainingAttempts);
+    	logger.info("Performing local search, number of attempts: " + remainingAttempts);
 
 		while (remainingAttempts > 0) {			
 			final List<T> currentChromosome = retValue.getChromosome();
@@ -63,12 +68,12 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 				newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
 			}
 			if (found) {
-				logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
+				logger.debug("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");
 				retValue = newIndividual;
 			} else if (newIndividual == null) {
-				logger.info("Local search at index " + index + ": no individual ** Unsuccessful");
+				logger.debug("Local search at index " + index + ": no individual ** Unsuccessful");
 			} else {
-				logger.info("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
+				logger.debug("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Unsuccessful");
 			}
 			--remainingAttempts;
 			

@@ -80,11 +80,11 @@ public class Main {
 		logger.info("Random seed " + this.o.getSeed());
 		logger.info("Estimated number of fitness evaluations: " + o.estimateFitnessEvaluations());
 
-		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm(new Random(this.o.getSeed()));
+		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm();
 		ga.evolve();
 		final Individual<?> bestIndividual = ga.getBestIndividuals(1).get(0);
-		final boolean bestIndividualHasMaxFitness = bestIndividual.getFitness() >= this.o.getMaxFitness();
 		
+		final boolean bestIndividualHasMaxFitness = bestIndividual.getFitness() >= this.o.getMaxFitness();		
 		if (bestIndividualHasMaxFitness) {
 			logger.info("The worst case individual has maximum fitness (possibly diverging execution).");
 		}
@@ -116,7 +116,8 @@ public class Main {
 		Configurator.initialize(builder.build());
 	}
 	
-	private GeneticAlgorithm<?, ?> geneticAlgorithm(Random random) {
+	private GeneticAlgorithm<?, ?> geneticAlgorithm() {
+		final Random random = new Random(this.o.getSeed());
 		final IndividualGenerator<GeneJBSE, IndividualJBSE> ig = 
 				new IndividualGeneratorJBSE(this.o.getMaxFitness(),
 											random,
@@ -131,7 +132,7 @@ public class Main {
 											   				   this.o.getNumberOfThreads(),
 											   				   this.o.getGenerations(),
 											   				   this.o.getTimeout(),
-											   				   this.o.getLocalSearchRate(),
+											   				   this.o.getLocalSearchPeriod(),
 											   				   this.o.getPopulationSize(),
 											   				   this.o.getEliteSize(),
 											   				   crossoverFunction(random),
@@ -185,6 +186,7 @@ public class Main {
 		case HILL_CLIMBING:
 			return new LocalSearchAlgorithmHillClimbing<T, U>(ig,
 														   this.o.getPopulationSize(),
+														   this.o.getLocalSearchAttempts(),
 														   random);
 		case NONE:
 			return null;
