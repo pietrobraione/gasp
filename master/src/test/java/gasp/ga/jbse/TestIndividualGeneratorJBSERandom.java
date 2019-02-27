@@ -5,10 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import static settings.Settings.*;
+
 import java.util.Random;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +19,6 @@ import gasp.ga.jbse.IndividualGeneratorJBSE;
 @DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite (purely random generation)")
 public class TestIndividualGeneratorJBSERandom {
 	private static final long MAX_FITNESS = 1_000_000;
-	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
-	static {
-		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
-	}
-	private static final Path JBSE_PATH = Paths.get("/Users", "pietro", "git", "gasp", "jbse", "build", "classes", "java", "main"); 
-	private static final Path Z3_PATH = Paths.get("/opt", "local", "bin", "z3");
 	private static final String METHOD_CLASS_NAME = "smalldemos/ifx/IfExample";
 	private static final String METHOD_DESCRIPTOR = "(I)V";
 	private static final String METHOD_NAME = "m";

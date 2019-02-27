@@ -107,7 +107,7 @@ public class Main {
 		if (d.isZero()) {
 			return "unlimited";
 		} else {
-			return d.toString().substring(2).replace("H", " h ").replace("M", " min ").replace("S", " sec ");
+			return d.toString().substring(2).replace("H", " h ").replace("M", " min ").replace("S", " sec ").trim();
 		}
 	}
 	

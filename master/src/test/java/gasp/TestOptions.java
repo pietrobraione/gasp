@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestOptions {
 	@Test
 	@DisplayName("Options.estimateFitnessEvaluations() must always be greater than 0")
-	public void testFitnessEval(){
+	public void testFitnessEval() {
 		final Options o = new Options();
 		assertTrue(o.estimateFitnessEvaluations() > 0);
 		//TODO try on more points

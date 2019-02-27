@@ -16,6 +16,7 @@ public class LauncherPalindrome {
 		o.setZ3Path(PATH_Z3);
 		o.setGenerations(50);
 		o.setMethodSignature("small/palindrome/Palindrome:([I)Z:isPalindrome");
+		o.setSeed(1551301040407L);
 		
 		final Main m = new Main(o);
 		m.run();

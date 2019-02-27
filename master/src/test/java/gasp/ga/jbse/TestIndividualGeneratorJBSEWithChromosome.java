@@ -6,10 +6,12 @@ import static jbse.bc.Signatures.JAVA_SERIALIZABLE;
 import static jbse.common.Type.ARRAYOF;
 import static jbse.common.Type.CHAR;
 import static jbse.val.HistoryPoint.unknown;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import static settings.Settings.*;
+
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,12 +46,6 @@ import jbse.val.SymbolFactory;
 @DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite (with chromosome)")
 public class TestIndividualGeneratorJBSEWithChromosome {
 	private static final long MAX_FITNESS = 1_000_000;
-	private static final List<Path> CLASSPATH = new ArrayList<Path>(); 
-	static {
-		CLASSPATH.add(Paths.get("/Users", "pietro", "git", "jbse-examples", "bin"));
-	}
-	private static final Path JBSE_PATH = Paths.get("/Users", "pietro", "git", "gasp", "jbse", "build", "classes", "java", "main"); 
-	private static final Path Z3_PATH = Paths.get("/opt", "local", "bin", "z3");
 	private static final String METHOD_CLASS_NAME = "smalldemos/ifx/IfExample";
 	private static final String METHOD_DESCRIPTOR = "(I)V";
 	private static final String METHOD_NAME = "m";
