@@ -24,7 +24,7 @@ public class TestGeneticAlgorithm {
 	private static final Duration TIMEOUT = Duration.ofHours(1);
 	private static final int LOCAL_SEARCH_RATE = 1;
 	private static final int POPULATION_SIZE = 5;
-	private static final int ELITE_SIZE = 5;
+	private static final int ELITE_SIZE = 4;
 	
 	private GeneticAlgorithm<GeneStub, Individual<GeneStub>> ga() {
 		return new GeneticAlgorithm<>(new IndividualGeneratorStub(new Random()), NUM_THREADS, 
@@ -50,8 +50,8 @@ public class TestGeneticAlgorithm {
 	}
 	
 	@Test
-	@DisplayName("GeneticAlgorithm.elitism returns a list with size of the corresponding configuration parameter")
-	public void testElitism5() throws FoundWorstIndividualException {
+	@DisplayName("GeneticAlgorithm.elitism returns a list with size of the corresponding configuration parameter, if the population is greater than it")
+	public void testElitism3() throws FoundWorstIndividualException {
 		final GeneticAlgorithm<?, ?> algo = ga();
 		algo.generateInitialPopulation();
 		assertEquals(algo.elitism().size(), ELITE_SIZE);
