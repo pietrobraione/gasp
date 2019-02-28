@@ -12,6 +12,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.IndividualGenerator;
 import jbse.algo.exc.CannotManageStateException;
@@ -59,6 +62,8 @@ import jbse.val.exc.InvalidOperandException;
 import jbse.val.exc.InvalidTypeException;
 
 public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE, IndividualJBSE> {
+	private static final Logger logger = LogManager.getFormatterLogger(IndividualGeneratorJBSE.class);
+	
 	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
 	private final long maxFitness;
@@ -228,6 +233,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 				this.outcome = Outcome.MAXIMUM_FITNESS_REACHED;
 				this.fitness = fitness;
 				this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
+				logger.debug("Trace finished, maximum fitness reached, fitness %d", fitness);
 				return true;
 			}
 			return super.atStepPost();
@@ -270,6 +276,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			//if none found, terminate
 			if (compliantStateIndex == none) {
 				this.outcome = Outcome.PRECONDITION_TOO_STRICT;
+				logger.debug("Trace finished, no state complies with precondition (too strict?), fitness %d", fitness());
 				return true;
 			}
 			
@@ -330,6 +337,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		@Override
 		public boolean atContradictionException(ContradictionException e) {
 			this.outcome = Outcome.ASSUMPTION_VIOLATED;
+			logger.debug("Trace finished, assumption violated, fitness %d", fitness());
 			return true;
 		}
 
@@ -338,6 +346,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			this.outcome = Outcome.FOUND;
 			this.fitness = fitness();
 			this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
+			logger.debug("Trace finished, found individual, fitness %d", this.fitness);
 			return true;
 		}
 
