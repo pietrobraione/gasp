@@ -60,8 +60,8 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	private void beforeEach() throws InvalidInputException, InvalidClassFileFactoryClassException, IOException, ClassFileNotFoundException, ClassFileIllFormedException, ClassFileNotAccessibleException, IncompatibleClassFileException, BadClassFileVersionException, WrongClassNameException {
 		this.ig = new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 		this.calc = new CalculatorRewriting();
-		this.symbolFactory = new SymbolFactory(calc);
-		this.s = new State(true, unknown(), 10, 10, new Classpath(Paths.get(System.getProperty("java.home")), Collections.emptyList(), CLASSPATH), ClassFileFactoryJavassist.class, new HashMap<>(), this.calc, this.symbolFactory);
+		this.symbolFactory = new SymbolFactory();
+		this.s = new State(true, unknown(), 10, 10, new Classpath(Paths.get(System.getProperty("java.home")), Collections.emptyList(), CLASSPATH), ClassFileFactoryJavassist.class, new HashMap<>(), this.symbolFactory);
 		this.hier = s.getClassHierarchy();
 		this.hier.loadCreateClass(JAVA_OBJECT);
 		this.hier.loadCreateClass(JAVA_CLONEABLE);
@@ -76,16 +76,16 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
 		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
 		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
-		s.assumeExpands(R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
-		s.assume(R0_a.widen(Type.INT).eq(this.calc.valInt(0)));
-		s.assume(R0_b.widen(Type.INT).ne(this.calc.valInt(0)));
+		s.assumeExpands(this.calc, R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
+		s.assume(this.calc.push(R0_a).widen(Type.INT).eq(this.calc.valInt(0)).pop());
+		s.assume(this.calc.push(R0_b).widen(Type.INT).ne(this.calc.valInt(0)).pop());
 		final List<Clause> pathCondition = s.getPathCondition();
 		
 		//builds an individual whose chromosome reorders the clauses in the path condition
 		final ArrayList<GeneJBSE> chromosomeStart = new ArrayList<>();
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(1)));
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(2)));
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(0)));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(1), this.calc));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(2), this.calc));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(0), this.calc));
 		final IndividualJBSE individual = this.ig.generateRandomIndividual(chromosomeStart);
 		
 		//the individual's chromosome must have as first clause the same 
@@ -101,16 +101,16 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
 		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
 		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
-		s.assumeExpands(R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
-		s.assume(R0_a.widen(Type.INT).eq(this.calc.valInt(0)));
-		s.assume(R0_b.widen(Type.INT).ne(this.calc.valInt(0)));
+		s.assumeExpands(this.calc, R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
+		s.assume(this.calc.push(R0_a).widen(Type.INT).eq(this.calc.valInt(0)).pop());
+		s.assume(this.calc.push(R0_b).widen(Type.INT).ne(this.calc.valInt(0)).pop());
 		final List<Clause> pathCondition = s.getPathCondition();
 		
 		//builds an individual whose chromosome reorders the clauses in the path condition
 		final ArrayList<GeneJBSE> chromosomeStart = new ArrayList<>();
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(1)));
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(2)));
-		chromosomeStart.add(new GeneJBSE(pathCondition.get(0)));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(1), this.calc));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(2), this.calc));
+		chromosomeStart.add(new GeneJBSE(pathCondition.get(0), this.calc));
 		final IndividualJBSE individual = this.ig.generateRandomIndividual(chromosomeStart);
 		
 		//the individual's chromosome must have as first clause the same 

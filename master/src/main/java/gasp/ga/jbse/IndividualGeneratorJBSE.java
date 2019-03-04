@@ -69,6 +69,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private final long maxFitness;
 	private final Random random;
 	private final String[] classpath;
+	private final CalculatorRewriting calculatorForGenes;
 	private final String z3Path;
 	private final ArrayList<String> z3CommandLine;
 	private final RunnerParameters commonParams;
@@ -107,6 +108,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			this.classpath[i] = classpath.get(i).toString();
 		}
 		this.classpath[classpath.size()] = jbsePath.toString();
+		this.calculatorForGenes = makeCalculator();
 		this.z3Path = z3Path.toString(); 
 		this.z3CommandLine  = new ArrayList<>();
 		this.z3CommandLine.add(this.z3Path);
@@ -221,7 +223,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			final List<Clause> pathCondition = getEngine().getCurrentState().getPathCondition();
 			final Clause lastPathConditionClause = pathCondition.get(pathCondition.size() - 1);
 			if (lastPathConditionClause instanceof ClauseAssumeExpands && "{ROOT}:this".equals(((ClauseAssumeExpands) lastPathConditionClause).getReference().asOriginString())) {
-				this.chromosome.add(new GeneJBSE(lastPathConditionClause));
+				this.chromosome.add(new GeneJBSE(lastPathConditionClause, IndividualGeneratorJBSE.this.calculatorForGenes));
 			}
 			return super.atRoot();
 		}
@@ -302,7 +304,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		private void addGenes(Iterable<Clause> clauses) {
 			for (Clause clause : clauses) {
 				if (clause instanceof ClauseAssume || clause instanceof ClauseAssumeReferenceSymbolic) {
-					this.chromosome.add(new GeneJBSE(clause));
+					this.chromosome.add(new GeneJBSE(clause, IndividualGeneratorJBSE.this.calculatorForGenes));
 				}
 			}
 		}
@@ -375,19 +377,23 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		final RunnerParameters params = this.commonParams.clone();
 		
 		//sets the calculator
-		final CalculatorRewriting calc = new CalculatorRewritingSynchronized();
-		calc.addRewriter(new RewriterOperationOnSimplex());
+		final CalculatorRewriting calc = makeCalculator();
 		params.setCalculator(calc);
 		
 		//sets the decision procedures
-		params.setDecisionProcedure(new DecisionProcedureAlgorithms(
-				new DecisionProcedureClassInit( //useless?
-						new DecisionProcedureLICS( //useless?
-								new DecisionProcedureSMTLIB2_AUFNIRA(
-										new DecisionProcedureAlwSat(), 
-										calc, this.z3CommandLine), 
-								calc, new LICSRulesRepo()), 
-						calc, new ClassInitRulesRepo()), calc));
+		try {
+			params.setDecisionProcedure(
+				new DecisionProcedureAlgorithms(
+					new DecisionProcedureClassInit( //useless?
+						new DecisionProcedureLICS(  //useless?
+							new DecisionProcedureSMTLIB2_AUFNIRA(
+								new DecisionProcedureAlwSat(calc), this.z3CommandLine), 
+							new LICSRulesRepo()), 
+						new ClassInitRulesRepo())));
+		} catch (InvalidInputException e) {
+			//this should never happen
+			throw new AssertionError("Failed while creating the decision procedure.", e);
+		}
 
 		//sets the actions
 		params.setActions(actions);
@@ -412,7 +418,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 						} else if (clause instanceof ClauseAssumeExpands) {
 							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
 							if (!gene.isNegated()) {
-								initialState.assumeExpands(ce.getReference(), ce.getObjekt().getType());
+								initialState.assumeExpands(calc, ce.getReference(), ce.getObjekt().getType());
 							}
 						} else if (clause instanceof ClauseAssumeNull) {
 							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
@@ -420,14 +426,14 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 								initialState.assumeNull(cn.getReference());
 							}
 						} else if (clause instanceof ClauseAssume) {
-							final Primitive condition = gene.isNegated() ? ((ClauseAssume) clause).getCondition().not() : ((ClauseAssume) clause).getCondition();
+							final Primitive condition = gene.isNegated() ? calc.push(((ClauseAssume) clause).getCondition()).not().pop() : ((ClauseAssume) clause).getCondition();
 							initialState.assume(condition);
 						}
 					} catch (ContradictionException e) {
 						//found a duplicate or contradictory reference clause that
 						//survived filtering: just skip it
 						continue; //pleonastic
-					} catch (InvalidInputException | InvalidTypeException e) {
+					} catch (InvalidInputException | InvalidOperandException | InvalidTypeException e) {
 						//this should never happen
 						throw new AssertionError("Found an invalid condition in a clause.", e);
 					}
@@ -442,25 +448,33 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		return r;
 	}
 	
+	private CalculatorRewriting makeCalculator() {
+		final CalculatorRewriting calc = new CalculatorRewriting();
+		calc.addRewriter(new RewriterOperationOnSimplex());
+		return calc;
+	}
+	
 	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {
 		final ArrayList<GeneJBSE> retVal = new ArrayList<>();
 		
 		//first pass: delete redundant numeric clauses
-		final CalculatorRewriting calc = new CalculatorRewriting();
-		calc.addRewriter(new RewriterOperationOnSimplex());
-		try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine)) {
+		final CalculatorRewriting calc = makeCalculator();
+		try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(calc), IndividualGeneratorJBSE.this.z3CommandLine)) {
 			for (GeneJBSE gene : reverse(toSimplify)) {
 				final Clause clause = gene.getClause();
 				if (clause instanceof ClauseAssumeReferenceSymbolic) {
 					retVal.add(0, gene);
 				} else if (clause instanceof ClauseAssume) {
-					final Expression conditionNegated = gene.isNegated() ? (Expression) ((ClauseAssume) clause).getCondition() : (Expression) ((ClauseAssume) clause).getCondition().not();
+					final Expression conditionNegated = gene.isNegated() ? (Expression) ((ClauseAssume) clause).getCondition() : (Expression) calc.push(((ClauseAssume) clause).getCondition()).not().pop();
 					if (dec.isSat(conditionNegated)) {
 						retVal.add(0, gene);
 						dec.pushAssumption(clause);
 					} //else, discard it
 				} //else, discard it
 			}
+		} catch (InvalidOperandException e) {
+			//this should never happen
+			throw new AssertionError("Found an invalid condition in a clause.", e);
 		}
 		
 		//second pass: delete redundant reference genes
@@ -544,21 +558,20 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		ChromosomeChecker(List<GeneJBSE> chromosome) throws DecisionException, InvalidTypeException, InvalidOperandException, InvalidInputException {
 			final HashSet<Integer> contradictoryGenesPositions = new HashSet<>();
 			Primitive precondition = null;
-			final CalculatorRewriting calc = new CalculatorRewriting();
-			calc.addRewriter(new RewriterOperationOnSimplex());
-			try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(), calc, IndividualGeneratorJBSE.this.z3CommandLine)) {
+			final CalculatorRewriting calc = makeCalculator();
+			try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(calc), IndividualGeneratorJBSE.this.z3CommandLine)) {
 				for (int i = 0; i < chromosome.size(); ++i) {
 					final GeneJBSE gene = chromosome.get(i);
 					final Clause clause = gene.getClause();
 					if (clause instanceof ClauseAssume) {
 						Primitive condition = ((ClauseAssume) clause).getCondition();
 						if (gene.isNegated()) {
-							condition = condition.not();
+							condition = calc.push(condition).not().pop();
 						}
-						if (contradicts(dec, precondition, condition)) {
+						if (contradicts(dec, precondition, condition, calc)) {
 							contradictoryGenesPositions.add(i);
 						} else {
-							precondition = (precondition == null ? condition : precondition.and(condition));
+							precondition = (precondition == null ? condition : calc.push(precondition).and(condition).pop());
 						}
 					} else if (clause instanceof ClauseAssumeReferenceSymbolic) {
 						if (gene.isNegated()) {
@@ -632,9 +645,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			}
 		}
 		
-		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition) 
+		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition, CalculatorRewriting calc) 
 		throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
-			final Primitive conditionAnd = (precondition == null ? condition : precondition.and(condition));
+			final Primitive conditionAnd = (precondition == null ? condition : calc.push(precondition).and(condition).pop());
 			if (conditionAnd.surelyFalse()) {
 				return true;
 			} else if (conditionAnd.surelyTrue()) {

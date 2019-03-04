@@ -10,6 +10,7 @@ import jbse.mem.ClauseAssumeClassNotInitialized;
 import jbse.mem.ClauseAssumeExpands;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
+import jbse.rewr.CalculatorRewriting;
 import jbse.val.Any;
 import jbse.val.Expression;
 import jbse.val.NarrowingConversion;
@@ -21,19 +22,22 @@ import jbse.val.PrimitiveVisitor;
 import jbse.val.Simplex;
 import jbse.val.Term;
 import jbse.val.WideningConversion;
+import jbse.val.exc.InvalidOperandException;
 import jbse.val.exc.InvalidTypeException;
 
 public final class GeneJBSE extends Gene<GeneJBSE> {
 	private final Clause clause;
+	private final CalculatorRewriting calc;
 	private final boolean negated;
 	private final int hashCode;
 	private final String toString;
 
-	public GeneJBSE(Clause clause, boolean negated) {
+	public GeneJBSE(Clause clause, CalculatorRewriting calc, boolean negated) {
 		if (clause == null) {
 			throw new NullPointerException("Cannot build a ConstraintJBSE from a null Clause.");
 		}
 		this.clause = clause;
+		this.calc = calc;
 		this.negated = negated;
 		
 		//hashCode
@@ -56,7 +60,7 @@ public final class GeneJBSE extends Gene<GeneJBSE> {
 		} else if (this.clause instanceof ClauseAssume) {
 			try {
 				final Expression condition = (this.negated ? 
-											  (Expression) ((ClauseAssume) this.clause).getCondition().not() :
+											  (Expression) this.calc.push(((ClauseAssume) this.clause).getCondition()).not().pop() :
 										      (Expression) ((ClauseAssume) this.clause).getCondition());
 				final ConditionStringifier cs = new ConditionStringifier();
 				condition.accept(cs);
@@ -70,8 +74,8 @@ public final class GeneJBSE extends Gene<GeneJBSE> {
 		}
 	}
 	
-	public GeneJBSE(Clause clause) {
-		this(clause, false);
+	public GeneJBSE(Clause clause, CalculatorRewriting calc) {
+		this(clause, calc, false);
 	}
 	
 	public Clause getClause() {
@@ -86,16 +90,17 @@ public final class GeneJBSE extends Gene<GeneJBSE> {
 	public GeneJBSE not() {
 		try {
 			if (this.clause instanceof ClauseAssume) {
-				return new GeneJBSE(new ClauseAssume(((ClauseAssume) this.clause).getCondition().not()));
+				return new GeneJBSE(new ClauseAssume(this.calc.push(((ClauseAssume) this.clause).getCondition()).not().pop()), calc);
 			} else if (this.clause instanceof ClauseAssumeReferenceSymbolic) {
-				return new GeneJBSE(this.clause, !this.negated);
+				return new GeneJBSE(this.clause, this.calc, !this.negated);
 			} else if (this.clause instanceof ClauseAssumeClassInitialized) {
-				return new GeneJBSE(new ClauseAssumeClassNotInitialized(((ClauseAssumeClassInitialized) this.clause).getClassFile()));
+				return new GeneJBSE(new ClauseAssumeClassNotInitialized(((ClauseAssumeClassInitialized) this.clause).getClassFile()), this.calc);
 			} else { //this.clause instanceof ClauseAssumeClassNotInitialized
-				return new GeneJBSE(new ClauseAssumeClassInitialized(((ClauseAssumeClassNotInitialized) this.clause).getClassFile(), null));
+				return new GeneJBSE(new ClauseAssumeClassInitialized(((ClauseAssumeClassNotInitialized) this.clause).getClassFile(), null), this.calc);
 			}
-		} catch (InvalidTypeException | InvalidInputException e) {
-			throw new RuntimeException(e);
+		} catch (InvalidTypeException | InvalidOperandException | InvalidInputException e) {
+			//this should never happen
+			throw new AssertionError(e);
 		} 
 	}
 
