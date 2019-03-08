@@ -127,30 +127,29 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
 	void generateInitialPopulation() throws FoundWorstIndividualException {
 		final ExecutorService executor = Executors.newFixedThreadPool(this.numberOfThreads);
 		final ExecutorCompletionService<U> completionService = new ExecutorCompletionService<>(executor);
+		for (int i = 0; i < this.populationSize; ++i) {
+			completionService.submit(() -> this.individualGenerator.generateRandomIndividual(this.random.nextLong()));
+		}
 		int generated = 0;
 		while (generated < this.populationSize) {
-			final int toGenerate = this.populationSize - generated;
-			for (int i = 0; i < toGenerate; ++i) {
-				completionService.submit(() -> this.individualGenerator.generateRandomIndividual(this.random.nextLong()));
-			}
-			for (int i = 0; i < toGenerate; ++i) {
-				try {
-					final Future<U> f = completionService.take();
-					final U individual = f.get();
-					if (individual != null) {
-						this.population.add(individual);
-						++generated;
-					}
-				} catch (ExecutionException e) {
-					if (e.getCause() instanceof FoundWorstIndividualException) {
-						throw (FoundWorstIndividualException) e.getCause();
-					} else {
-						throw new RuntimeException(e); //TODO report better
-					}
-				} catch (InterruptedException e) {
-					//this should never happen
-					throw new AssertionError("Unreachable code reached: thread interrupted.", e);
+			try {
+				final Future<U> f = completionService.take();
+				final U individual = f.get();
+				if (individual == null) {
+					completionService.submit(() -> this.individualGenerator.generateRandomIndividual(this.random.nextLong()));
+				} else {
+					this.population.add(individual);
+					++generated;
 				}
+			} catch (ExecutionException e) {
+				if (e.getCause() instanceof FoundWorstIndividualException) {
+					throw (FoundWorstIndividualException) e.getCause();
+				} else {
+					throw new RuntimeException(e); //TODO report better
+				}
+			} catch (InterruptedException e) {
+				//this should never happen
+				throw new AssertionError("Unreachable code reached: thread interrupted.", e);
 			}
 		}
         executor.shutdown();
