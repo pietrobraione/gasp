@@ -6,5 +6,5 @@ import gasp.ga.Gene;
 
 @FunctionalInterface
 public interface MutationFunction<T extends Gene<T>> {
-	List<T> mutate(List<T> chromosome);
+	List<T> mutate(long seed, List<T> chromosome);
 }

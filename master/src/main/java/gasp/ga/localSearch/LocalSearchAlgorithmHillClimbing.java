@@ -17,9 +17,8 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 	private final IndividualGenerator<T, U> individualGenerator;
 	private final int populationSize;
 	private final int attempts;
-	private final Random random;
 	
-	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T, U> individualGenerator, int populationSize, int attempts, Random random) {
+	public LocalSearchAlgorithmHillClimbing(IndividualGenerator<T, U> individualGenerator, int populationSize, int attempts) {
 		if (individualGenerator == null) {
 			throw new IllegalArgumentException("The individual generator cannot be null.");
 		}
@@ -29,20 +28,17 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 		if (attempts <= 0) {
 			throw new IllegalArgumentException("Attempts cannot be less or equal to 0.");
 		}
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
-		}
 
 		this.individualGenerator = individualGenerator;
 		this.populationSize = populationSize;
 		this.attempts = attempts;
-		this.random = random;
 	}
 	
 	@Override
-	public U doLocalSearch(U individual) throws FoundWorstIndividualException {
+	public U doLocalSearch(long seed, U individual) throws FoundWorstIndividualException {
 		U retValue = individual;
-		int index = this.random.nextInt(retValue.size());
+		final Random random = new Random(seed); 
+		int index = random.nextInt(retValue.size());
 		int remainingAttempts = Math.min(retValue.size(), this.attempts);
 		
 		logger.debug("Total number of local search attempts: " + remainingAttempts);
@@ -52,7 +48,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 			currentChromosome.remove(index);
 			currentChromosome.add(index, mutatedGene);
 			
-			U newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
+			U newIndividual = this.individualGenerator.generateRandomIndividual(random.nextLong(), currentChromosome);
 			boolean found = false;
 			int remainingAttemptsIndividual = Math.max(1, this.populationSize * 10 / ((int) retValue.getFitness()));
 			while (true) {
@@ -64,7 +60,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 					break;
 				}
 				--remainingAttemptsIndividual;
-				newIndividual = this.individualGenerator.generateRandomIndividual(currentChromosome);
+				newIndividual = this.individualGenerator.generateRandomIndividual(random.nextLong(), currentChromosome);
 			}
 			if (found) {
 				logger.debug("Local search at index " + index + ": " + retValue.getFitness() + " --> " + newIndividual.getFitness() + " ** Successful");

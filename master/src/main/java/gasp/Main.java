@@ -6,7 +6,6 @@ import static gasp.utils.Utils.getVersion;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Random;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -28,6 +27,8 @@ import gasp.ga.IndividualGenerator;
 import gasp.ga.jbse.GeneJBSE;
 import gasp.ga.jbse.IndividualGeneratorJBSE;
 import gasp.ga.jbse.IndividualJBSE;
+import gasp.ga.jbse.ModelGeneratorJBSE;
+import gasp.ga.jbse.ModelJBSE;
 import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 import gasp.ga.localSearch.LocalSearchAlgorithm;
@@ -83,7 +84,7 @@ public class Main {
 		logger.info("Estimated number of fitness evaluations: %d", this.o.estimateFitnessEvaluations());
 		logger.info("Starting evolution, %s generations, %s timeout", readableGenerations(this.o.getGenerations()), readableDuration(this.o.getTimeout()));
 
-		final GeneticAlgorithm<?, ?> ga = geneticAlgorithm();
+		final GeneticAlgorithm<?, ?, ?> ga = geneticAlgorithm();
 		ga.evolve();
 		final Individual<?> bestIndividual = ga.getBestIndividuals(1).get(0);
 		
@@ -91,9 +92,9 @@ public class Main {
 		if (bestIndividualHasMaxFitness) {
 			logger.info("The worst case individual has maximum fitness (possibly diverging execution).");
 		}
-		logger.info("Worst case chromosome: %s", bestIndividual.getChromosome().toString());
-		logger.info("Worst case model: %s", bestIndividual.getModel().toString());
 		logger.info("Worst case cost: %d", bestIndividual.getFitness());
+		logger.info("Worst case chromosome: %s", bestIndividual.getChromosome().toString());
+		logger.info("Worst case model: %s", ga.getModels(1).get(0).toString());
 		logger.info("%s ended", getName());
 	}
 	
@@ -132,78 +133,75 @@ public class Main {
 		Configurator.initialize(builder.build());
 	}
 	
-	private GeneticAlgorithm<?, ?> geneticAlgorithm() {
-		final Random random = new Random(this.o.getSeed());
+	private GeneticAlgorithm<?, ?, ?> geneticAlgorithm() {
 		final IndividualGenerator<GeneJBSE, IndividualJBSE> ig = 
 				new IndividualGeneratorJBSE(this.o.getMaxFitness(),
-											random,
 										    this.o.getClasspath(),
 										    this.o.getJBSEPath(), 
 										    this.o.getZ3Path(),
 										    this.o.getMethodClassName(), 
 										    this.o.getMethodDescriptor(), 
 										    this.o.getMethodName());
-		final GeneticAlgorithm<GeneJBSE, IndividualJBSE> retVal = 
-				new GeneticAlgorithm<GeneJBSE, IndividualJBSE>(ig,
-											   				   this.o.getNumberOfThreads(),
-											   				   this.o.getGenerations(),
-											   				   this.o.getTimeout(),
-											   				   this.o.getLocalSearchPeriod(),
-											   				   this.o.getPopulationSize(),
-											   				   this.o.getEliteSize(),
-											   				   crossoverFunction(random),
-											   				   mutationFunction(random),
-											   				   selectionFunction(random),
-											   				   localSearchAlgorithm(ig, random));	
+		final GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE> retVal = 
+				new GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE>(this.o.getSeed(), 
+																	      this.o.getNumberOfThreads(),
+															   			  this.o.getGenerations(),
+															   			  this.o.getTimeout(),
+															   			  this.o.getLocalSearchPeriod(),
+															   			  this.o.getPopulationSize(),
+															   			  this.o.getEliteSize(),
+															   			  ig,
+															   			  new ModelGeneratorJBSE(),
+															   			  crossoverFunction(),
+															   			  mutationFunction(),
+															   			  selectionFunction(),
+															   			  localSearchAlgorithm(ig));	
 		return retVal;
 	}
 	
-	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction(Random random) {
+	private <T extends Gene<T>> CrossoverFunction<T> crossoverFunction() {
 		switch (this.o.getCrossoverFunctionType()) {
 		case SINGLE_POINT:
-			return new CrossoverFunctionSinglePoint<T>(random);
+			return new CrossoverFunctionSinglePoint<T>();
 		case TWO_POINTS:
-			return new CrossoverFunctionTwoPoints<T>(random);
+			return new CrossoverFunctionTwoPoints<T>();
 		case PREFIX:
-			return new CrossoverFunctionPrefix<T>(random);
+			return new CrossoverFunctionPrefix<T>();
 		case UNION:
-			return new CrossoverFunctionUnion<T>(random);
+			return new CrossoverFunctionUnion<T>();
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a crossover function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>> MutationFunction<T> mutationFunction(Random random) {
+	private <T extends Gene<T>> MutationFunction<T> mutationFunction() {
 		switch (this.o.getMutationFunctionType()) {
 		case DELETE:
 			return new MutationFunctionDelete<T>(this.o.getMutationProbability(),
-												 this.o.getMutationSizeRatio(),
-												 random);
+												 this.o.getMutationSizeRatio());
 		case DELETE_OR_NEGATE:
 			return new MutationFunctionDeleteOrNegate<T>(this.o.getMutationProbability(), 
-														 this.o.getMutationSizeRatio(),
-														 random);
+														 this.o.getMutationSizeRatio());
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a mutation function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>, U extends Individual<T>> SelectionFunction<T, U> selectionFunction(Random random) {
+	private <T extends Gene<T>, U extends Individual<T>> SelectionFunction<T, U> selectionFunction() {
 		switch (this.o.getSelectionFunctionType()) {
 		case RANK:
-			return new SelectionFunctionRank<T, U>(random);
+			return new SelectionFunctionRank<T, U>();
 		default:
 			throw new AssertionError("Reached unreachable point: Possibly a selection function case was not handled.");
 		}
 	}
 	
-	private <T extends Gene<T>, U extends Individual<T>> LocalSearchAlgorithm<T, U> localSearchAlgorithm(IndividualGenerator<T, U> ig, Random random) {
+	private <T extends Gene<T>, U extends Individual<T>> LocalSearchAlgorithm<T, U> localSearchAlgorithm(IndividualGenerator<T, U> ig) {
 		switch (this.o.getLocalSearchAlgorithmType()) {
 		case HILL_CLIMBING:
 			return new LocalSearchAlgorithmHillClimbing<T, U>(ig,
-														   this.o.getPopulationSize(),
-														   this.o.getLocalSearchAttempts(),
-														   random);
+														      this.o.getPopulationSize(),
+														      this.o.getLocalSearchAttempts());
 		case NONE:
 			return null;
 		default:

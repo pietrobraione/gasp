@@ -8,7 +8,7 @@ public class Alternate0 {
 	 * Worst case: a list that alternates zeros and non-zero values.
 	 */
 	public void alternate_0(int[] l) {
-		Analysis.assume(l.length == 20);
+		Analysis.assume(l.length == 100);
 		int check;
 		for (int i = 0; i < l.length; ++i) {
 			if (l[i] == 0) {

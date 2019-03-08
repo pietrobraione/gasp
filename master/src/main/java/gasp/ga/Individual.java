@@ -38,10 +38,6 @@ public class Individual<T extends Gene<T>> implements Cloneable, Comparable<Indi
 		return this.fitness;
 	}
 
-	public Model<T> getModel() {
-		return new Model<T>(this);
-	}
-	
 	@Override
 	public String toString() {
 		return this.toString;

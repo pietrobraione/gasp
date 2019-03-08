@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -21,10 +22,12 @@ import gasp.ga.operators.crossover.CrossoverFunction;
 import gasp.ga.operators.mutation.MutationFunction;
 import gasp.ga.operators.selection.SelectionFunction;
 
-public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> {
+public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, R extends Model<T>> {
 	private static final Logger logger = LogManager.getFormatterLogger(GeneticAlgorithm.class);
 
+	private final Random random;
 	private final IndividualGenerator<T, U> individualGenerator;
+	private final ModelGenerator<T, U, R> modelGenerator;
 	private final int numberOfThreads;
 	private final int generations;
 	private final Duration timeout;
@@ -37,15 +40,20 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	private final LocalSearchAlgorithm<T, U> localSearchAlgorithm;
 	
 	private List<U> population = new ArrayList<>();
+	private List<R> models = new ArrayList<>();
 	private int currentGeneration = 0;
 	private Instant start;
 
-	public GeneticAlgorithm(IndividualGenerator<T, U> individualGenerator, int numberOfThreads, 
-							int generations, Duration timeout, int localSearchRate, int populationSize, int eliteSize, 
+	public GeneticAlgorithm(long seed, int numberOfThreads, int generations, 
+			                Duration timeout, int localSearchRate, int populationSize, int eliteSize, 
+			                IndividualGenerator<T, U> individualGenerator, ModelGenerator<T, U, R> modelGenerator, 
 							CrossoverFunction<T> crossoverFunction, MutationFunction<T> mutationFunction, 
 							SelectionFunction<T, U> selectionFunction, LocalSearchAlgorithm<T, U> localSearchAlgorithm) {
 		if (individualGenerator == null) {
 			throw new IllegalArgumentException("The individual generator cannot be null.");
+		}
+		if (modelGenerator == null) {
+			throw new IllegalArgumentException("The model generator cannot be null.");
 		}
 		if (numberOfThreads <= 0) {
 			throw new IllegalArgumentException("Number of threads cannot be less or equal to 0.");
@@ -84,7 +92,9 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 			throw new IllegalArgumentException("Local search algorithm cannot be null.");
 		}
 		
+		this.random = new Random(seed);
 		this.individualGenerator = individualGenerator;
+		this.modelGenerator = modelGenerator;
 		this.numberOfThreads = numberOfThreads;
 		this.generations = generations;
 		this.timeout = timeout; 
@@ -120,7 +130,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		int generated = 0;
 		while (generated < this.populationSize) {
 			for (int i = 0; i < this.populationSize - generated; ++i) {
-				completionService.submit(this.individualGenerator::generateRandomIndividual);
+				completionService.submit(() -> this.individualGenerator.generateRandomIndividual(this.random.nextLong()));
 			}
 			for (int i = 0; i < this.populationSize - generated; ++i) {
 				try {
@@ -146,13 +156,28 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		Collections.sort(this.population);
 	}
 	
-	public List<Individual<T>> getBestIndividuals(int n) {
+	public List<U> getBestIndividuals(int n) {
 		if (n < 0 || n > this.population.size()) {
 			throw new IllegalArgumentException();
 		}
 		
-		Collections.sort(this.population);
+		Collections.sort(this.population); //just to stay safe
         return new ArrayList<>(this.population.subList(0, n));        
+	}
+	
+	public List<R> getModels(int n) {
+		if (n < 0 || n > this.population.size()) {
+			throw new IllegalArgumentException();
+		}
+		if (n > this.models.size()) {
+			//generates the missing models
+			for (int i = this.models.size(); i < n; ++i) {
+		        logger.debug("Generating model for %d-%s population individual", i + 1, (i == 0 ? "st" : i == 1 ? "nd" : i == 3 ? "rd" : "th"));
+				final R model = this.modelGenerator.generateModel(this.population.get(i));
+				this.models.add(model);
+			}
+		}
+		return new ArrayList<>(this.models.subList(0, n));
 	}
 	
 	void logCurrentGeneration() {
@@ -182,7 +207,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
     	logger.debug("Performing local search");
     	
         final U best = this.population.get(0);
-        final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(best);
+        final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(this.random.nextLong(), best);
         
         if (optimizedBest.getFitness() > best.getFitness()) {
         	logger.debug("Local search found a better individual: %s", optimizedBest::toString);
@@ -232,7 +257,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 		final ExecutorService executor = Executors.newFixedThreadPool(this.numberOfThreads);
 		final ExecutorCompletionService<List<U>> completionService = new ExecutorCompletionService<>(executor);
         for (int i = 0; i < this.populationSize / 2; ++i) {
-        	completionService.submit(this::generateOffspringsFromTwoParents);
+        	completionService.submit(() -> this.generateOffspringsFromTwoParents(this.random.nextLong()));
         }
         executor.shutdown();
         final ArrayList<U> offsprings = new ArrayList<>();
@@ -254,29 +279,31 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
         return offsprings;
 	}
 	
-	List<U> generateOffspringsFromTwoParents() throws FoundWorstIndividualException {
+	List<U> generateOffspringsFromTwoParents(long seed) throws FoundWorstIndividualException {
         final ArrayList<U> retVal = new ArrayList<>();
         
+        final Random random = new Random(seed);
+        
         //selection
-		final List<Integer> parents = this.selectionFunction.select(this.population, 2);
+		final List<Integer> parents = this.selectionFunction.select(random.nextLong(), this.population, 2);
         logger.debug("Selected parents: %d, %d", (parents.get(0) + 1), (parents.get(1) + 1));
         
         //crossover
 		final U individual1 = this.population.get(parents.get(0));
 		final U individual2 = this.population.get(parents.get(1));
-        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(individual1.getChromosome(), individual2.getChromosome());
+        final Pair<List<T>> chromosomesCrossover = this.crossoverFunction.doCrossover(random.nextLong(), individual1.getChromosome(), individual2.getChromosome());
         if (chromosomesCrossover == null) {
         	//too short chromosomes for the crossover function: no offsprings
         	return retVal;
         }
         
         //mutation
-        final List<T> chromosomeCrossoverMutation1 = this.mutationFunction.mutate(chromosomesCrossover.first);
-        final List<T> chromosomeCrossoverMutation2 = this.mutationFunction.mutate(chromosomesCrossover.second);
+        final List<T> chromosomeCrossoverMutation1 = this.mutationFunction.mutate(random.nextLong(), chromosomesCrossover.first);
+        final List<T> chromosomeCrossoverMutation2 = this.mutationFunction.mutate(random.nextLong(), chromosomesCrossover.second);
         
         //generation
-        final U offspring1 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation1);
-        final U offspring2 = this.individualGenerator.generateRandomIndividual(chromosomeCrossoverMutation2);
+        final U offspring1 = this.individualGenerator.generateRandomIndividual(random.nextLong(), chromosomeCrossoverMutation1);
+        final U offspring2 = this.individualGenerator.generateRandomIndividual(random.nextLong(), chromosomeCrossoverMutation2);
 
         if (offspring1 != null) {
         	retVal.add(offspring1);
@@ -288,7 +315,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>> 
 	}
 	
 	List<U> survivingIndividuals() {
-        final List<Integer> indices = this.selectionFunction.select(this.population, this.populationSize - this.eliteSize);
+        final List<Integer> indices = this.selectionFunction.select(this.random.nextLong(), this.population, this.populationSize - this.eliteSize);
         final List<U> oldPopulation = this.population;
         final List<U> retVal = new ArrayList<>();
         for (int index : indices) {

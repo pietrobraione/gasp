@@ -7,18 +7,8 @@ import gasp.ga.Gene;
 import gasp.ga.Individual;
 
 public class SelectionFunctionRank<T extends Gene<T>, U extends Individual<T>> implements SelectionFunction<T, U> {
-	private final Random random;
-	
-	public SelectionFunctionRank(Random random) {
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
-		}
-		
-		this.random = random;
-	}
-
 	@Override
-	public int selectIndividual(List<U> individuals) {
+	public int selectIndividual(long seed, List<U> individuals) {
         final int[] ranking = getRanks(individuals);
 
         int rankSum = 0;
@@ -26,7 +16,9 @@ public class SelectionFunctionRank<T extends Gene<T>, U extends Individual<T>> i
         	rankSum += ranking[i];
         }
         
-        final int pick = this.random.nextInt(rankSum);
+        final Random random = new Random(seed);
+        
+        final int pick = random.nextInt(rankSum);
         int current = 0;
         for (int i = ranking.length - 1; i >= 0; --i){
             current += ranking[i];

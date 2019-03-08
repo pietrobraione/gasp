@@ -28,7 +28,7 @@ public class LauncherMergesort {
 		o.setLocalSearchAttempts(25);
 		o.setMethodSignature("small/mergesort/Mergesort:([I)V:sort");
 		
-		o.setVerbosity(Level.INFO);
+		//o.setVerbosity(Level.DEBUG);
 		o.setSeed(1551314378141L);
 		
 		final Main m = new Main(o);

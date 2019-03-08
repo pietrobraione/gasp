@@ -8,18 +8,10 @@ import gasp.ga.Gene;
 import gasp.ga.Pair;
 
 public final class CrossoverFunctionUnion<T extends Gene<T>> implements CrossoverFunction<T> {
-	private final Random random;
-
-	public CrossoverFunctionUnion(Random random) {		
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
-		}
-		
-		this.random = random;
-	}
-
 	@Override
-	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(long seed, List<T> chromosome1, List<T> chromosome2) {
+		final Random random = new Random(seed);
+		
 		final List<T> allGenes = new ArrayList<>();
 		allGenes.addAll(chromosome1);
 		allGenes.addAll(chromosome2);
@@ -31,7 +23,7 @@ public final class CrossoverFunctionUnion<T extends Gene<T>> implements Crossove
             if (allGenes.contains(notG)) {
                 allGenes.remove(notG);
             }
-            if (this.random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 childChromosome1.add(g);
                 childChromosome2.add(notG);
             } else {

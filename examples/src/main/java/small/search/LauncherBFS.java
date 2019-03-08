@@ -1,4 +1,4 @@
-package small.memory;
+package small.search;
 
 import static settings.Settings.PATH_EXAMPLES;
 import static settings.Settings.PATH_JBSE;
@@ -9,7 +9,7 @@ import java.time.Duration;
 import gasp.Main;
 import gasp.Options;
 
-public class LauncherMemory {
+public class LauncherBFS {
 	public static void main(String[] s) {
 		final Options o = new Options();
 		
@@ -24,7 +24,7 @@ public class LauncherMemory {
 		o.setMutationProbability(0.2);
 		o.setLocalSearchPeriod(10);
 		o.setLocalSearchAttempts(25);
-		o.setMethodSignature("small/memory/MemoryFill:([I)V:memoryFill");
+		o.setMethodSignature("small/search/BFS:(Lsmall/search/Node;Lsmall/search/Node;)Z:search");
 		
 		final Main m = new Main(o);
 		m.run();

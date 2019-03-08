@@ -8,18 +8,8 @@ import gasp.ga.Gene;
 import gasp.ga.Pair;
 
 public final class CrossoverFunctionSinglePoint<T extends Gene<T>> implements CrossoverFunction<T> {
-	private final Random random;
-	
-	public CrossoverFunctionSinglePoint(Random random) {
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
-		}
-
-		this.random = random;
-	}
-
 	@Override
-	public Pair<List<T>> doCrossover(List<T> chromosome1, List<T> chromosome2) {
+	public Pair<List<T>> doCrossover(long seed, List<T> chromosome1, List<T> chromosome2) {
 		if (chromosome1 == null || chromosome2 == null) {
 			throw new IllegalArgumentException("The chromosomes cannot be null.");
 		}
@@ -27,8 +17,9 @@ public final class CrossoverFunctionSinglePoint<T extends Gene<T>> implements Cr
 			return null; //failure, chromosomes must have at least length 2
 		}
 		
-		final int cutPoint1 = this.random.nextInt(chromosome1.size() - 1) + 1;
-		final int cutPoint2 = this.random.nextInt(chromosome2.size() - 1) + 1;
+		final Random random = new Random(seed);
+		final int cutPoint1 = random.nextInt(chromosome1.size() - 1) + 1;
+		final int cutPoint2 = random.nextInt(chromosome2.size() - 1) + 1;
 				
         final List<T> chromosomeCombined1 = combineChromosomes(chromosome1.subList(0, cutPoint1), chromosome2.subList(cutPoint2, chromosome2.size()));
         final List<T> chromosomeCombined2 = combineChromosomes(chromosome2.subList(0, cutPoint2), chromosome1.subList(cutPoint1, chromosome1.size()));	        

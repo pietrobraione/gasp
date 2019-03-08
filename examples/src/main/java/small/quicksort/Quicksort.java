@@ -3,11 +3,13 @@ package small.quicksort;
 import jbse.meta.Analysis;
 
 /**
- * Worst case: array sorted in same or reverse order.
+ * Sorts an array with the quicksort algorithm.
+ * 
+ * Expected worst case: array sorted in same or reverse order.
  */
 public class Quicksort {
 	public void sort(int[] l) {
-		Analysis.assume(l.length == 20);
+		Analysis.assume(l.length == 100);
 		_sort(l, 0, l.length - 1);
 	}
 	

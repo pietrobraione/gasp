@@ -6,31 +6,22 @@ import java.util.List;
 import java.util.Random;
 
 public final class IndividualGeneratorStub implements IndividualGenerator<GeneStub, Individual<GeneStub>> {
-	private final Random random;
-	
-	public IndividualGeneratorStub(Random random) {
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
-		}
-
-		this.random = random;
-	}
-	
 	@Override
-	public Individual<GeneStub> generateRandomIndividual(List<GeneStub> precondition) {
+	public Individual<GeneStub> generateRandomIndividual(long seed, List<GeneStub> precondition) {
 		final List<GeneStub> chromosome = new ArrayList<>(precondition);
-		chromosome.addAll(generateRandomChromosome());
+		chromosome.addAll(generateRandomChromosome(seed));
 		return new Individual<>(chromosome, chromosome.size());
 	}
 	
 	@Override
-	public Individual<GeneStub> generateRandomIndividual() {
-		return generateRandomIndividual(Collections.emptyList());
+	public Individual<GeneStub> generateRandomIndividual(long seed) {
+		return generateRandomIndividual(seed, Collections.emptyList());
 	}
 
-	private List<GeneStub> generateRandomChromosome() {
+	private List<GeneStub> generateRandomChromosome(long seed) {
 		final List<GeneStub> retVal = new ArrayList<>();
-		final int n = 1 + (int) (this.random.nextDouble() * 30);
+		final Random random = new Random(seed);
+		final int n = 1 + (int) (random.nextDouble() * 30);
 		for (int i = 0; i < n; ++i) {
 			retVal.add(new GeneStub());
 		}

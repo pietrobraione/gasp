@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +44,7 @@ import jbse.val.SymbolFactory;
 
 @DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite (with chromosome)")
 public class TestIndividualGeneratorJBSEWithChromosome {
+	private static final long SEED = 0;
 	private static final long MAX_FITNESS = 1_000_000;
 	private static final String METHOD_CLASS_NAME = "smalldemos/ifx/IfExample";
 	private static final String METHOD_DESCRIPTOR = "(I)V";
@@ -58,7 +58,7 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	
 	@BeforeEach
 	private void beforeEach() throws InvalidInputException, InvalidClassFileFactoryClassException, IOException, ClassFileNotFoundException, ClassFileIllFormedException, ClassFileNotAccessibleException, IncompatibleClassFileException, BadClassFileVersionException, WrongClassNameException {
-		this.ig = new IndividualGeneratorJBSE(MAX_FITNESS, new Random(0), CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
+		this.ig = new IndividualGeneratorJBSE(MAX_FITNESS, CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 		this.calc = new CalculatorRewriting();
 		this.symbolFactory = new SymbolFactory();
 		this.s = new State(true, unknown(), 10, 10, new Classpath(Paths.get(System.getProperty("java.home")), Collections.emptyList(), CLASSPATH), ClassFileFactoryJavassist.class, new HashMap<>(), this.symbolFactory);
@@ -86,7 +86,7 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(1), this.calc));
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(2), this.calc));
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(0), this.calc));
-		final IndividualJBSE individual = this.ig.generateRandomIndividual(chromosomeStart);
+		final IndividualJBSE individual = this.ig.generateRandomIndividual(SEED, chromosomeStart);
 		
 		//the individual's chromosome must have as first clause the same 
 		//first clause in the path condition
@@ -111,7 +111,7 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(1), this.calc));
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(2), this.calc));
 		chromosomeStart.add(new GeneJBSE(pathCondition.get(0), this.calc));
-		final IndividualJBSE individual = this.ig.generateRandomIndividual(chromosomeStart);
+		final IndividualJBSE individual = this.ig.generateRandomIndividual(SEED, chromosomeStart);
 		
 		//the individual's chromosome must have as first clause the same 
 		//first clause in the path condition

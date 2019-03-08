@@ -46,6 +46,7 @@ import jbse.mem.ClauseAssumeExpands;
 import jbse.mem.ClauseAssumeNull;
 import jbse.mem.ClauseAssumeReferenceSymbolic;
 import jbse.mem.State;
+import jbse.mem.exc.CannotAssumeSymbolicObjectException;
 import jbse.mem.exc.ContradictionException;
 import jbse.mem.exc.HeapMemoryExhaustedException;
 import jbse.mem.exc.ThreadStackEmptyException;
@@ -67,7 +68,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
 
 	private final long maxFitness;
-	private final Random random;
 	private final String[] classpath;
 	private final CalculatorRewriting calculatorForGenes;
 	private final String z3Path;
@@ -75,12 +75,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private final RunnerParameters commonParams;
 	private final State initialState;
 	
-	public IndividualGeneratorJBSE(long maxFitness, Random random, List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
+	public IndividualGeneratorJBSE(long maxFitness, List<Path> classpath, Path jbsePath, Path z3Path, String methodClassName, String methodDescriptor, String methodName) {
 		if (maxFitness <= 0) {
 			throw new IllegalArgumentException("The maximum fitness cannot be  less or equal to 0.");
-		}
-		if (random == null) {
-			throw new IllegalArgumentException("The random generator cannot be null.");
 		}
 		if (classpath == null) {
 			throw new IllegalArgumentException("Classpath cannot be null");
@@ -102,7 +99,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 		
 		this.maxFitness = maxFitness;
-		this.random = random;
 		this.classpath = new String[classpath.size() + 1];
 		for (int i = 0; i < classpath.size(); ++i) {
 			this.classpath[i] = classpath.get(i).toString();
@@ -153,9 +149,10 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	}
 	
 	@Override
-	public IndividualJBSE generateRandomIndividual(List<GeneJBSE> chromosome) throws FoundWorstIndividualException {
+	public IndividualJBSE generateRandomIndividual(long seed, List<GeneJBSE> chromosome) throws FoundWorstIndividualException {
+		final Random random = new Random(seed);
 		final ArrayList<GeneJBSE> chromosomeShuffled = new ArrayList<>(chromosome);
-		Collections.shuffle(chromosomeShuffled, this.random);
+		Collections.shuffle(chromosomeShuffled, random);
 		final ChromosomeChecker chk;
 		try {
 			chk = new ChromosomeChecker(chromosomeShuffled);
@@ -163,7 +160,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			//TODO throw better exception
 			throw new RuntimeException(e);
 		}
-		final ActionsRunner actions = new ActionsRunner(chk);
+		final ActionsRunner actions = new ActionsRunner(random, chk);
 		final Runner r;
 		try {
 			r = newRunner(actions, chk.chromosomeFiltered);
@@ -203,13 +200,15 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private enum Outcome { FOUND, ASSUMPTION_VIOLATED, PRECONDITION_TOO_STRICT, MAXIMUM_FITNESS_REACHED };
 
 	private class ActionsRunner extends Actions {
+		private final Random random;
 		private final ChromosomeChecker chk;
 		private final ArrayList<GeneJBSE> chromosome = new ArrayList<>();
 		private Outcome outcome = null;
 		private long fitness = 0;
 		private String pathIdentifier = null;
 		
-		public ActionsRunner(ChromosomeChecker chk) {
+		public ActionsRunner(Random random, ChromosomeChecker chk) {
+			this.random = random;
 			this.chk = chk;
 			this.chromosome.addAll(chk.chromosomeFiltered);
 		}
@@ -230,6 +229,13 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		
 		@Override
 		public boolean atStepPost() {
+			/*final State s = getEngine().getCurrentState();
+			try {
+				System.out.println(s.getIdentifier() + "[" + s.getSequenceNumber() + "] " + (s.isStuck() ? "stuck" : (s.getCurrentMethodSignature() + ":" + s.getPC())));
+			} catch (FrozenStateException | ThreadStackEmptyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}*/
 			final long fitness = fitness();
 			if (fitness >= IndividualGeneratorJBSE.this.maxFitness) {
 				this.outcome = Outcome.MAXIMUM_FITNESS_REACHED;
@@ -252,7 +258,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			for (int i = 0; i < numOfStates; ++i) {
 				indices.add(i);
 			}
-			Collections.shuffle(indices, IndividualGeneratorJBSE.this.random);
+			Collections.shuffle(indices, this.random);
 			
 			//looks for a state that complies with the ClauseAssumeReferenceSymbolic
 			final int none = -1;
@@ -381,19 +387,8 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		params.setCalculator(calc);
 		
 		//sets the decision procedures
-		try {
-			params.setDecisionProcedure(
-				new DecisionProcedureAlgorithms(
-					new DecisionProcedureClassInit( //useless?
-						new DecisionProcedureLICS(  //useless?
-							new DecisionProcedureSMTLIB2_AUFNIRA(
-								new DecisionProcedureAlwSat(calc), this.z3CommandLine), 
-							new LICSRulesRepo()), 
-						new ClassInitRulesRepo())));
-		} catch (InvalidInputException e) {
-			//this should never happen
-			throw new AssertionError("Failed while creating the decision procedure.", e);
-		}
+		final DecisionProcedureAlgorithms dec = makeDecisionProcedure(calc);
+		params.setDecisionProcedure(dec);
 
 		//sets the actions
 		params.setActions(actions);
@@ -401,43 +396,8 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		//sets the initial state
 		final State initialState = (this.initialState == null ? null : this.initialState.clone());
 		if (initialState != null) {
-			if (chromosome != null) {				
-				//sorts the chromosome
-				final ArrayList<GeneJBSE> chromosomeSorted = new ArrayList<>(chromosome);
-				Collections.sort(chromosomeSorted, new ComparatorGeneJBSE());
-				
-				//assumes all the positive clauses in the chromosome
-				for (GeneJBSE gene : chromosome) {
-					try {
-						final Clause clause = gene.getClause();
-						if (clause instanceof ClauseAssumeAliases) {
-							final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
-							if (!gene.isNegated()) {
-								initialState.assumeAliases(ca.getReference(), ca.getObjekt().getOrigin());
-							}
-						} else if (clause instanceof ClauseAssumeExpands) {
-							final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
-							if (!gene.isNegated()) {
-								initialState.assumeExpands(calc, ce.getReference(), ce.getObjekt().getType());
-							}
-						} else if (clause instanceof ClauseAssumeNull) {
-							final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
-							if (!gene.isNegated()) {
-								initialState.assumeNull(cn.getReference());
-							}
-						} else if (clause instanceof ClauseAssume) {
-							final Primitive condition = gene.isNegated() ? calc.push(((ClauseAssume) clause).getCondition()).not().pop() : ((ClauseAssume) clause).getCondition();
-							initialState.assume(condition);
-						}
-					} catch (ContradictionException e) {
-						//found a duplicate or contradictory reference clause that
-						//survived filtering: just skip it
-						continue; //pleonastic
-					} catch (InvalidInputException | InvalidOperandException | InvalidTypeException e) {
-						//this should never happen
-						throw new AssertionError("Found an invalid condition in a clause.", e);
-					}
-				}
+			if (chromosome != null) {
+				assumeChromosome(initialState, chromosome, calc);
 			}
 			params.setInitialState(initialState);
 		}
@@ -448,10 +408,66 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		return r;
 	}
 	
+	private void assumeChromosome(State state, List<GeneJBSE> chromosome, CalculatorRewriting calc) throws CannotAssumeSymbolicObjectException, HeapMemoryExhaustedException {
+		//sorts the chromosome
+		final ArrayList<GeneJBSE> chromosomeSorted = new ArrayList<>(chromosome);
+		Collections.sort(chromosomeSorted, new ComparatorGeneJBSE());
+		
+		//assumes all the positive clauses in the chromosome
+		for (GeneJBSE gene : chromosome) {
+			try {
+				final Clause clause = gene.getClause();
+				if (clause instanceof ClauseAssumeAliases) {
+					final ClauseAssumeAliases ca = (ClauseAssumeAliases) clause;
+					if (!gene.isNegated()) {
+						state.assumeAliases(ca.getReference(), ca.getObjekt().getOrigin());
+					}
+				} else if (clause instanceof ClauseAssumeExpands) {
+					final ClauseAssumeExpands ce = (ClauseAssumeExpands) clause;
+					if (!gene.isNegated()) {
+						state.assumeExpands(calc, ce.getReference(), ce.getObjekt().getType());
+					}
+				} else if (clause instanceof ClauseAssumeNull) {
+					final ClauseAssumeNull cn = (ClauseAssumeNull) clause;
+					if (!gene.isNegated()) {
+						state.assumeNull(cn.getReference());
+					}
+				} else if (clause instanceof ClauseAssume) {
+					final Primitive condition = gene.isNegated() ? calc.push(((ClauseAssume) clause).getCondition()).not().pop() : ((ClauseAssume) clause).getCondition();
+					state.assume(condition);
+				}
+			} catch (ContradictionException e) {
+				//found a duplicate or contradictory reference clause that
+				//survived filtering: just skip it
+				continue; //pleonastic
+			} catch (InvalidInputException | InvalidOperandException | InvalidTypeException e) {
+				//this should never happen
+				throw new AssertionError("Found an invalid condition in a clause.", e);
+			}
+		}
+	}
+	
 	private CalculatorRewriting makeCalculator() {
 		final CalculatorRewriting calc = new CalculatorRewriting();
 		calc.addRewriter(new RewriterOperationOnSimplex());
+		//calc.addRewriter(new RewriterPolynomials());
 		return calc;
+	}
+	
+	private DecisionProcedureAlgorithms makeDecisionProcedure(CalculatorRewriting calc) throws DecisionException {
+		try {
+			return
+				new DecisionProcedureAlgorithms(
+					new DecisionProcedureClassInit( //useless?
+						new DecisionProcedureLICS(  //useless?
+							new DecisionProcedureSMTLIB2_AUFNIRA(
+								new DecisionProcedureAlwSat(calc), this.z3CommandLine), 
+							new LICSRulesRepo()), 
+						new ClassInitRulesRepo()));
+		} catch (InvalidInputException e) {
+			//this should never happen
+			throw new AssertionError("Failed while creating the decision procedure.", e);
+		}
 	}
 	
 	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {

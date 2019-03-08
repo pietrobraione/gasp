@@ -8,7 +8,7 @@ public class MemoryFill {
 	 * Worst case: a list of non-zero values.
 	 */
 	public void memoryFill(int[] l) {
-		Analysis.assume(l.length <= 20);
+		Analysis.assume(l.length == 100);
 		int[] memory = new int[16];
 		int free = 16;
 		

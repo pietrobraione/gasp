@@ -7,7 +7,7 @@ import jbse.meta.Analysis;
  */
 public class Bubblesort {
 	public void sort(int[] l) {
-		Analysis.assume(l.length == 20);
+		Analysis.assume(l.length == 100);
 		for (int i = l.length - 1; i >= 0; --i) {
 			for (int j = 0; j < i; ++j) {
 				if (l[j] > l [j + 1]) {
