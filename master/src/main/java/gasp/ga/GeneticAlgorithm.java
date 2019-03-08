@@ -129,10 +129,11 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
 		final ExecutorCompletionService<U> completionService = new ExecutorCompletionService<>(executor);
 		int generated = 0;
 		while (generated < this.populationSize) {
-			for (int i = 0; i < this.populationSize - generated; ++i) {
+			final int toGenerate = this.populationSize - generated;
+			for (int i = 0; i < toGenerate; ++i) {
 				completionService.submit(() -> this.individualGenerator.generateRandomIndividual(this.random.nextLong()));
 			}
-			for (int i = 0; i < this.populationSize - generated; ++i) {
+			for (int i = 0; i < toGenerate; ++i) {
 				try {
 					final Future<U> f = completionService.take();
 					final U individual = f.get();
