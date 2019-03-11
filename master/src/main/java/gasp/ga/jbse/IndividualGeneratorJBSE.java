@@ -21,6 +21,7 @@ import jbse.algo.exc.CannotManageStateException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
 import jbse.common.exc.ClasspathException;
 import jbse.common.exc.InvalidInputException;
+import jbse.dec.DecisionProcedure;
 import jbse.dec.DecisionProcedureAlgorithms;
 import jbse.dec.DecisionProcedureAlwSat;
 import jbse.dec.DecisionProcedureClassInit;
@@ -229,13 +230,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		
 		@Override
 		public boolean atStepPost() {
-			/*final State s = getEngine().getCurrentState();
-			try {
-				System.out.println(s.getIdentifier() + "[" + s.getSequenceNumber() + "] " + (s.isStuck() ? "stuck" : (s.getCurrentMethodSignature() + ":" + s.getPC())));
-			} catch (FrozenStateException | ThreadStackEmptyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
 			final long fitness = fitness();
 			if (fitness >= IndividualGeneratorJBSE.this.maxFitness) {
 				this.outcome = Outcome.MAXIMUM_FITNESS_REACHED;
@@ -408,7 +402,8 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		return r;
 	}
 	
-	private void assumeChromosome(State state, List<GeneJBSE> chromosome, CalculatorRewriting calc) throws CannotAssumeSymbolicObjectException, HeapMemoryExhaustedException {
+	private void assumeChromosome(State state, List<GeneJBSE> chromosome, CalculatorRewriting calc) 
+	throws CannotAssumeSymbolicObjectException, HeapMemoryExhaustedException {
 		//sorts the chromosome
 		final ArrayList<GeneJBSE> chromosomeSorted = new ArrayList<>(chromosome);
 		Collections.sort(chromosomeSorted, new ComparatorGeneJBSE());
@@ -475,7 +470,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		
 		//first pass: delete redundant numeric clauses
 		final CalculatorRewriting calc = makeCalculator();
-		try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(calc), IndividualGeneratorJBSE.this.z3CommandLine)) {
+		try (DecisionProcedure dec = makeDecisionProcedure(calc)) {
 			for (GeneJBSE gene : reverse(toSimplify)) {
 				final Clause clause = gene.getClause();
 				if (clause instanceof ClauseAssumeReferenceSymbolic) {
@@ -575,7 +570,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			final HashSet<Integer> contradictoryGenesPositions = new HashSet<>();
 			Primitive precondition = null;
 			final CalculatorRewriting calc = makeCalculator();
-			try (DecisionProcedureSMTLIB2_AUFNIRA dec = new DecisionProcedureSMTLIB2_AUFNIRA(new DecisionProcedureAlwSat(calc), IndividualGeneratorJBSE.this.z3CommandLine)) {
+			try (DecisionProcedure dec = makeDecisionProcedure(calc)) {
 				for (int i = 0; i < chromosome.size(); ++i) {
 					final GeneJBSE gene = chromosome.get(i);
 					final Clause clause = gene.getClause();
@@ -661,7 +656,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			}
 		}
 		
-		boolean contradicts(DecisionProcedureSMTLIB2_AUFNIRA dec, Primitive precondition, Primitive condition, CalculatorRewriting calc) 
+		boolean contradicts(DecisionProcedure dec, Primitive precondition, Primitive condition, CalculatorRewriting calc) 
 		throws InvalidOperandException, InvalidTypeException, InvalidInputException, DecisionException {
 			final Primitive conditionAnd = (precondition == null ? condition : calc.push(precondition).and(condition).pop());
 			if (conditionAnd.surelyFalse()) {
