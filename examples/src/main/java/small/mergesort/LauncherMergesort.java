@@ -6,8 +6,6 @@ import static settings.Settings.PATH_Z3;
 
 import java.time.Duration;
 
-import org.apache.logging.log4j.Level;
-
 import gasp.Main;
 import gasp.Options;
 
