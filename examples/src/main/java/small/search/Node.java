@@ -13,7 +13,7 @@ public class Node {
 			}
 		}
 		final Node[] outgoingOld = this.outgoing;
-		this.outgoing = new Node[outgoingOld.length];
+		this.outgoing = new Node[outgoingOld.length + 1];
 		System.arraycopy(outgoingOld, 0, this.outgoing, 0, outgoingOld.length);
 		this.outgoing[this.outgoing.length - 1] = to;
 	}
