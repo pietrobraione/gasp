@@ -445,7 +445,6 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 	private CalculatorRewriting makeCalculator() {
 		final CalculatorRewriting calc = new CalculatorRewriting();
 		calc.addRewriter(new RewriterOperationOnSimplex());
-		//calc.addRewriter(new RewriterPolynomials());
 		return calc;
 	}
 	
