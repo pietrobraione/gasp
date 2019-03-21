@@ -1,4 +1,4 @@
-package gasp.ga.jbse;
+package gasp.ga.individualGenerator;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

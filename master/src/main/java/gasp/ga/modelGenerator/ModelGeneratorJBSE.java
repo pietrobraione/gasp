@@ -1,6 +1,8 @@
-package gasp.ga.jbse;
+package gasp.ga.modelGenerator;
 
 import gasp.ga.ModelGenerator;
+import gasp.ga.individualGenerator.GeneJBSE;
+import gasp.ga.individualGenerator.IndividualJBSE;
 
 public final class ModelGeneratorJBSE implements ModelGenerator<GeneJBSE, IndividualJBSE, ModelJBSE> {
 	@Override

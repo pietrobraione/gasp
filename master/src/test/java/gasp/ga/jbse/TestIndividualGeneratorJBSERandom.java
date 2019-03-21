@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import gasp.ga.FoundWorstIndividualException;
-import gasp.ga.jbse.IndividualGeneratorJBSE;
+import gasp.ga.individualGenerator.IndividualGeneratorJBSE;
 
 @DisplayName("gasp.ga.jbse.IndividualGeneratorJBSE test suite (purely random generation)")
 public class TestIndividualGeneratorJBSERandom {

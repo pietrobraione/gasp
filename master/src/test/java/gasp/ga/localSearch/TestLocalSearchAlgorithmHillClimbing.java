@@ -5,9 +5,9 @@ import static settings.Settings.*;
 import org.junit.jupiter.api.Test;
 
 import gasp.ga.FoundWorstIndividualException;
-import gasp.ga.jbse.GeneJBSE;
-import gasp.ga.jbse.IndividualGeneratorJBSE;
-import gasp.ga.jbse.IndividualJBSE;
+import gasp.ga.individualGenerator.GeneJBSE;
+import gasp.ga.individualGenerator.IndividualGeneratorJBSE;
+import gasp.ga.individualGenerator.IndividualJBSE;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
 
 import org.junit.jupiter.api.DisplayName;

@@ -22,7 +22,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import gasp.ga.jbse.IndividualGeneratorJBSE;
+import gasp.ga.individualGenerator.GeneJBSE;
+import gasp.ga.individualGenerator.IndividualGeneratorJBSE;
+import gasp.ga.individualGenerator.IndividualJBSE;
 import jbse.bc.ClassFileFactoryJavassist;
 import jbse.bc.ClassHierarchy;
 import jbse.bc.Classpath;

@@ -5,7 +5,7 @@ import static settings.Settings.*;
 import org.junit.jupiter.api.Test;
 
 import gasp.ga.Individual;
-import gasp.ga.jbse.IndividualGeneratorJBSE;
+import gasp.ga.individualGenerator.IndividualGeneratorJBSE;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

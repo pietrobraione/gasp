@@ -1,4 +1,4 @@
-package gasp.ga.jbse;
+package gasp.ga.individualGenerator;
 
 import gasp.ga.Gene;
 import jbse.common.exc.InvalidInputException;

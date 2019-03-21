@@ -1,4 +1,4 @@
-package gasp.ga.jbse;
+package gasp.ga.individualGenerator;
 
 import java.util.List;
 
