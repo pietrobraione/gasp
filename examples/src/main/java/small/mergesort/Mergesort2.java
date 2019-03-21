@@ -1,8 +1,5 @@
 package small.mergesort;
 
-import java.util.Arrays;
-import java.util.stream.IntStream;
-
 /**
  * Sorts an array with the mergesort algorithm.
  * 
@@ -85,19 +82,5 @@ public class Mergesort2 {
 		i80 = 13; i81 = 53;  i82 = 85; i83 = 21; i84 = 37; i85 = 69; i86 = 5;  i87 = 57; i88 = 89; i89 = 25; 
 		i90 = 41; i91 = 73;  i92 = 9;  i93 = 49; i94 = 81; i95 = 17; i96 = 97; i97 = 33; i98 = 65; i99 = 1;
 		sort();
-	}
-	
-	private static int[] worstCaseArrayOfSize(int n) {
-		if (n == 1) {
-			return new int[] { 1 };
-		} else {
-			final int[] top = worstCaseArrayOfSize((int) Math.floor(((float) n) / 2));
-			final int[] bottom = worstCaseArrayOfSize((int) Math.ceil(((float) n) / 2));
-			return IntStream.concat(Arrays.stream(top).map(x -> x * 2), Arrays.stream(bottom).map(x -> x * 2 - 1)).toArray();
-		}
-	}
-	
-	public static void main(String[] s) {
-		System.out.println(Arrays.toString(worstCaseArrayOfSize(100)));
 	}
 }

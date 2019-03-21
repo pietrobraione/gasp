@@ -3,7 +3,7 @@ package small.quicksort;
 /**
  * Sorts an array with the quicksort algorithm.
  * 
- * Expected worst case: array sorted in same or reverse order.
+ * Expected worst case: see worstCase method.
  */
 public class Quicksort2 {
 	int i0 = 0,  i1 = 0,  i2 = 0,  i3 = 0,  i4 = 0,  i5 = 0,  i6 = 0,  i7 = 0,  i8 = 0,  i9 = 0;
@@ -132,5 +132,19 @@ public class Quicksort2 {
 	        a = a + 1;
 	        b = b + 1;
 	    }
+	}
+	
+	public void sortWorstCase() {
+		i0 = 66;  i1 = 67;  i2 = 65;  i3 = 63;   i4 = 64;  i5 = 68;  i6 = 72;  i7 = 73;  i8 = 24;  i9 = 71; 
+		i10 = 69; i11 = 70; i12 = 62; i13 = 54;  i14 = 55; i15 = 53; i16 = 51; i17 = 52; i18 = 56; i19 = 60; 
+		i20 = 61; i21 = 59; i22 = 57; i23 = 58;  i24 = 75; i25 = 92; i26 = 93; i27 = 91; i28 = 89; i29 = 90; 
+		i30 = 94; i31 = 98; i32 = 99; i33 = 100; i34 = 97; i35 = 95; i36 = 96; i37 = 88; i38 = 79; i39 = 80; 
+		i40 = 78; i41 = 76; i42 = 77; i43 = 81;  i44 = 85; i45 = 86; i46 = 87; i47 = 84; i48 = 82; i49 = 83; 
+		i50 = 50; i51 = 16; i52 = 17; i53 = 15;  i54 = 13; i55 = 14; i56 = 18; i57 = 22; i58 = 23; i59 = 24; 
+		i60 = 21; i61 = 19; i62 = 20; i63 = 12;  i64 = 4;  i65 = 5;  i66 = 3;  i67 = 1;  i68 = 2;  i69 = 6; 
+		i70 = 10; i71 = 11; i72 = 9;  i73 = 7;   i74 = 8;  i75 = 25; i76 = 41; i77 = 42; i78 = 40; i79 = 38; 
+		i80 = 39; i81 = 43; i82 = 47; i83 = 48;  i84 = 49; i85 = 46; i86 = 44; i87 = 45; i88 = 37; i89 = 29; 
+		i90 = 30; i91 = 28; i92 = 26; i93 = 27;  i94 = 31; i95 = 35; i96 = 36; i97 = 34; i98 = 32; i99 = 33;
+		sort();
 	}
 }

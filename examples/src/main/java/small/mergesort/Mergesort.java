@@ -59,17 +59,21 @@ public class Mergesort {
 		sort(worst100);
 	}
 	
-	private static int[] worstCaseArrayOfSize(int n) {
-		if (n == 1) {
+	private static int[] worstCase(int size) {
+		if (size < 0) {
+			throw new NegativeArraySizeException();
+		} else if (size == 0) {
+			return new int[0];
+		} else if (size == 1) {
 			return new int[] { 1 };
 		} else {
-			final int[] top = worstCaseArrayOfSize((int) Math.floor(((float) n) / 2));
-			final int[] bottom = worstCaseArrayOfSize((int) Math.ceil(((float) n) / 2));
+			final int[] top = worstCase((int) Math.floor(((float) size) / 2));
+			final int[] bottom = worstCase((int) Math.ceil(((float) size) / 2));
 			return IntStream.concat(Arrays.stream(top).map(x -> x * 2), Arrays.stream(bottom).map(x -> x * 2 - 1)).toArray();
 		}
 	}
 	
 	public static void main(String[] s) {
-		System.out.println(Arrays.toString(worstCaseArrayOfSize(100)));
+		System.out.println(Arrays.toString(worstCase(100)));
 	}
 }
