@@ -3,8 +3,6 @@ package small.mergesort;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-import jbse.meta.Analysis;
-
 /**
  * Sorts an array with the mergesort algorithm.
  * 
