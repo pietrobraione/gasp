@@ -24,7 +24,8 @@ public class LauncherMergesort {
 		o.setMutationProbability(0.2);
 		o.setLocalSearchPeriod(10);
 		o.setLocalSearchAttempts(25);
-		o.setMethodSignature("small/mergesort/Mergesort:([I)V:sort");
+		//o.setMethodSignature("small/mergesort/Mergesort:([I)V:sort");
+		o.setMethodSignature("small/mergesort/Mergesort2:()V:sort");
 		
 		final Main m = new Main(o);
 		m.run();
