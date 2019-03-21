@@ -32,7 +32,7 @@ public class TestGeneticAlgorithm {
 									  POPULATION_SIZE, ELITE_SIZE,
 									  new IndividualGeneratorStub(), new ModelGeneratorStub(),
 									  (s, c1, c2) -> { return new Pair<>(c1, c2); }, (s, c) -> c,
-									  (s, pop) -> 0, (s, i) -> i);
+									  (s, pop) -> 0, (s, i, t) -> i);
 	}
 	
 	@Test

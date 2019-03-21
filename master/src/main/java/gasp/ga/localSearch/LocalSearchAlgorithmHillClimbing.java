@@ -2,6 +2,7 @@ package gasp.ga.localSearch;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,14 +36,14 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 	}
 	
 	@Override
-	public U doLocalSearch(long seed, U individual) throws FoundWorstIndividualException {
+	public U doLocalSearch(long seed, U individual, Supplier<Boolean> timedOut) throws FoundWorstIndividualException {
 		U retValue = individual;
 		final Random random = new Random(seed); 
 		int index = random.nextInt(retValue.size());
 		int remainingAttempts = Math.min(retValue.size(), this.attempts);
 		
 		logger.debug("Total number of local search attempts: " + remainingAttempts);
-		while (remainingAttempts > 0) {			
+		while (remainingAttempts > 0 && !timedOut.get()) {			
 			final List<T> currentChromosome = retValue.getChromosome();
 			final T mutatedGene = currentChromosome.get(index).not();
 			currentChromosome.remove(index);
@@ -56,7 +57,7 @@ public final class LocalSearchAlgorithmHillClimbing<T extends Gene<T>, U extends
 					found = true;
 					break;
 				}
-				if (remainingAttemptsIndividual == 0) {
+				if (remainingAttemptsIndividual == 0 || timedOut.get()) {
 					break;
 				}
 				--remainingAttemptsIndividual;

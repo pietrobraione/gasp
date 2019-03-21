@@ -38,7 +38,7 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch() does not return null")
 	public void testLocalSearch1() throws FoundWorstIndividualException {
 		final IndividualJBSE indRandom = ig().generateRandomIndividual(SEED);
-		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone());
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone(), () -> false);
 		assertNotEquals(indSearch, null);
 	}
 	
@@ -46,7 +46,7 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch(), if returns a different Individual, this has a higher fitness than the input one")
 	public void testLocalSearch3() throws FoundWorstIndividualException {
 		final IndividualJBSE indRandom = ig().generateRandomIndividual(SEED);
-		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone());
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone(), () -> false);
 		assumeFalse(indSearch == null);
 		assumeFalse(indRandom.equals(indSearch));
 		assertTrue(indSearch.getFitness() >= indRandom.getFitness());
@@ -56,7 +56,7 @@ public class TestLocalSearchAlgorithmHillClimbing {
 	@DisplayName("LocalSearchAlgorithmHillClimbing.doLocalSearch(), if returns a different individual, this has at least a negative constraint")
 	public void testLocalSearch4() throws FoundWorstIndividualException {
 		final IndividualJBSE indRandom = ig().generateRandomIndividual(SEED);
-		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone());
+		final IndividualJBSE indSearch = localSearch().doLocalSearch(SEED, indRandom.clone(), () -> false);
 		assumeFalse(indSearch == null);
 		assumeFalse(indRandom.equals(indSearch));
 		boolean hasANegativeConstraint = false;

@@ -207,7 +207,7 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
     	logger.debug("Performing local search");
     	
         final U best = this.population.get(0);
-        final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(this.random.nextLong(), best);
+        final U optimizedBest = this.localSearchAlgorithm.doLocalSearch(this.random.nextLong(), best, this::timedOut);
         
         if (optimizedBest.getFitness() > best.getFitness()) {
         	logger.debug("Local search found a better individual: %s", optimizedBest::toString);
@@ -221,7 +221,11 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
 
 	boolean isFinished() {
 		return (this.generations > 0 && this.currentGeneration == this.generations) ||
-		       (!this.timeout.isZero() && Instant.now().isAfter(this.start.plus(this.timeout)));
+		       timedOut();
+	}
+	
+	boolean timedOut() {
+		return (!this.timeout.isZero() && Instant.now().isAfter(this.start.plus(this.timeout)));
 	}
 
 	void produceNextGeneration() throws FoundWorstIndividualException {
