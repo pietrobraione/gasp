@@ -31,8 +31,8 @@ import gasp.ga.GeneticAlgorithm;
 import gasp.ga.Individual;
 import gasp.ga.localSearch.LocalSearchAlgorithm;
 import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
-import gasp.ga.modelGenerator.ModelGeneratorJBSE;
-import gasp.ga.modelGenerator.ModelJBSE;
+import gasp.ga.modelGenerator.ModelGeneratorJBSE_SMTLIB;
+import gasp.ga.modelGenerator.ModelJBSE_SMTLIB;
 import gasp.ga.operators.crossover.CrossoverFunction;
 import gasp.ga.operators.crossover.CrossoverFunctionTwoPoints;
 import gasp.ga.operators.crossover.CrossoverFunctionPrefix;
@@ -142,20 +142,20 @@ public class Main {
 										    this.o.getMethodClassName(), 
 										    this.o.getMethodDescriptor(), 
 										    this.o.getMethodName());
-		final GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE> retVal = 
-				new GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE>(this.o.getSeed(), 
-																	      this.o.getNumberOfThreads(),
-															   			  this.o.getGenerations(),
-															   			  this.o.getTimeout(),
-															   			  this.o.getLocalSearchPeriod(),
-															   			  this.o.getPopulationSize(),
-															   			  this.o.getEliteSize(),
-															   			  ig,
-															   			  new ModelGeneratorJBSE(),
-															   			  crossoverFunction(),
-															   			  mutationFunction(),
-															   			  selectionFunction(),
-															   			  localSearchAlgorithm(ig));	
+		final GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE_SMTLIB> retVal = 
+				new GeneticAlgorithm<GeneJBSE, IndividualJBSE, ModelJBSE_SMTLIB>(this.o.getSeed(), 
+																	      		 this.o.getNumberOfThreads(),
+																	      		 this.o.getGenerations(),
+																	      		 this.o.getTimeout(),
+																	      		 this.o.getLocalSearchPeriod(),
+																	      		 this.o.getPopulationSize(),
+																	      		 this.o.getEliteSize(),
+																	      		 ig,
+																	      		 new ModelGeneratorJBSE_SMTLIB(this.o.getZ3Path()),
+																	      		 crossoverFunction(),
+																	      		 mutationFunction(),
+																	      		 selectionFunction(),
+																	      		 localSearchAlgorithm(ig));	
 		return retVal;
 	}
 	

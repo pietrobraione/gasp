@@ -1,5 +1,8 @@
 package gasp.ga.individualGenerator;
 
+import static gasp.ga.jbse.Utils.makeCalculator;
+import static gasp.ga.jbse.Utils.makeDecisionProcedure;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,10 +26,6 @@ import jbse.common.exc.ClasspathException;
 import jbse.common.exc.InvalidInputException;
 import jbse.dec.DecisionProcedure;
 import jbse.dec.DecisionProcedureAlgorithms;
-import jbse.dec.DecisionProcedureAlwSat;
-import jbse.dec.DecisionProcedureClassInit;
-import jbse.dec.DecisionProcedureLICS;
-import jbse.dec.DecisionProcedureSMTLIB2_AUFNIRA;
 import jbse.dec.exc.DecisionBacktrackException;
 import jbse.dec.exc.DecisionException;
 import jbse.jvm.Runner;
@@ -52,9 +51,6 @@ import jbse.mem.exc.ContradictionException;
 import jbse.mem.exc.HeapMemoryExhaustedException;
 import jbse.mem.exc.ThreadStackEmptyException;
 import jbse.rewr.CalculatorRewriting;
-import jbse.rewr.RewriterOperationOnSimplex;
-import jbse.rules.ClassInitRulesRepo;
-import jbse.rules.LICSRulesRepo;
 import jbse.tree.StateTree.BranchPoint;
 import jbse.val.Expression;
 import jbse.val.Primitive;
@@ -66,13 +62,10 @@ import jbse.val.exc.InvalidTypeException;
 public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJBSE, IndividualJBSE> {
 	private static final Logger logger = LogManager.getFormatterLogger(IndividualGeneratorJBSE.class);
 	
-	private static final String SWITCH_CHAR = System.getProperty("os.name").toLowerCase().contains("windows") ? "/" : "-";
-
 	private final long maxFitness;
 	private final String[] classpath;
 	private final CalculatorRewriting calculatorForGenes;
-	private final String z3Path;
-	private final ArrayList<String> z3CommandLine;
+	private final Path z3Path;
 	private final RunnerParameters commonParams;
 	private final State initialState;
 	
@@ -106,12 +99,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 		this.classpath[classpath.size()] = jbsePath.toString();
 		this.calculatorForGenes = makeCalculator();
-		this.z3Path = z3Path.toString(); 
-		this.z3CommandLine  = new ArrayList<>();
-		this.z3CommandLine.add(this.z3Path);
-		this.z3CommandLine.add(SWITCH_CHAR + "smt2");
-		this.z3CommandLine.add(SWITCH_CHAR + "in");
-		this.z3CommandLine.add(SWITCH_CHAR + "t:10");
+		this.z3Path = z3Path; 
 		this.commonParams = new RunnerParameters();
 		this.commonParams.setMethodSignature(methodClassName, methodDescriptor, methodName);
 		this.commonParams.addUserClasspath(this.classpath);
@@ -381,7 +369,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		params.setCalculator(calc);
 		
 		//sets the decision procedures
-		final DecisionProcedureAlgorithms dec = makeDecisionProcedure(calc);
+		final DecisionProcedureAlgorithms dec = makeDecisionProcedure(calc, this.z3Path);
 		params.setDecisionProcedure(dec);
 
 		//sets the actions
@@ -442,34 +430,12 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 	}
 	
-	private CalculatorRewriting makeCalculator() {
-		final CalculatorRewriting calc = new CalculatorRewriting();
-		calc.addRewriter(new RewriterOperationOnSimplex());
-		return calc;
-	}
-	
-	private DecisionProcedureAlgorithms makeDecisionProcedure(CalculatorRewriting calc) throws DecisionException {
-		try {
-			return
-				new DecisionProcedureAlgorithms(
-					new DecisionProcedureClassInit( //useless?
-						new DecisionProcedureLICS(  //useless?
-							new DecisionProcedureSMTLIB2_AUFNIRA(
-								new DecisionProcedureAlwSat(calc), this.z3CommandLine), 
-							new LICSRulesRepo()), 
-						new ClassInitRulesRepo()));
-		} catch (InvalidInputException e) {
-			//this should never happen
-			throw new AssertionError("Failed while creating the decision procedure.", e);
-		}
-	}
-	
 	private ArrayList<GeneJBSE> simplify(ArrayList<GeneJBSE> toSimplify) throws DecisionException, InvalidTypeException, InvalidInputException {
 		final ArrayList<GeneJBSE> retVal = new ArrayList<>();
 		
 		//first pass: delete redundant numeric clauses
 		final CalculatorRewriting calc = makeCalculator();
-		try (DecisionProcedure dec = makeDecisionProcedure(calc)) {
+		try (DecisionProcedure dec = makeDecisionProcedure(calc, this.z3Path)) {
 			for (GeneJBSE gene : reverse(toSimplify)) {
 				final Clause clause = gene.getClause();
 				if (clause instanceof ClauseAssumeReferenceSymbolic) {
@@ -569,7 +535,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			final HashSet<Integer> contradictoryGenesPositions = new HashSet<>();
 			Primitive precondition = null;
 			final CalculatorRewriting calc = makeCalculator();
-			try (DecisionProcedure dec = makeDecisionProcedure(calc)) {
+			try (DecisionProcedure dec = makeDecisionProcedure(calc, IndividualGeneratorJBSE.this.z3Path)) {
 				for (int i = 0; i < chromosome.size(); ++i) {
 					final GeneJBSE gene = chromosome.get(i);
 					final Clause clause = gene.getClause();
