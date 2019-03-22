@@ -52,8 +52,8 @@ public class Mergesort10 {
 		}
 	}
 	
-	public void sortWorstCase() {
-		//TODO
+	public void sortWorstCase() { 
+		i0 = 8;  i1 = 4;   i2 = 6;  i3 = 10;  i4 = 2;  i5 = 7;  i6 = 3;  i7 = 5;  i8 = 9;  i9 = 1; 
 		sort();
 	}
 }
