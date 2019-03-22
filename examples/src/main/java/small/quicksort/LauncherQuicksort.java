@@ -24,8 +24,13 @@ public class LauncherQuicksort {
 		o.setMutationProbability(0.2);
 		o.setLocalSearchPeriod(10);
 		o.setLocalSearchAttempts(25);
+		
 		//o.setMethodSignature("small/quicksort/Quicksort:([I)V:sort");
-		o.setMethodSignature("small/quicksort/Quicksort2:()V:sort");
+		
+		o.setMethodSignature("small/quicksort/Quicksort10:()V:sort");
+		o.setMethodSignature("small/quicksort/Quicksort50:()V:sort");
+		o.setMethodSignature("small/quicksort/Quicksort75:()V:sort");
+		o.setMethodSignature("small/quicksort/Quicksort100:()V:sort");
 		
 		final Main m = new Main(o);
 		m.run();
