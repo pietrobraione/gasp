@@ -24,7 +24,7 @@ public class LauncherMergesortTable4 {
 		o.setMethodSignature("small/mergesort/Mergesort100:()V:sort");
 		
 		final int[] populationSize = { 10, 10, 10, 10, 50, 50, 50, 50, 75, 75, 75, 75, 100, 100, 100, 100 };
-		final int[] localSearchPeriod = { 0, 10, 50, 100, 0, 10, 50, 100, 0, 10, 50, 100, 0, 10, 50, 100 };
+		final int[] localSearchPeriod = { 0, 50, 10, 100, 0, 50, 10, 100, 0, 50, 10, 100, 0, 50, 10, 100 };
 		final double[] mutationProbability = { 0.0, 0.2, 0.5, 1.0, 0.2, 0.5, 1.0, 0.0, 0.5, 1.0, 0.0, 0.2, 1.0, 0.0, 0.2, 0.5 };
 		final int[] eliteSize = { 0, 1, 5, 10, 5, 10, 0, 1, 0, 1, 5, 10, 5, 10, 0, 1 };
 		
