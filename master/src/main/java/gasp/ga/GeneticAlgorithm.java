@@ -73,8 +73,8 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
 		if (populationSize <= 0) {
 			throw new IllegalArgumentException("Population size cannot be less or equal to 0.");
 		}
-		if (eliteSize <= 0) {
-			throw new IllegalArgumentException("Elite size cannot be less or equal to 0.");
+		if (eliteSize < 0) {
+			throw new IllegalArgumentException("Elite size cannot be less than 0.");
 		}
 		if (eliteSize > populationSize) {
 			throw new IllegalArgumentException("Elite size cannot be greater than population size.");
@@ -87,9 +87,6 @@ public final class GeneticAlgorithm<T extends Gene<T>, U extends Individual<T>, 
 		}
 		if (selectionFunction == null) {
 			throw new IllegalArgumentException("Selection function cannot be null.");
-		}
-		if (localSearchAlgorithm == null) {
-			throw new IllegalArgumentException("Local search algorithm cannot be null.");
 		}
 		
 		this.random = new Random(seed);

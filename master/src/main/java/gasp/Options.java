@@ -164,7 +164,7 @@ public class Options {
 	
 	@Option(names = {"-e", "--elite-size"}, defaultValue = "5", description = "Number of the best individuals in the population that are preserved across generations (default: ${DEFAULT-VALUE}).")
 	public void setEliteSize(int eliteSize) {
-		if (eliteSize <= 0) { //TODO can eliteSize be == 0?
+		if (eliteSize < 0) {
 			throw new ParameterException(this.spec.commandLine(), String.format("Elite size %d is zero or negative.", populationSize));
 		}
 		this.eliteSize = Math.min(this.populationSize, eliteSize);
