@@ -1,6 +1,15 @@
+def javaVersion = JavaLanguageVersion.of(8)
+def javaHome = javaToolchains.compilerFor { languageVersion = javaVersion }.get().metadata.installationPath.asFile.toString()
+
+repositories {
+    mavenCentral()
+    flatDir {
+    	dirs "${javaHome}/lib", "${project(':jbse').projectDir}/libs"
+    }
+}
 dependencies {
     implementation project(':jbse')
     implementation project(':gasp-master')
-    implementation 'org.apache.logging.log4j:log4j-api:2.11.1'
-    implementation 'org.apache.logging.log4j:log4j-core:2.11.1'
+    implementation name: 'javassist'
+    implementation name: 'tools'
 }

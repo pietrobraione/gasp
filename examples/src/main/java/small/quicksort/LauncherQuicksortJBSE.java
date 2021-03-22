@@ -15,7 +15,8 @@ public class LauncherQuicksortJBSE {
 	public static void main(String[] s) {
 		final RunParameters o = new RunParameters();
 		
-		o.addUserClasspath(PATH_JBSE, PATH_EXAMPLES);
+		o.setJBSELibPath(PATH_JBSE);
+		o.addUserClasspath(PATH_EXAMPLES);
 		o.setDecisionProcedureType(DecisionProcedureType.Z3);
 		o.setExternalDecisionProcedurePath(PATH_Z3);		
 		//o.setMethodSignature("small/quicksort/Quicksort", "([I)V", "sort");
