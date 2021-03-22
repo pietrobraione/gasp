@@ -2,9 +2,6 @@ package gasp.ga;
 
 import org.junit.jupiter.api.Test;
 
-import gasp.ga.GeneticAlgorithm;
-import gasp.ga.Individual;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;

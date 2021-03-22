@@ -2,8 +2,6 @@ package gasp;
 
 import org.junit.jupiter.api.Test;
 
-import gasp.Options;
-
 import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -24,7 +24,7 @@ public class LauncherMergesortJBSE {
 		//o.setMethodSignature("small/mergesort/Mergesort75", "()V", "sort");
 		o.setMethodSignature("small/mergesort/Mergesort100", "()V", "sort");
 		o.getRunnerParameters().getEngineParameters().setMakePreInitClassesSymbolic(false);
-		o.setStateFormatMode(StateFormatMode.TRACE);
+		o.setStateFormatMode(StateFormatMode.PATH);
 		o.setStepShowMode(StepShowMode.ALL);
 		
 		//o.setGuided("small/mergesort/Mergesort", "sortWorstCase");

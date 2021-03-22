@@ -11,7 +11,10 @@ import jbse.dec.DecisionProcedureLICS;
 import jbse.dec.DecisionProcedureSMTLIB2_AUFNIRA;
 import jbse.dec.exc.DecisionException;
 import jbse.rewr.CalculatorRewriting;
-import jbse.rewr.RewriterOperationOnSimplex;
+import jbse.rewr.RewriterExpressionOrConversionOnSimplex;
+import jbse.rewr.RewriterFunctionApplicationOnSimplex;
+import jbse.rewr.RewriterNegationElimination;
+import jbse.rewr.RewriterZeroUnit;
 import jbse.rules.ClassInitRulesRepo;
 import jbse.rules.LICSRulesRepo;
 
@@ -20,7 +23,10 @@ public interface Utils {
 	
 	static CalculatorRewriting makeCalculator() {
 		final CalculatorRewriting calc = new CalculatorRewriting();
-		calc.addRewriter(new RewriterOperationOnSimplex());
+        calc.addRewriter(new RewriterExpressionOrConversionOnSimplex());
+        calc.addRewriter(new RewriterFunctionApplicationOnSimplex());
+        calc.addRewriter(new RewriterZeroUnit());
+        calc.addRewriter(new RewriterNegationElimination());
 		return calc;
 	}
 	

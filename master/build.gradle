@@ -1,6 +1,14 @@
 plugins {
     id 'application'
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+def javaHome = javaToolchains.compilerFor { languageVersion = javaVersion }.get().metadata.installationPath.asFile.toString()
+
+repositories {
+    flatDir {
+    	dirs "${javaHome}/lib", "${project(':jbse').projectDir.toString()}/libs"
+    }
 }
 
 test {
@@ -9,8 +17,8 @@ test {
 
 dependencies {
     implementation project(':jbse')
-    implementation 'org.apache.logging.log4j:log4j-api:2.11.1'
-    implementation 'org.apache.logging.log4j:log4j-core:2.11.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.14.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.0'
     implementation 'info.picocli:picocli:3.9.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'

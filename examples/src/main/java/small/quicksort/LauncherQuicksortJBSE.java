@@ -24,7 +24,7 @@ public class LauncherQuicksortJBSE {
 		//o.setMethodSignature("small/quicksort/Quicksort75", "()V", "sort");
 		o.setMethodSignature("small/quicksort/Quicksort100", "()V", "sort");
 		o.getRunnerParameters().getEngineParameters().setMakePreInitClassesSymbolic(false);
-		o.setStateFormatMode(StateFormatMode.TRACE);
+		o.setStateFormatMode(StateFormatMode.PATH);
 		o.setStepShowMode(StepShowMode.ALL);
 		
 		//o.setGuided("small/quicksort/Quicksort", "sortWorstCase");

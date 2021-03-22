@@ -207,13 +207,13 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 		
 		@Override
-		public boolean atRoot() {
+		public boolean atInitial() {
 			final List<Clause> pathCondition = getEngine().getCurrentState().getPathCondition();
 			final Clause lastPathConditionClause = pathCondition.get(pathCondition.size() - 1);
 			if (lastPathConditionClause instanceof ClauseAssumeExpands && "{ROOT}:this".equals(((ClauseAssumeExpands) lastPathConditionClause).getReference().asOriginString())) {
 				this.chromosome.add(new GeneJBSE(lastPathConditionClause, IndividualGeneratorJBSE.this.calculatorForGenes));
 			}
-			return super.atRoot();
+			return super.atInitial();
 		}
 		
 		@Override
@@ -222,7 +222,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			if (fitness >= IndividualGeneratorJBSE.this.maxFitness) {
 				this.outcome = Outcome.MAXIMUM_FITNESS_REACHED;
 				this.fitness = fitness;
-				this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
+				this.pathIdentifier = getEngine().getCurrentState().getBranchIdentifier();
 				logger.debug("Trace finished, maximum fitness reached, fitness %d", fitness);
 				return true;
 			}
@@ -274,7 +274,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			for (int i = 0; i < compliantStateIndex; ++i) {
 				try {
 					engine.backtrack();
-				} catch (DecisionBacktrackException | CannotBacktrackException e) {
+				} catch (DecisionBacktrackException | CannotBacktrackException | ContradictionException e) {
 					//TODO improve
 					throw new RuntimeException(e);
 				}
@@ -332,10 +332,10 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 		}
 
 		@Override
-		public boolean atTraceEnd() {
+		public boolean atPathEnd() {
 			this.outcome = Outcome.FOUND;
 			this.fitness = fitness();
-			this.pathIdentifier = getEngine().getCurrentState().getIdentifier();
+			this.pathIdentifier = getEngine().getCurrentState().getBranchIdentifier();
 			logger.debug("Trace finished, found individual, fitness %d", this.fitness);
 			return true;
 		}
@@ -381,7 +381,7 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 			if (chromosome != null) {
 				assumeChromosome(initialState, chromosome, calc);
 			}
-			params.setInitialState(initialState);
+			params.setStartingState(initialState);
 		}
 
 		//builds the runner and returns it
@@ -448,6 +448,9 @@ public final class IndividualGeneratorJBSE implements IndividualGenerator<GeneJB
 					} //else, discard it
 				} //else, discard it
 			}
+		} catch (ContradictionException e) {
+			//this should never happen
+			throw new AssertionError("Found a contradictory condition in a clause.", e);
 		} catch (InvalidOperandException e) {
 			//this should never happen
 			throw new AssertionError("Found an invalid condition in a clause.", e);

@@ -13,6 +13,7 @@ import jbse.common.exc.InvalidInputException;
 import jbse.dec.DecisionProcedureAlgorithms;
 import jbse.dec.exc.DecisionException;
 import jbse.mem.Clause;
+import jbse.mem.exc.ContradictionException;
 import jbse.rewr.CalculatorRewriting;
 import jbse.val.PrimitiveSymbolic;
 import jbse.val.Simplex;
@@ -38,7 +39,7 @@ public final class ModelGeneratorJBSE_SMTLIB implements ModelGenerator<GeneJBSE,
 		} catch (DecisionException e) {
 			//if this happens, we return null
 			return null; //TODO report the issue
-		} catch (InvalidInputException e) {
+		} catch (InvalidInputException | ContradictionException e) {
 			//this should never happen
 			throw new AssertionError(e);
 		}

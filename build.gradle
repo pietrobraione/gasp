@@ -1,16 +1,21 @@
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'maven'
     group = 'gasp'
     version = '0.1.0-SNAPSHOT'
 
     repositories {
-        maven {
-            url = 'http://repo.maven.apache.org/maven2'
-        }
+    	mavenCentral()
     }
-
-    sourceCompatibility = '1.8'
+    
+    ext {
+    	javaVersion = JavaLanguageVersion.of(8)
+    }
+    
+    java {
+    	toolchain {
+    		languageVersion = javaVersion
+    	}
+    }
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'

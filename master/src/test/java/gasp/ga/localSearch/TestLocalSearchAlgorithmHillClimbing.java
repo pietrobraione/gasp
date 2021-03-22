@@ -8,7 +8,6 @@ import gasp.ga.FoundWorstIndividualException;
 import gasp.ga.individualGenerator.GeneJBSE;
 import gasp.ga.individualGenerator.IndividualGeneratorJBSE;
 import gasp.ga.individualGenerator.IndividualJBSE;
-import gasp.ga.localSearch.LocalSearchAlgorithmHillClimbing;
 
 import org.junit.jupiter.api.DisplayName;
 

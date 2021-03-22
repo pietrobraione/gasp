@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +33,7 @@ import jbse.bc.exc.ClassFileNotAccessibleException;
 import jbse.bc.exc.ClassFileNotFoundException;
 import jbse.bc.exc.IncompatibleClassFileException;
 import jbse.bc.exc.InvalidClassFileFactoryClassException;
+import jbse.bc.exc.RenameUnsupportedException;
 import jbse.bc.exc.WrongClassNameException;
 import jbse.common.Type;
 import jbse.common.exc.InvalidInputException;
@@ -59,11 +59,11 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	private ClassHierarchy hier;
 	
 	@BeforeEach
-	private void beforeEach() throws InvalidInputException, InvalidClassFileFactoryClassException, IOException, ClassFileNotFoundException, ClassFileIllFormedException, ClassFileNotAccessibleException, IncompatibleClassFileException, BadClassFileVersionException, WrongClassNameException {
+	private void beforeEach() throws InvalidInputException, InvalidClassFileFactoryClassException, IOException, ClassFileNotFoundException, ClassFileIllFormedException, ClassFileNotAccessibleException, IncompatibleClassFileException, BadClassFileVersionException, WrongClassNameException, RenameUnsupportedException {
 		this.ig = new IndividualGeneratorJBSE(MAX_FITNESS, CLASSPATH, JBSE_PATH, Z3_PATH, METHOD_CLASS_NAME, METHOD_DESCRIPTOR, METHOD_NAME);
 		this.calc = new CalculatorRewriting();
 		this.symbolFactory = new SymbolFactory();
-		this.s = new State(true, unknown(), 10, 10, new Classpath(Paths.get(System.getProperty("java.home")), Collections.emptyList(), CLASSPATH), ClassFileFactoryJavassist.class, new HashMap<>(), this.symbolFactory);
+		this.s = new State(true, unknown(), 10, 10, new Classpath(JBSE_PATH, Paths.get(System.getProperty("java.home")), Collections.emptyList(), CLASSPATH), ClassFileFactoryJavassist.class, Collections.emptyMap(), Collections.emptyMap(), this.symbolFactory);
 		this.hier = s.getClassHierarchy();
 		this.hier.loadCreateClass(JAVA_OBJECT);
 		this.hier.loadCreateClass(JAVA_CLONEABLE);
@@ -75,9 +75,9 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual(chromosome) correctly reorders numeric vs. symbolic reference clauses")
 	public void testRandomIndividualWithChromosome1() throws Exception {
 		//builds a path condition
-		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
-		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
-		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
+		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariableReference(unknown(), "L" + METHOD_CLASS_NAME + ";", "L" + METHOD_CLASS_NAME + ";", "foo");
+		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberFieldPrimitive("Z", R0, "a", METHOD_CLASS_NAME);
+		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberFieldPrimitive("C", R0, "b", METHOD_CLASS_NAME);
 		s.assumeExpands(this.calc, R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
 		s.assume(this.calc.push(R0_a).widen(Type.INT).eq(this.calc.valInt(0)).pop());
 		s.assume(this.calc.push(R0_b).widen(Type.INT).ne(this.calc.valInt(0)).pop());
@@ -100,9 +100,9 @@ public class TestIndividualGeneratorJBSEWithChromosome {
 	@DisplayName("IndividualGeneratorJBSE.generateRandomIndividual(chromosome) correctly reorders numeric vs. symbolic reference clauses")
 	public void testRandomIndividualWithChromosome2() throws Exception {
 		//builds a path condition
-		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariable(unknown(), "L" + METHOD_CLASS_NAME + ";", "foo");
-		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("Z", R0, "a", METHOD_CLASS_NAME);
-		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberField("C", R0, "b", METHOD_CLASS_NAME);
+		final ReferenceSymbolic R0 = (ReferenceSymbolic) this.symbolFactory.createSymbolLocalVariableReference(unknown(), "L" + METHOD_CLASS_NAME + ";", "L" + METHOD_CLASS_NAME + ";", "foo");
+		final PrimitiveSymbolic R0_a = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberFieldPrimitive("Z", R0, "a", METHOD_CLASS_NAME);
+		final PrimitiveSymbolic R0_b = (PrimitiveSymbolic) this.symbolFactory.createSymbolMemberFieldPrimitive("C", R0, "b", METHOD_CLASS_NAME);
 		s.assumeExpands(this.calc, R0, this.hier.loadCreateClass(2, METHOD_CLASS_NAME, true));
 		s.assume(this.calc.push(R0_a).widen(Type.INT).eq(this.calc.valInt(0)).pop());
 		s.assume(this.calc.push(R0_b).widen(Type.INT).ne(this.calc.valInt(0)).pop());
